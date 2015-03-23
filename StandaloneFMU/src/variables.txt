@@ -1,0 +1,4 @@
+---------------------
+INITIALIZE INPUTS:
+%INITIALIZE_INPUTS%
+---------------------
