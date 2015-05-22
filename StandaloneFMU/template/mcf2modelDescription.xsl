@@ -143,6 +143,20 @@
 %ENDIF%
 %IF%%FMI2%
 		<xsl:element name="ModelStructure">
+			<xsl:if test="modelVariables/modelVariable[string(kind) = 'output']">
+				<xsl:element name="Outputs">
+					<xsl:for-each select="modelVariables/modelVariable[string(kind) = 'output']">
+						<xsl:element name="Unknown">
+							<xsl:attribute name="index">
+								<xsl:call-template name="valueReference">
+									<xsl:with-param name="modelvariable" select="." />
+									<xsl:with-param name="index" select="0" />
+								</xsl:call-template>
+							</xsl:attribute>
+						</xsl:element>			
+					</xsl:for-each>				
+				</xsl:element>			
+			</xsl:if>			
 		</xsl:element>
 %ENDIF%
 		
