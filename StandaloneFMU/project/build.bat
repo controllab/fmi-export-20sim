@@ -7,7 +7,7 @@ rem noclean to force a build without clean
 rem noprompt to avoid all prompts
 CLS
 COLOR 1B
-TITLE 20-sim FMU export - Build script
+TITLE 20-sim FMU %FMUVERSION% export - Build script
 rem -------------------------------------------------------------
 rem Config
 rem If you get an error that Visual studio was not found, SET your path for VSNET main executable.
@@ -164,7 +164,7 @@ ECHO ------------------------------------------------------------
 rem	CONFIG END
 rem -------------------------------------------------------------
 
-%GUIDTOOL% > "%ROOTPATH%\src\guid.txt"
+"%GUIDTOOL%" > "%ROOTPATH%\src\guid.txt"
 rem generate GUID header
 FOR /f "tokens=*" %%g IN (%ROOTPATH%\src\guid.txt) DO (
 	rem generate a header with a define for the GUID
@@ -251,12 +251,12 @@ FOR /f "tokens=*" %%g IN (%ROOTPATH%\src\guid.txt) DO (
   copy "%PROJ_DIR%\%buildconfig%\%DLL%" "%BIN_DIR%"
   
   ECHO Generate the modelDescription.xml
-  %XSLTTOOL% "%ROOTPATH%\src\ModelConfiguration.xml" "%ROOTPATH%\template\mcf2modelDescription.xsl" -o "%FMU_DIR%\modelDescription.xml" SOURCEDIRECTORY="%ROOTPATH%\src"
+  "%XSLTTOOL%"  "%ROOTPATH%\src\ModelConfiguration.xml" "%ROOTPATH%\template\mcf2modelDescription.xsl" -o "%FMU_DIR%\modelDescription.xml" SOURCEDIRECTORY="%ROOTPATH%\src"
   
   ECHO Generate the FMU
   cd %FMU_DIR%
-  del /Q %FMU%
-  %ZIPTOOL% a -tzip -xr!.svn %FMU% *
+  if exist %FMU% del /Q %FMU%
+  "%ZIPTOOL%" a -tzip -xr!.svn %FMU% *
   cd %CURPATH%
   
   IF NOT EXIST %FMU% (

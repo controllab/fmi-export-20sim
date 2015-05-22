@@ -39,19 +39,23 @@
 
 #ifndef XX_TYPES_H
 #define XX_TYPES_H
-
+%IF%%FMI1%
 #include "fmiPlatformTypes.h"
+%ENDIF%
+%IF%%FMI2%
+#include "fmi2FunctionTypes.h"
+%ENDIF%
 
 /* The mentioned typedefs */
-typedef fmiReal XXDouble;
-typedef fmiInteger XXInteger;
-typedef fmiInteger XXCharacter;
-typedef fmiBoolean XXBoolean;
-typedef fmiString XXString;
+typedef %FMI_PREFIX%Real XXDouble;
+typedef %FMI_PREFIX%Integer XXInteger;
+typedef %FMI_PREFIX%Integer XXCharacter;
+typedef %FMI_PREFIX%Boolean XXBoolean;
+typedef %FMI_PREFIX%String XXString;
 
 /* Defines */
-#define XXTRUE  fmiTrue
-#define XXFALSE fmiFalse
+#define XXTRUE  %FMI_PREFIX%True
+#define XXFALSE %FMI_PREFIX%False
 
 /* String defines */
 #define XXString2Double *(XXDouble *)&

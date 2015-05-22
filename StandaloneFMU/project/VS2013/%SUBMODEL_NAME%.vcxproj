@@ -133,8 +133,14 @@
     <ClInclude Include="..\..\src\xxmodel.h" />
     <ClInclude Include="..\..\src\xxsubmod.h" />
     <ClInclude Include="..\..\src\xxtypes.h" />
-    <ClInclude Include="..\..\src\fmiFunctions.h" />
+    <ClInclude Include="..\..\src\%FMI_PREFIX%Functions.h" />
+%IF%%FMI1%
     <ClInclude Include="..\..\src\fmiPlatformTypes.h" />
+%ENDIF%
+%IF%%FMI2%
+    <ClInclude Include="..\..\src\fmi2FunctionTypes.h" />
+    <ClInclude Include="..\..\src\fmi2TypesPlatform.h" />
+%ENDIF%
 	<ClInclude Include="..\..\src\fmiGUID.h" />
   </ItemGroup>
   <ItemGroup>
@@ -145,7 +151,7 @@
     <ClCompile Include="..\..\src\xxinverse.c" />
     <ClCompile Include="..\..\src\xxmodel.c" />
     <ClCompile Include="..\..\src\xxmatrix.c" />
-    <ClCompile Include="..\..\src\fmiFunctions.c" />
+    <ClCompile Include="..\..\src\%FMI_PREFIX%Functions.c" />
     <ClCompile Include="..\..\src\xxsubmod.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

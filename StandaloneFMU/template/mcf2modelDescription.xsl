@@ -63,24 +63,51 @@
 <!--  Template for root MCF element -->
 <xsl:template match="/modelConfiguration">
 	<xsl:element name="fmiModelDescription">
-		<xsl:attribute name="fmiVersion">1.0</xsl:attribute>
+		<xsl:attribute name="fmiVersion">%FMIVERSION%</xsl:attribute>
 		<xsl:attribute name="modelName">
 			<xsl:value-of select="general/name" />
 		</xsl:attribute>
+%IF%%FMI1%
 		<xsl:attribute name="modelIdentifier">
 			<xsl:value-of select="general/name" />
 		</xsl:attribute>
+%ENDIF%
 		<xsl:attribute name="guid">
 			<xsl:text>{</xsl:text>
 			<xsl:value-of select="document(concat($SOURCEDIRECTORY, '\GUID.xml'))/tokens/token[@name='GUID']" />
 			<xsl:text>}</xsl:text>
 		</xsl:attribute>
 		<xsl:attribute name="generationTool">20-sim</xsl:attribute>
+%IF%%FMI1%
 		<xsl:attribute name="numberOfContinuousStates">
 			<!-- Note: 20-sim doesn't distinguish between discrete and continuous states, so return the union of both sets -->
 			<xsl:value-of select="$NUMBER_STATES" />
 		</xsl:attribute>
+%ENDIF%
 		<xsl:attribute name="numberOfEventIndicators">0</xsl:attribute>
+
+%IF%%FMI2%
+		<xsl:attribute name="copyright">Controllab Products B.V.</xsl:attribute>
+		<xsl:attribute name="license">-</xsl:attribute>
+%ENDIF%
+
+%IF%%FMI2%
+		<xsl:element name="CoSimulation">
+			<xsl:attribute name="modelIdentifier">
+				<xsl:value-of select="general/name" />
+			</xsl:attribute>
+			<xsl:attribute name="needsExecutionTool">false</xsl:attribute>
+			<xsl:attribute name="canHandleVariableCommunicationStepSize">false</xsl:attribute>
+			<xsl:attribute name="canInterpolateInputs">true</xsl:attribute>
+			<xsl:attribute name="maxOutputDerivativeOrder">0</xsl:attribute>
+			<xsl:attribute name="canRunAsynchronuously">false</xsl:attribute>
+			<xsl:attribute name="canBeInstantiatedOnlyOncePerProcess">true</xsl:attribute>
+			<xsl:attribute name="canNotUseMemoryManagementFunctions">true</xsl:attribute>
+			<xsl:attribute name="canGetAndSetFMUstate">false</xsl:attribute>
+			<xsl:attribute name="canSerializeFMUstate">false</xsl:attribute>
+			<xsl:attribute name="providesDirectionalDerivative">false</xsl:attribute>
+		</xsl:element>
+%ENDIF%
 
 		<xsl:element name="DefaultExperiment">
 			<xsl:attribute name="startTime"><xsl:value-of select="run/startTime" /></xsl:attribute>
@@ -97,7 +124,7 @@
 				</xsl:call-template>
 			</xsl:for-each>
 		</xsl:element>
-		
+%IF%%FMI1%
 		<xsl:element name="Implementation">
 			<xsl:element name="CoSimulation_StandAlone">
 				<xsl:element name="Capabilities">
@@ -113,7 +140,11 @@
 				</xsl:element>
 			</xsl:element>		
 		</xsl:element>
-		
+%ENDIF%
+%IF%%FMI2%
+		<xsl:element name="ModelStructure">
+		</xsl:element>
+%ENDIF%
 		
     </xsl:element>
 </xsl:template>
@@ -149,7 +180,13 @@
 		</xsl:if>
 		<xsl:attribute name="variability">
 			<xsl:choose>
+%IF%%FMI1%
 				<xsl:when test="string($modelvariable/kind)='parameter'">parameter</xsl:when>
+%ENDIF%
+%IF%%FMI2%
+				<xsl:when test="string($modelvariable/kind)='parameter'">fixed</xsl:when>
+				<xsl:when test="string($modelvariable/kind)='initial value'">fixed</xsl:when>
+%ENDIF%
 				<xsl:when test="string($modelvariable/kind)='constant'">constant</xsl:when>
 				<xsl:when test="string(document(concat($SOURCEDIRECTORY, '\tokens.xml'))/tokens/token[@name='MODEL_IS_DISCRETE']) = 'XXTRUE'">discrete</xsl:when>
 				<xsl:otherwise>continuous</xsl:otherwise>
@@ -157,19 +194,30 @@
 		</xsl:attribute>
 		<xsl:attribute name="causality">
 			<xsl:choose>
+%IF%%FMI2%
+				<xsl:when test="string($modelvariable/kind)='parameter'">parameter</xsl:when>
+				<xsl:when test="string($modelvariable/kind)='initial value'">parameter</xsl:when>
+%ENDIF%
 				<xsl:when test="string($modelvariable/kind)='input'">input</xsl:when>
 				<xsl:when test="string($modelvariable/kind)='output'">output</xsl:when>
+%IF%%FMI1%
 				<xsl:otherwise>internal</xsl:otherwise>
+%ENDIF%
+%IF%%FMI2%
+				<xsl:otherwise>local</xsl:otherwise>
+%ENDIF%
 			</xsl:choose>
 		</xsl:attribute>
 		<!--<xsl:if test="$modelvariable/preceding-sibling::modelVariable/storage[string(name) = $variable_table  and string(index) = $variable_offset] or $modelvariable/aliasOf">  Test if it's not the first usage of the underlying variable -->
+%IF%%FMI1%
 		<xsl:if test="$modelvariable/aliasOf">
 			<xsl:attribute name="alias">alias</xsl:attribute>
 		</xsl:if>		
+%ENDIF%
 		<!-- end of attributes assignment -->
 	
-	
 		<xsl:element name="Real">
+%IF%%FMI1%
 			<xsl:if test="$modelvariable/value">
 				<xsl:attribute name="start">
 					<xsl:call-template name="GetArrayValue">
@@ -177,7 +225,6 @@
 						<xsl:with-param name="index" select="$index"/>
 					</xsl:call-template>
 				</xsl:attribute>
-				
 				<!-- determine the 'fixed' attribute -->
 				<xsl:attribute name="fixed">
 					<xsl:choose>
@@ -186,6 +233,34 @@
 					</xsl:choose>
 				</xsl:attribute>
 			</xsl:if>
+%ENDIF%
+%IF%%FMI2%
+			<xsl:if test="string($modelvariable/kind)='parameter'">
+				<xsl:attribute name="start">
+					<xsl:call-template name="GetArrayValue">
+						<xsl:with-param name="stringarray" select="$modelvariable/value"/>
+						<xsl:with-param name="index" select="$index"/>
+					</xsl:call-template>
+				</xsl:attribute>
+			</xsl:if>
+			<xsl:if test="string($modelvariable/kind)='initial value'">
+				<xsl:attribute name="start">
+					<xsl:call-template name="GetArrayValue">
+						<xsl:with-param name="stringarray" select="$modelvariable/value"/>
+						<xsl:with-param name="index" select="$index"/>
+					</xsl:call-template>
+				</xsl:attribute>
+			</xsl:if>
+			<xsl:if test="string($modelvariable/kind)='input'">
+				<xsl:attribute name="start">
+					<xsl:call-template name="GetArrayValue">
+						<xsl:with-param name="stringarray" select="$modelvariable/value"/>
+						<xsl:with-param name="index" select="$index"/>
+					</xsl:call-template>
+				</xsl:attribute>
+			</xsl:if>
+%ENDIF%
+
 		</xsl:element>
 	</xsl:element>
 

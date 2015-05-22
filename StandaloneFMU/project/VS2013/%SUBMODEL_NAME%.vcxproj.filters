@@ -35,15 +35,25 @@
     <ClInclude Include="..\..\src\xxtypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\fmiFunctions.h">
+    <ClInclude Include="..\..\src\%FMI_PREFIX%Functions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\fmiGUID.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+%IF%%FMI1%
     <ClInclude Include="..\..\src\fmiPlatformTypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+%ENDIF%
+%IF%%FMI2%
+    <ClInclude Include="..\..\src\fmi2FunctionTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\fmi2TypesPlatform.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+%ENDIF%
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\EulerAngles.c">
@@ -61,7 +71,7 @@
     <ClCompile Include="..\..\src\xxinverse.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\fmiFunctions.c">
+    <ClCompile Include="..\..\src\%FMI_PREFIX%Functions.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\xxmatrix.c">
