@@ -409,3 +409,39 @@ fmi2Status fmi2GetContinuousStates(fmi2Component c, fmi2Real x[], size_t nx)
 	return fmi2OK;
 }
 %ENDIF%
+
+%IF%%FMI2%
+fmi2Status fmi2GetFMUstate (fmi2Component c, fmi2FMUstate* FMUstate) {
+    
+/* not yet */
+    return fmi2Discard;
+}
+fmi2Status fmi2SetFMUstate (fmi2Component c, fmi2FMUstate FMUstate) {
+    /* not yet */
+    return fmi2Discard;
+}
+fmi2Status fmi2FreeFMUstate(fmi2Component c, fmi2FMUstate* FMUstate) {
+    /* not yet */
+    return fmi2Discard;
+}
+fmi2Status fmi2SerializedFMUstateSize(fmi2Component c, fmi2FMUstate FMUstate, size_t *size) {
+    /* not yet */
+    return fmi2Discard;
+}
+fmi2Status fmi2SerializeFMUstate (fmi2Component c, fmi2FMUstate FMUstate, fmi2Byte serializedState[], size_t size) {
+    /* not yet */
+    return fmi2Discard;
+}
+fmi2Status fmi2DeSerializeFMUstate (fmi2Component c, const fmi2Byte serializedState[], size_t size,
+                                    fmi2FMUstate* FMUstate) {
+    /* not yet */
+    return fmi2Discard;
+}
+
+fmi2Status fmi2GetDirectionalDerivative(fmi2Component c, const fmi2ValueReference vUnknown_ref[], size_t nUnknown,
+                                        const fmi2ValueReference vKnown_ref[] , size_t nKnown,
+                                        const fmi2Real dvKnown[], fmi2Real dvUnknown[]) {
+    /* not yet */
+    return fmi2Discard;
+}
+%ENDIF%
