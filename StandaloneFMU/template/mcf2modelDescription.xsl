@@ -146,14 +146,10 @@
 			<xsl:if test="modelVariables/modelVariable[string(kind) = 'output']">
 				<xsl:element name="Outputs">
 					<xsl:for-each select="modelVariables/modelVariable[string(kind) = 'output']">
+						<!-- Add 1-based index to the corresponding model variable -->
 						<xsl:element name="Unknown">
-							<xsl:attribute name="index">
-								<xsl:call-template name="valueReference">
-									<xsl:with-param name="modelvariable" select="." />
-									<xsl:with-param name="index" select="0" />
-								</xsl:call-template>
-							</xsl:attribute>
-						</xsl:element>			
+							<xsl:value-of select="count(preceding-sibling::modelVariable) + 1" />
+						</xsl:element>	
 					</xsl:for-each>				
 				</xsl:element>			
 			</xsl:if>			
