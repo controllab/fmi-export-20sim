@@ -148,7 +148,9 @@
 					<xsl:for-each select="modelVariables/modelVariable[string(kind) = 'output']">
 						<!-- Add 1-based index to the corresponding model variable -->
 						<xsl:element name="Unknown">
-							<xsl:value-of select="count(preceding-sibling::modelVariable) + 1" />
+							<xsl:attribute name="index">
+								<xsl:value-of select="count(preceding-sibling::modelVariable) + 1" />
+							</xsl:attribute>
 						</xsl:element>	
 					</xsl:for-each>				
 				</xsl:element>			
