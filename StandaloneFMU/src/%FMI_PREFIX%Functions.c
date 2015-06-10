@@ -125,7 +125,12 @@ FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%SetBoolean(%FMI_PREFIX%Component c
 								size_t nvr,
 								const %FMI_PREFIX%Boolean value[])
 {
-    return %FMI_PREFIX%Error;    /* not yet */
+	unsigned int i;
+	for (i = 0; i < nvr; i++)
+	{
+		xx_MEMORY[vr[i]] = value[i] ? 1.0 : 0.0;
+	}
+	return %FMI_PREFIX%OK;    /* temp implementation allowing boolean to real conversion, until proper boolean support is added. */
 }
 FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%SetString(%FMI_PREFIX%Component c,
 								const %FMI_PREFIX%ValueReference vr[],
