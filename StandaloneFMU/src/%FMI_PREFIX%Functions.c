@@ -402,15 +402,23 @@ fmi2Status fmi2DoStep(fmi2Component c,
 %IF%%FMI2%
 fmi2Status fmi2GetContinuousStates(fmi2Component c, fmi2Real x[], size_t nx)
 {
-	unsigned i;
+%IF%%NUMBER_STATES%
+	size_t i;
+
+%ENDIF%
 	if( %NUMBER_STATES% != nx )
 	{
 		return fmi2Error;
 	}
+%IF%%NUMBER_STATES%
+
 	for( i = 0; i < %NUMBER_STATES%; ++i)
 	{
 		x[i] = %VARPREFIX%%XX_STATE_ARRAY_NAME%[i];
 	}
+%ELSE%
+	/* the exported submodel has no states */
+%ENDIF%
 	return fmi2OK;
 }
 %ENDIF%
