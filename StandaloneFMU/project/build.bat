@@ -35,10 +35,7 @@ set SRC_DIR=%FMU_DIR%\sources
 set DOC_DIR=%FMU_DIR%\documentation
 
 FOR %%b in (%1, %2, %3, %4, %5) DO (
-	IF %%b==vs2005 SET comp=vs2005
-	IF %%b==vs2008 SET comp=vs2008
 	IF %%b==vs2010 SET comp=vs2010
-	IF %%b==vs2012 SET comp=vs2012
 	IF %%b==vs2013 SET comp=vs2013
 	IF %%b==clean SET buildmode=clean
 	IF %%b==noclean SET buildmode=noclean
@@ -54,7 +51,7 @@ ECHO 20-sim standalone co-simulation FMU export for '%SUBMODEL_NAME%'
 ECHO ------------------------------------------------------------
 ECHO Searching for Visual C++ compiler...
 
-rem Seach for VS 2012 / VS 2012 Express
+rem Seach for VS 2013 / VS 2013 Express / VS 2013 Community edition
 IF %comp%==vs2013 (
 	set PROJ_DIR=VS2013
 	IF EXIST "%VS120COMNTOOLS%\vsvars32.bat" (
@@ -63,24 +60,6 @@ IF %comp%==vs2013 (
 	) ELSE IF EXIST "%ProgramFiles%\Microsoft Visual Studio 12.0\Common7\Tools\vsvars32.bat" (
 		set VSVARS32="%VS120COMNTOOLS%\vsvars32.bat"
 		ECHO Found Visual C++ for Desktop 2013
-	) ELSE (
-		rem Try an older compiler
-		set comp=vs2012
-	)
-)
-
-rem Seach for VS 2012 / VS 2012 Express
-IF %comp%==vs2012 (
-	set PROJ_DIR=VS2012
-	IF EXIST "%VS110COMNTOOLS%\..\IDE\devenv.exe" (
-		set DEVENV="%VS110COMNTOOLS%\..\IDE\devenv.exe"
-		ECHO Found Visual C++ 2012
-	) ELSE IF EXIST "%VS110COMNTOOLS%\..\IDE\VCExpress.exe" (
-		set DEVENV="%VS110COMNTOOLS%\..\IDE\VCExpress.exe"
-		ECHO Found Visual C++ Express 2012
-	) ELSE IF EXIST "%ProgramFiles%\Microsoft Visual Studio 11.0\Common7\IDE\VCExpress.exe" (
-		set DEVENV="%ProgramFiles%\Microsoft Visual Studio 11.0\Common7\IDE\VCExpress.exe"
-		ECHO Found Visual C++ Express 2012
 	) ELSE (
 		rem Try an older compiler
 		set comp=vs2010
@@ -100,49 +79,16 @@ IF %comp%==vs2010 (
 		set DEVENV="%ProgramFiles%\Microsoft Visual Studio 10.0\Common7\IDE\VCExpress.exe"
 		ECHO Found Visual C++ Express 2010
 	) ELSE (
-		rem Try an older compiler
-		set comp=vs2008
+		echo "Could not find a supported Visual C++ (Express) compiler. Currently supported versions in this template: 2010 and 2013"
+		pause
+		goto END
 	)
 )
 
-rem Seach for VS 2008 / VS 2008 Express
-IF %comp%==vs2008 (
-	set PROJ_DIR=VS2008
-	IF EXIST "%VS90COMNTOOLS%\..\IDE\devenv.exe" (
-		set DEVENV="%VS90COMNTOOLS%\..\IDE\devenv.exe"
-		ECHO Found Visual C++ 2008
-	) ELSE IF EXIST "%VS90COMNTOOLS%\..\IDE\VCExpress.exe" (
-		set DEVENV="%VS90COMNTOOLS%\..\IDE\VCExpress.exe"
-		ECHO Found Visual C++ Express 2008
-	) ELSE IF EXIST "%ProgramFiles%\Microsoft Visual Studio 9.0\Common7\IDE\VCExpress.exe" (
-		set DEVENV="%ProgramFiles%\Microsoft Visual Studio 9.0\Common7\IDE\VCExpress.exe"
-		ECHO Found Visual C++ Express 2008
-	) ELSE (
-		rem Try an older compiler
-		set comp=vs2005
-	)
-)
-
-rem Seach for VS 2005 / VS 2005 Express
-IF %comp%==vs2005 (
-	set PROJ_DIR=VS2005
-	IF EXIST "%VS80COMNTOOLS%\..\IDE\devenv.exe" (
-		set DEVENV="%VS80COMNTOOLS%\..\IDE\devenv.exe"
-		ECHO Found Visual C++ 2005
-	) ELSE IF EXIST "%VS80COMNTOOLS%\..\IDE\VCExpress.exe" (
-		set DEVENV="%VS80COMNTOOLS%\..\IDE\VCExpress.exe"
-		ECHO Found Visual C++ Express 2005
-	) ELSE IF EXIST "%ProgramFiles%\Microsoft Visual Studio 8\Common7\IDE\VCExpress.exe" (
-		set DEVENV="%ProgramFiles%\Microsoft Visual Studio 8\Common7\IDE\VCExpress.exe"
-		ECHO Found Visual C++ Express 2005
-	) ELSE (
-		set comp=vc6
-	)
-)
 
 IF %DEVENV% NEQ "" (
 	IF NOT EXIST %DEVENV% (
-		echo "Could not find a suitable Visual C++ (Express) compiler. Supported versions: 2005, 2008, 2010, 2012, 2013 Desktop (including Express editions)."
+		echo "Could not find a suitable Visual C++ (Express) compiler. Supported versions: 2010, 2013 Community/Desktop (including Express editions)."
 		echo "You can use the generated Makefile to compile the DLL using the MinGW compiler"
 		pause
 	)
