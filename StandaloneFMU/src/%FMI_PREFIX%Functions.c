@@ -72,7 +72,7 @@ FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%GetReal(%FMI_PREFIX%Component c,
 									 const %FMI_PREFIX%ValueReference vr[],
 									 size_t nvr, %FMI_PREFIX%Real value[])
 {
-    unsigned int i;
+    size_t i;
     for (i = 0; i < nvr; i++)
     {
         value [i] = %VARPREFIX%MEMORY[ vr[i] ];
@@ -106,7 +106,7 @@ FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%SetReal(%FMI_PREFIX%Component c,
 								size_t nvr,
 								const %FMI_PREFIX%Real value[])
 {
-    unsigned int i;
+    size_t i;
     for (i = 0; i < nvr; i++)
     {
         %VARPREFIX%MEMORY[ vr[i] ] = value [i];
@@ -125,10 +125,10 @@ FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%SetBoolean(%FMI_PREFIX%Component c
 								size_t nvr,
 								const %FMI_PREFIX%Boolean value[])
 {
-	unsigned int i;
+	size_t i;
 	for (i = 0; i < nvr; i++)
 	{
-		xx_MEMORY[vr[i]] = value[i] ? 1.0 : 0.0;
+		%VARPREFIX%MEMORY[vr[i]] = value[i] ? 1.0 : 0.0;
 	}
 	return %FMI_PREFIX%OK;    /* temp implementation allowing boolean to real conversion, until proper boolean support is added. */
 }
