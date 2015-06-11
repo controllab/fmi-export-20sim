@@ -132,7 +132,7 @@ FOR /f "tokens=*" %%g IN (%ROOTPATH%\src\guid.txt) DO (
   rem ---------------------------------------------
   rem	check for existing dll
   rem ---------------------------------------------
-  
+
   IF EXIST ..\%FMU% (
     echo "Found existing FMU named %FMU%"
     goto FMU_EXIST
@@ -148,7 +148,7 @@ FOR /f "tokens=*" %%g IN (%ROOTPATH%\src\guid.txt) DO (
   set /P COMPILE_ANSWER=Compile a new FMU? [1/2]:
   if /I %COMPILE_ANSWER% EQU 1 goto COMPILE_FMU
   if /I %COMPILE_ANSWER% EQU 2 goto COMPILE_NO_CLEAN_FMU
-  
+
 :COMPILE_FMU
   IF EXIST ..\%FMU% del /Q ..\%FMU%
   IF %DEVENV% NEQ "" (
@@ -160,7 +160,7 @@ FOR /f "tokens=*" %%g IN (%ROOTPATH%\src\guid.txt) DO (
     ECHO Compiling 20-sim FMU for submodel "%SUBMODEL_NAME%"
     msbuild.exe "%PROJ_DIR%\%SUBMODEL_NAME%.vcxproj" /p:Configuration=%buildconfig% /t:Rebuild /verbosity:minimal
   )
-  
+
   IF NOT EXIST %PROJ_DIR%\%buildconfig%\%DLL% (
     set DIETEXT="%DLL% failed to build!  See ..\%PROJ_DIR%\%buildconfig%\BuildLog.htm for details."
     goto DIE
@@ -174,13 +174,13 @@ FOR /f "tokens=*" %%g IN (%ROOTPATH%\src\guid.txt) DO (
     ECHO Compiling 20-sim FMU for submodel "%SUBMODEL_NAME%"
     %DEVENV% "%PROJ_DIR%\%SUBMODEL_NAME%.sln" /build "%buildconfig%"
   ) ELSE (
-	ECHO Compiling 20-sim FMU for submodel "%SUBMODEL_NAME%"
+    ECHO Compiling 20-sim FMU for submodel "%SUBMODEL_NAME%"
     msbuild.exe "%PROJ_DIR%\%SUBMODEL_NAME%.vcxproj" /p:Configuration=Release /t:Build /verbosity:minimal
   )
 
   IF NOT EXIST ..\%FMU% (
-  	set DIETEXT="%FMU% failed to build!  See ..\%PROJ_DIR%\%buildconfig%\BuildLog.htm for details."
-  	goto DIE
+    set DIETEXT="%FMU% failed to build!  See ..\%PROJ_DIR%\%buildconfig%\BuildLog.htm for details."
+    goto DIE
   )
   ECHO Build successful.
   ECHO ------------------------------------------------------------
@@ -195,16 +195,19 @@ FOR /f "tokens=*" %%g IN (%ROOTPATH%\src\guid.txt) DO (
   if not exist %DOC_DIR% mkdir %DOC_DIR%
   ECHO Copy the compiled DLL %PROJ_DIR%\%buildconfig%\%DLL% to %BIN_DIR%
   copy "%PROJ_DIR%\%buildconfig%\%DLL%" "%BIN_DIR%"
-  
+
+  ECHO copy the generated sources to %SRC_DIR%
+  copy "%ROOTPATH%\src\*.*" "%SRC_DIR%"
+
   ECHO Generate the modelDescription.xml
   "%XSLTTOOL%"  "%ROOTPATH%\src\ModelConfiguration.xml" "%ROOTPATH%\template\mcf2modelDescription.xsl" -o "%FMU_DIR%\modelDescription.xml" SOURCEDIRECTORY="%ROOTPATH%\src"
-  
+
   ECHO Generate the FMU
   cd %FMU_DIR%
   if exist %FMU% del /Q %FMU%
   "%ZIPTOOL%" a -tzip -xr!.svn %FMU% *
   cd %CURPATH%
-  
+
   IF NOT EXIST %FMU% (
     set DIETEXT="%FMU% failed to build!  See ..\%PROJ_DIR%\%buildconfig%\BuildLog.htm for details."
     goto DIE
@@ -212,7 +215,7 @@ FOR /f "tokens=*" %%g IN (%ROOTPATH%\src\guid.txt) DO (
   ECHO ------------------------------------------------------------
   GOTO FMU_READY
 
-  
+
 :FMU_READY
   cd ..
   ECHO Your %SUBMODEL_NAME% FMU is ready and can be found in:
@@ -223,7 +226,7 @@ FOR /f "tokens=*" %%g IN (%ROOTPATH%\src\guid.txt) DO (
   SET exitcode=0
   cd %CURPATH%
   GOTO END
-  
+
 :DIE
   set DIETEXT=Error: %DIETEXT%
   echo %DIETEXT%
