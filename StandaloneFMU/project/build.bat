@@ -133,7 +133,7 @@ FOR /f "tokens=*" %%g IN ("%ROOTPATH%\src\guid.txt") DO (
   rem	check for existing dll
   rem ---------------------------------------------
 
-  IF EXIST ..\%FMU% (
+  IF EXIST "%FMU%" (
     echo "Found existing FMU named %FMU%"
     goto FMU_EXIST
   )
@@ -150,7 +150,7 @@ FOR /f "tokens=*" %%g IN ("%ROOTPATH%\src\guid.txt") DO (
   if /I %COMPILE_ANSWER% EQU 2 goto COMPILE_NO_CLEAN_FMU
 
 :COMPILE_FMU
-  IF EXIST ..\%FMU% del /Q ..\%FMU%
+  IF EXIST "%FMU%" del /Q "%FMU%"
   IF %DEVENV% NEQ "" (
     ECHO Cleaning Solution...
     %DEVENV% "%PROJ_DIR%\%SUBMODEL_NAME%.sln" /clean "%buildconfig%"
@@ -178,7 +178,7 @@ FOR /f "tokens=*" %%g IN ("%ROOTPATH%\src\guid.txt") DO (
     msbuild.exe "%PROJ_DIR%\%SUBMODEL_NAME%.vcxproj" /p:Configuration=Release /t:Build /verbosity:minimal
   )
 
-  IF NOT EXIST ..\%FMU% (
+  IF NOT EXIST "%FMU%" (
     set DIETEXT="%FMU% failed to build!  See ..\%PROJ_DIR%\%buildconfig%\BuildLog.htm for details."
     goto DIE
   )
@@ -189,10 +189,10 @@ FOR /f "tokens=*" %%g IN ("%ROOTPATH%\src\guid.txt") DO (
 :MAKE_FMI
   cd %CURPATH%
   ECHO Creating an empty FMU
-  if not exist %FMU_DIR% mkdir %FMU_DIR%
-  if not exist %BIN_DIR% mkdir %BIN_DIR%
-  if not exist %SRC_DIR% mkdir %SRC_DIR%
-  if not exist %DOC_DIR% mkdir %DOC_DIR%
+  if not exist "%FMU_DIR%" mkdir "%FMU_DIR%"
+  if not exist "%BIN_DIR%" mkdir "%BIN_DIR%"
+  if not exist "%SRC_DIR%" mkdir "%SRC_DIR%"
+  if not exist "%DOC_DIR%" mkdir "%DOC_DIR%"
   ECHO Copy the compiled DLL %PROJ_DIR%\%buildconfig%\%DLL% to %BIN_DIR%
   copy "%PROJ_DIR%\%buildconfig%\%DLL%" "%BIN_DIR%"
 
@@ -203,12 +203,12 @@ FOR /f "tokens=*" %%g IN ("%ROOTPATH%\src\guid.txt") DO (
   "%XSLTTOOL%"  "%ROOTPATH%\src\ModelConfiguration.xml" "%ROOTPATH%\template\mcf2modelDescription.xsl" -o "%FMU_DIR%\modelDescription.xml" SOURCEDIRECTORY="%ROOTPATH%\src"
 
   ECHO Generate the FMU
-  cd %FMU_DIR%
-  if exist %FMU% del /Q %FMU%
-  "%ZIPTOOL%" a -tzip -xr!.svn %FMU% *
-  cd %CURPATH%
+  cd "%FMU_DIR%"
+  if exist "%FMU%" del /Q "%FMU%"
+  "%ZIPTOOL%" a -tzip -xr!.svn "%FMU%" *
+  cd "%CURPATH%"
 
-  IF NOT EXIST %FMU% (
+  IF NOT EXIST "%FMU%" (
     set DIETEXT="%FMU% failed to build!  See ..\%PROJ_DIR%\%buildconfig%\BuildLog.htm for details."
     goto DIE
   )
