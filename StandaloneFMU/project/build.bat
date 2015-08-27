@@ -112,7 +112,7 @@ rem -------------------------------------------------------------
 
 "%GUIDTOOL%" > "%ROOTPATH%\src\guid.txt"
 rem generate GUID header
-FOR /f "tokens=*" %%g IN (%ROOTPATH%\src\guid.txt) DO (
+FOR /f "tokens=*" %%g IN ("%ROOTPATH%\src\guid.txt") DO (
 	rem generate a header with a define for the GUID
 	echo #define FMI_GUID "{%%g}" > "%ROOTPATH%\src\fmiGUID.h"
 
