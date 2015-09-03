@@ -30,7 +30,8 @@ SET XSLTTOOL=%TEMPLATE_DIR%\bin\msxsl.exe
 SET GUIDTOOL=%TEMPLATE_DIR%\bin\GenerateGuid.exe
 
 set FMU_DIR=%CURPATH%fmu
-set BIN_DIR=%FMU_DIR%\binaries\win32
+set BIN32_DIR=%FMU_DIR%\binaries\win32
+set BIN64_DIR=%FMU_DIR%\binaries\win64
 set SRC_DIR=%FMU_DIR%\sources
 set DOC_DIR=%FMU_DIR%\documentation
 
@@ -99,9 +100,6 @@ IF %VSVARS32% NEQ "" (
 	call %VSVARS32%
 )
 
-set OPTS_FMU="%PROJ_DIR%\%SUBMODEL_NAME%.sln" /build "%buildconfig%"
-set CLEAN_FMU="%PROJ_DIR%\%SUBMODEL_NAME%.sln" /clean "%buildconfig%"
-
 rem ECHO %PROJ_DIR%
 rem ECHO %OPTS_DLL%
 rem ECHO %CLEAN_DLL%
@@ -112,7 +110,7 @@ rem -------------------------------------------------------------
 
 "%GUIDTOOL%" > "%ROOTPATH%\src\guid.txt"
 rem generate GUID header
-FOR /f "tokens=*" %%g IN ("%ROOTPATH%\src\guid.txt") DO (
+FOR /f "tokens=*" %%g IN (%ROOTPATH%\src\guid.txt) DO (
 	rem generate a header with a define for the GUID
 	echo #define FMI_GUID "{%%g}" > "%ROOTPATH%\src\fmiGUID.h"
 
@@ -151,17 +149,12 @@ FOR /f "tokens=*" %%g IN ("%ROOTPATH%\src\guid.txt") DO (
 
 :COMPILE_FMU
   IF EXIST "%FMU%" del /Q "%FMU%"
-  IF %DEVENV% NEQ "" (
-    ECHO Cleaning Solution...
-    %DEVENV% "%PROJ_DIR%\%SUBMODEL_NAME%.sln" /clean "%buildconfig%"
-    ECHO Compiling 20-sim FMU for submodel "%SUBMODEL_NAME%"
-    %DEVENV% "%PROJ_DIR%\%SUBMODEL_NAME%.sln" /build "%buildconfig%"
-  ) ELSE (
-    ECHO Compiling 20-sim FMU for submodel "%SUBMODEL_NAME%"
-    msbuild.exe "%PROJ_DIR%\%SUBMODEL_NAME%.vcxproj" /p:Configuration=%buildconfig% /t:Rebuild /verbosity:minimal
-  )
+  msbuild.exe "%PROJ_DIR%\%SUBMODEL_NAME%.sln" /p:Configuration=%buildconfig%;Platform=win32 /t:Build /verbosity:minimal
+  msbuild.exe "%PROJ_DIR%\%SUBMODEL_NAME%.sln" /p:Configuration=%buildconfig%;Platform=x64 /t:Build /verbosity:minimal
 
-  IF NOT EXIST %PROJ_DIR%\%buildconfig%\%DLL% (
+  REM Check whether the 32-bits dll has been generated.
+  REM note: 64-bits will not for all visual studio installations be possible
+  IF NOT EXIST %PROJ_DIR%\win32\%buildconfig%\%DLL% (
     set DIETEXT="%DLL% failed to build!  See ..\%PROJ_DIR%\%buildconfig%\BuildLog.htm for details."
     goto DIE
   )
@@ -172,10 +165,12 @@ FOR /f "tokens=*" %%g IN ("%ROOTPATH%\src\guid.txt") DO (
 :COMPILE_NO_CLEAN_FMU
   IF %DEVENV% NEQ "" (
     ECHO Compiling 20-sim FMU for submodel "%SUBMODEL_NAME%"
-    %DEVENV% "%PROJ_DIR%\%SUBMODEL_NAME%.sln" /build "%buildconfig%"
+    msbuild.exe "%PROJ_DIR%\%SUBMODEL_NAME%.sln" /p:Configuration=%buildconfig%;Platform=win32 /t:Build /verbosity:minimal
+    msbuild.exe "%PROJ_DIR%\%SUBMODEL_NAME%.sln" /p:Configuration=%buildconfig%;Platform=x64 /t:Build /verbosity:minimal
   ) ELSE (
     ECHO Compiling 20-sim FMU for submodel "%SUBMODEL_NAME%"
-    msbuild.exe "%PROJ_DIR%\%SUBMODEL_NAME%.vcxproj" /p:Configuration=Release /t:Build /verbosity:minimal
+    msbuild.exe "%PROJ_DIR%\%SUBMODEL_NAME%.vcxproj" /p:Configuration=%buildconfig% /t:Build /verbosity:minimal
+    msbuild.exe "%PROJ_DIR%\%SUBMODEL_NAME%.vcxproj" /p:Configuration=%buildconfig%;Platform=x64 /t:Build /verbosity:minimal
   )
 
   IF NOT EXIST "%FMU%" (
@@ -190,11 +185,14 @@ FOR /f "tokens=*" %%g IN ("%ROOTPATH%\src\guid.txt") DO (
   cd %CURPATH%
   ECHO Creating an empty FMU
   if not exist "%FMU_DIR%" mkdir "%FMU_DIR%"
-  if not exist "%BIN_DIR%" mkdir "%BIN_DIR%"
+  if not exist "%BIN32_DIR%" mkdir "%BIN32_DIR%"
+  if not exist "%BIN64_DIR%" mkdir "%BIN64_DIR%"
   if not exist "%SRC_DIR%" mkdir "%SRC_DIR%"
   if not exist "%DOC_DIR%" mkdir "%DOC_DIR%"
-  ECHO Copy the compiled DLL %PROJ_DIR%\%buildconfig%\%DLL% to %BIN_DIR%
-  copy "%PROJ_DIR%\%buildconfig%\%DLL%" "%BIN_DIR%"
+  ECHO Copy the compiled DLL %PROJ_DIR%\Win32\%buildconfig%\%DLL% to %BIN32_DIR%
+  copy "%PROJ_DIR%\Win32\%buildconfig%\%DLL%" "%BIN32_DIR%"
+  ECHO Copy the compiled DLL %PROJ_DIR%\x64\%buildconfig%\%DLL% to %BIN64_DIR%
+  copy "%PROJ_DIR%\x64\%buildconfig%\%DLL%" "%BIN64_DIR%"
 
   ECHO copy the generated sources to %SRC_DIR%
   copy "%ROOTPATH%\src\*.*" "%SRC_DIR%"
