@@ -39,6 +39,11 @@
 */
 #define xxComponent "%SUBMODEL_NAME%"
 
+%IF%%FMI2%
+/* Global pointer to co-simulator callback functions */
+fmi2CallbackFunctions* g_fmiCallbackFunctions = NULL;
+%ENDIF%
+
 /* Inquire version numbers of header files */
 FMI_Dll_Export const char* %FMI_PREFIX%GetTypesPlatform()
 {
@@ -185,26 +190,37 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 {
 	/* we should remember the functions pointer in order to make callback functions */
 
-    if (!functions) 
+    if (!functions)
+	{
         return NULL; // we cannot even log this problem
-    if (!functions->logger) 
+	}
+	
+    if (!functions->logger)
+	{
         return NULL; // we cannot even log this problem
+	}
     if (!instanceName || strlen(instanceName)==0) { 
         functions->logger(NULL, "?", fmi2Error, "error",
                 "Missing instance name.");
         return NULL;
     }
+	else
+	{
+		/* Register the callback */
+		g_fmiCallbackFunctions = functions;
+	}
+	
 	/* Check whether the given GUID equals our GUID */
 	if( strncmp(fmuGUID, FMI_GUID, strlen(fmuGUID)) != 0 )
 	{
-		functions->logger(NULL, instanceName, fmi2Error, "error",
+		g_fmiCallbackFunctions->logger(NULL, instanceName, fmi2Error, "error",
 			"Wrong GUID %s. Expected %s.", fmuGUID, FMI_GUID);
 		return NULL;
 	}
 	/* check if we are setup for co-simulation, that's the only possible option for now */
 	if( fmuType != fmi2CoSimulation )
 	{
-		functions->logger(NULL, instanceName, fmi2Error, "error",
+		g_fmiCallbackFunctions->logger(NULL, instanceName, fmi2Error, "error",
 			"FMU can only be used for Co-Simulation, not for Model Exchange");
 		return NULL;
 	}
@@ -355,8 +371,14 @@ fmi2Status fmi2DoStep(fmi2Component c,
     while (%VARPREFIX%%XX_TIME% < (currentCommunicationPoint + communicationStepSize))
     {
         /* check for termination first */
-        if ((%VARPREFIX%%XX_TIME% > %VARPREFIX%finish_time) || (%VARPREFIX%stop_simulation == XXTRUE))
+        if ( (%VARPREFIX%finish_time > 0.0) && (%VARPREFIX%%XX_TIME% > %VARPREFIX%finish_time) )
         {
+			if(g_fmiCallbackFunctions != NULL && g_fmiCallbackFunctions->logger != NULL)
+			{
+				g_fmiCallbackFunctions->logger(NULL, "bouncingBall", fmi2Error, "error",
+					"Exceeded model finish time: %g > %g\n", %VARPREFIX%%XX_TIME%, %VARPREFIX%finish_time);
+			}
+			
             /* we're done */
             return %FMI_PREFIX%Error;
         }
