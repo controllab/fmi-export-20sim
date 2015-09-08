@@ -373,11 +373,13 @@ fmi2Status fmi2DoStep(fmi2Component c,
         /* check for termination first */
         if ( (%VARPREFIX%finish_time > 0.0) && (%VARPREFIX%%XX_TIME% > %VARPREFIX%finish_time) )
         {
+%IF%%FMI2%
 			if(g_fmiCallbackFunctions != NULL && g_fmiCallbackFunctions->logger != NULL)
 			{
 				g_fmiCallbackFunctions->logger(NULL, "bouncingBall", fmi2Error, "error",
 					"Exceeded model finish time: %g > %g\n", %VARPREFIX%%XX_TIME%, %VARPREFIX%finish_time);
 			}
+%ENDIF%
 			
             /* we're done */
             return %FMI_PREFIX%Error;
