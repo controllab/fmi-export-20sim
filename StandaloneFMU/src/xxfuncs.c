@@ -18,7 +18,6 @@
    information on these types.
 
    This means that all used functions follow the ANSI definition
-   (see the help file of Visual C++ 5 for more info).
 
    Please check the math.h file of your particular compiler
    to see if this is indeed the case. Otherwise, you might have
@@ -61,17 +60,17 @@ XXDouble XXArcSineHyperbolic (XXDouble argument)
 
 XXDouble XXArcTangentHyperbolic (XXDouble argument)
 {
-	return (XXDouble) log (sqrt( argument * argument + 1.0) - sqrt(argument * argument - 1.0));
+	return (XXDouble) 0.5 * log ((1.0 + argument) / (1.0 - argument));;
 }
 
 XXDouble XXExponent2 (XXDouble argument)
 {
-	return(XXDouble) exp (argument * xx_logarithm_2);
+	return (XXDouble) exp (argument * xx_logarithm_2);
 }
 
 XXDouble XXExponent10 (XXDouble argument)
 {
-	return exp (argument * xx_logarithm_10);
+	return (XXDouble) exp (argument * xx_logarithm_10);
 }
 
 XXDouble XXIntegerDivide (XXDouble argument1, XXDouble argument2)
@@ -84,7 +83,7 @@ XXDouble XXIntegerDivide (XXDouble argument1, XXDouble argument2)
 
 XXDouble XXIntegerModulo (XXDouble argument1, XXDouble argument2)
 {
-	XXDouble value;
+	XXInteger value;
 
 	value = (XXInteger) (argument1 / argument2);
 	return (XXDouble) argument1 - (value * argument2);
@@ -153,22 +152,22 @@ XXDouble XXStep (XXDouble argument, XXDouble time)
 	return value;
 }
 
-XXDouble XXImpulse (XXDouble arg1, XXDouble arg2, XXDouble time, XXDouble stepsize)
+XXDouble XXImpulse (XXDouble impulsestarttime, XXDouble impulseduration, XXDouble currenttime, XXDouble stepsize)
 {
 	XXDouble value;
 
-	if (stepsize <= 0.0 || arg2 <= 0.0)
+	if (stepsize <= 0.0 || impulseduration <= 0.0)
 		value = 0.0;
 	else
 	{
-		if ((time < arg1) || (time > (arg1 + stepsize)))
+		if ((currenttime < impulsestarttime) || (currenttime > (impulsestarttime + impulseduration)))
 			value = 0.0;
 		else
 		{
-			if (stepsize < arg2)
-				value = (1.0 / arg2) * (XXStep (arg1, time) - XXStep (arg1 + arg2, time));
+			if (stepsize < impulseduration)
+				value = (1.0 / impulseduration);
 			else
-				value = (1.0 / stepsize) * (XXStep (arg1, time) - XXStep (arg1 + stepsize, time));
+				value = (1.0 / stepsize);
 		}
 	}
 	return value;
@@ -249,6 +248,83 @@ XXDouble XXInitialValue (XXDouble argument, XXInteger identifier)
 	return value;
 }
 %ENDIF%
+
+XXInteger XXBitAnd(XXInteger argument1, XXInteger argument2)
+{
+	/* bitwise and */
+	return (argument1 & argument2);
+}
+
+XXInteger XXBitOr(XXInteger argument1, XXInteger argument2)
+{
+	/* bitwise or */
+	return  (argument1 | argument2);
+}
+
+XXInteger XXBitXor(XXInteger argument1, XXInteger argument2)
+{
+	/* bitwise xor */
+	return (argument1 ^ argument2);
+}
+
+XXInteger XXBitCmp(XXInteger argument, XXInteger nrBits)
+{
+	XXInteger bits = (XXInteger)(pow(2.0, (double)nrBits)) - 1;
+
+	/* only do the last number of asked bits (the and operator) and invert */
+	return (bits - argument);
+}
+
+XXInteger XXBitGet(XXInteger argument, XXInteger bitPos)
+{
+	return (argument & (1 << (bitPos - 1)));
+}
+
+XXInteger XXBitSet(XXInteger argument, XXInteger bitPos)
+{
+	/* Set the bit to 1 */
+	return (argument | (1 << (bitPos - 1)));
+}
+
+XXInteger XXBitClear(XXInteger argument, XXInteger bitPos)
+{
+	/* Clear the bit */
+	return (argument & ~(1 << (bitPos - 1)));
+}
+
+XXInteger XXBitShift(XXInteger argument, XXInteger bitsToShift)
+{
+	if ( bitsToShift > 0 )
+	{
+		return (argument << bitsToShift);
+	}
+	else
+	{
+		return (argument >> bitsToShift);
+	}
+}
+
+XXInteger XXSwapBytes(XXInteger argument)
+{
+	int arg1;
+	int byte1;
+	int byte2;
+	int byte3;
+	int byte4;
+	int result;
+	
+	arg1 = (int) argument;	/* the argument to swap (only 32-bits swap) */
+
+	byte1 =  0x000000ff & arg1;
+	byte2 = (0x0000ff00 & arg1) >> 8;
+	byte3 = (0x00ff0000 & arg1) >> 16;
+	byte4 = (0xff000000 & arg1) >> 24;
+
+	/* do the explicit 32-bit swap */
+	result = (byte1 << 24) + (byte2 << 16) + (byte3 << 8) + byte4;
+
+	return (XXInteger) result;
+}
 
 /* 20-sim stubs. Implement them yourself if needed */
 XXDouble XXData (XXString name, XXInteger column, XXInteger id)

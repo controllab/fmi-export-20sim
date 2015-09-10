@@ -42,7 +42,7 @@ XXDouble XXRamp (XXDouble argument, XXDouble time);
 XXDouble XXRound (XXDouble argument);
 XXDouble XXSign (XXDouble argument);
 XXDouble XXStep (XXDouble argument, XXDouble time);
-XXDouble XXImpulse (XXDouble arg1, XXDouble arg2, XXDouble time, XXDouble stepsize);
+XXDouble XXImpulse (XXDouble impulsestarttime, XXDouble impulseduration, XXDouble currenttime, XXDouble stepsize);
 %IF%%NUMBEROF_DELAYFUNCTION%
 XXDouble XXDelay (XXDouble argument1, XXDouble argument2, XXInteger id);
 void XXDelayUpdate(void);
@@ -51,6 +51,15 @@ XXDouble XXXor (XXDouble argument1, XXDouble argument2);
 %IF%%NUMBEROF_INITIALFUNCTION%
 XXDouble XXInitialValue (XXDouble argument, XXInteger identifier);
 %ENDIF%
+XXInteger XXBitAnd(XXInteger argument1, XXInteger argument2);
+XXInteger XXBitOr(XXInteger argument1, XXInteger argument2);
+XXInteger XXBitXor(XXInteger argument1, XXInteger argument2);
+XXInteger XXBitCmp(XXInteger argument, XXInteger nrBits);
+XXInteger XXBitGet(XXInteger argument, XXInteger bitPos);
+XXInteger XXBitSet(XXInteger argument1, XXInteger bitPos);
+XXInteger XXBitClear(XXInteger argument1, XXInteger bitPos);
+XXInteger XXBitShift(XXInteger argument, XXInteger bitsToShift);
+XXInteger XXSwapBytes(XXInteger argument);
 
 /* 20-sim stub prototypes */
 XXDouble XXData (XXString name, XXInteger column, XXInteger id);

@@ -116,7 +116,7 @@ void XXMatrixMulElement (XXMatrix *mat_dest, XXMatrix *mat_source1, XXMatrix *ma
 void XXMatrixDivElement (XXMatrix *mat_dest, XXMatrix *mat_source1, XXMatrix *mat_source2);
 
 /* pow all elements element-wise to the destination */
-void XXMatrixAddElement (XXMatrix *mat_dest, XXMatrix *mat_source1, XXMatrix *mat_source2);
+void XXMatrixPowElement (XXMatrix *mat_dest, XXMatrix *mat_source1, XXMatrix *mat_source2);
 
 /* take the inverse of a matrix source to a matrix destination
    workarray size at least (3 * n * n + 2 * n)

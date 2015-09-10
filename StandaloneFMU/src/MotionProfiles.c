@@ -24,7 +24,7 @@
 #include "xxtypes.h"
 #include "MotionProfiles.h"
 
-char g_lastError[512];
+static char g_lastError[512];
 
 #ifndef M_PI
 #define M_PI 3.1415926535897932384626433832795
@@ -993,9 +993,9 @@ XXInteger MotionProfileTrapezoidal(XXDouble u, XXDouble *fu, XXDouble *dfu, XXDo
 	return 1;
 }
 
-XXInteger MotionProfileModifiedTrapezoidal(double u, double *fu, double *dfu, double *d2fu)
+XXInteger MotionProfileModifiedTrapezoidal(XXDouble u, XXDouble *fu, XXDouble *dfu, XXDouble *d2fu)
 {
-	double A;
+	XXDouble A;
 	int region;
 
 	A = (8.0 * M_PI / (2.0 + M_PI));
@@ -1377,9 +1377,9 @@ XXInteger MotionProfileStandardModifiedSine(XXDouble u, XXDouble *fu, XXDouble *
 	return 1;
 }
 
-XXInteger MotionProfileModifiedSineWithConstantVelocity(double u, double *fu, double *dfu, double *d2fu)
+XXInteger MotionProfileModifiedSineWithConstantVelocity(XXDouble u, XXDouble *fu, XXDouble *dfu, XXDouble *d2fu)
 {
-	double A;
+	XXDouble A;
 	int region;
 
 	A = 18.0 * M_PI / (3.0 + M_PI);
