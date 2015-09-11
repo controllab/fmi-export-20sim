@@ -196,7 +196,7 @@
 				<xsl:when test="string($modelvariable/kind)='parameter'">parameter</xsl:when>
 %ENDIF%
 %IF%%FMI2%
-				<xsl:when test="string($modelvariable/kind)='parameter'">fixed</xsl:when>
+				<xsl:when test="string($modelvariable/kind)='parameter'">tunable</xsl:when>
 				<xsl:when test="string($modelvariable/kind)='initial value'">fixed</xsl:when>
 %ENDIF%
 				<xsl:when test="string($modelvariable/kind)='constant'">constant</xsl:when>
