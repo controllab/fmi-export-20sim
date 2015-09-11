@@ -98,7 +98,7 @@
 			</xsl:attribute>
 			<xsl:attribute name="needsExecutionTool">false</xsl:attribute>
 			<xsl:attribute name="canHandleVariableCommunicationStepSize">true</xsl:attribute>
-			<xsl:attribute name="canInterpolateInputs">true</xsl:attribute>
+			<xsl:attribute name="canInterpolateInputs">false</xsl:attribute>
 			<xsl:attribute name="maxOutputDerivativeOrder">0</xsl:attribute>
 			<xsl:attribute name="canRunAsynchronuously">false</xsl:attribute>
 			<xsl:attribute name="canBeInstantiatedOnlyOncePerProcess">true</xsl:attribute>
