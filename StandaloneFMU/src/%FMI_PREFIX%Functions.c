@@ -41,7 +41,7 @@
 
 %IF%%FMI2%
 /* Global pointer to co-simulator callback functions */
-fmi2CallbackFunctions* g_fmiCallbackFunctions = NULL;
+const fmi2CallbackFunctions* g_fmiCallbackFunctions = NULL;
 %ENDIF%
 
 /* Inquire version numbers of header files */
