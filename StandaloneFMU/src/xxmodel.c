@@ -66,6 +66,12 @@ XXDouble %VARPREFIX%%XX_UNNAMED_ARRAY_NAME%[%NUMBER_UNNAMED% + 1];		/* unnamed *
 XXDouble %VARPREFIX%workarray[%WORK_ARRAY_SIZE% + 1];
 XXDouble %VARPREFIX%%XX_FAVORITE_PARS_ARRAY_NAME%[%NUMBER_FAVORITE_PARAMETERS% + 1];	/* favorite parameters */
 XXDouble %VARPREFIX%%XX_FAVORITE_VARS_ARRAY_NAME%[%NUMBER_FAVORITE_VARIABLES% + 1];		/* favorite variables */
+%IF%%NUMBER_IMPORTS%
+XXDouble %VARPREFIX%%XX_EXT_IN_ARRAY_NAME%[%NUMBER_IMPORTS%]; /* import variables */
+%ENDIF%
+%IF%%NUMBER_EXPORTS%
+XXDouble %VARPREFIX%%XX_EXT_OUT_ARRAY_NAME%[%NUMBER_EXPORTS%]; /* export variables */
+%ENDIF%
 
 /* the names of the variables as used in the arrays above
    uncomment this part if these names are needed
@@ -96,6 +102,16 @@ XXString %VARPREFIX%favorite_par_names[] = {
 XXString %VARPREFIX%favorite_var_names[] = {
 %FAVORITE_VARIABLE_NAMES%, NULL
 };
+%IF%%NUMBER_IMPORTS%
+XXString %VARPREFIX%import_names[] = {
+%IMPORT_NAMES%, NULL
+};
+%ENDIF%
+%IF%%NUMBER_EXPORTS%
+XXString %VARPREFIX%export_names[] = {
+%EXPORT_NAMES%, NULL
+};
+%ENDIF%
 */
 
 /* this method is called before calculation is possible */

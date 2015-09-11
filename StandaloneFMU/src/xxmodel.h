@@ -47,6 +47,12 @@ extern XXDouble* %VARPREFIX%%XX_STATE_ARRAY_NAME%;
 extern XXDouble* %VARPREFIX%%XX_RATE_ARRAY_NAME%;
 extern XXMatrix %VARPREFIX%%XX_MATRIX_ARRAY_NAME%[];
 extern XXDouble %VARPREFIX%%XX_UNNAMED_ARRAY_NAME%[];
+%IF%%NUMBER_IMPORTS%
+extern XXDouble %VARPREFIX%%XX_EXT_IN_ARRAY_NAME%[];
+%ENDIF%
+%IF%%NUMBER_EXPORTS%
+extern XXDouble %VARPREFIX%%XX_EXT_OUT_ARRAY_NAME%[];
+%ENDIF%
 
 /* The names of the variables as used in the arrays above
    uncomment this if you need the names (see source file too)
@@ -57,6 +63,12 @@ extern XXString %VARPREFIX%variable_names[];
 extern XXString %VARPREFIX%state_names[];
 extern XXString %VARPREFIX%rate_names[];
 extern XXString %VARPREFIX%matrix_names[];
+%IF%%NUMBER_IMPORTS%
+extern XXString %VARPREFIX%import_names[];
+%ENDIF%
+%IF%%NUMBER_EXPORTS%
+extern XXString %VARPREFIX%export_names[];
+%ENDIF%
 */
 
 /* Initialization methods */
