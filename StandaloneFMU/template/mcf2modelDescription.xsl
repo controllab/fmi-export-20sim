@@ -116,7 +116,7 @@
 		
 		<xsl:element name="ModelVariables">
 			<!-- Only real support currently -->
-			<xsl:for-each select="modelVariables/modelVariable[string(type) = 'real']">
+			<xsl:for-each select="modelVariables/modelVariable[string(type) = 'real' or string(type) = 'integer' or string(type) = 'boolean']">
 				<xsl:call-template name="modelVariable">
 					<xsl:with-param name="modelvariable" select="."/>
 					<xsl:with-param name="isArray" select="boolean(size and (number(size/rows) > 1 or number(size/columns) > 1)) "/>
@@ -174,6 +174,14 @@
 	<xsl:variable name="variable_table" select="$modelvariable/storage/name" />
 	<xsl:variable name="variable_offset" select="$modelvariable/storage/index" />
 
+	<xsl:variable name="scalartype">
+			<xsl:choose>
+				<xsl:when test="$modelvariable/type = 'integer'">Integer</xsl:when>
+				<xsl:when test="$modelvariable/type = 'boolean'">Boolean</xsl:when>
+				<xsl:otherwise>Real</xsl:otherwise>
+			</xsl:choose>
+	</xsl:variable>
+
 	<xsl:element name="ScalarVariable">
 		<xsl:attribute name="name">
 			<xsl:choose>
@@ -228,7 +236,7 @@
 %ENDIF%
 		<!-- end of attributes assignment -->
 	
-		<xsl:element name="Real">
+		<xsl:element name="{$scalartype}">
 %IF%%FMI1%
 			<xsl:if test="$modelvariable/value">
 				<xsl:attribute name="start">

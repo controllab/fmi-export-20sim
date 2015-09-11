@@ -89,14 +89,28 @@ FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%GetInteger(%FMI_PREFIX%Component c
 								size_t nvr,
 								%FMI_PREFIX%Integer value[])
 {
-    return %FMI_PREFIX%Error;    /* not yet */
+	/* 20-sim generated C-code uses doubles for the model equation calculations. The variable type (i.e. integer or boolean) are not supported as data type, but are transfered to doubles. In the FMI interface however, the double can be converted to its implicit type  */
+	
+    size_t i;
+    for (i = 0; i < nvr; i++)
+    {
+        value [i] = (%FMI_PREFIX%Integer) %VARPREFIX%MEMORY[ vr[i] ];
+    }
+    return %FMI_PREFIX%OK;
 }
 FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%GetBoolean(%FMI_PREFIX%Component c,
 								const %FMI_PREFIX%ValueReference vr[],
 								size_t nvr,
 								%FMI_PREFIX%Boolean value[])
 {
-    return %FMI_PREFIX%Error;    /* not yet */
+	/* 20-sim generated C-code uses doubles for the model equation calculations. The variable type (i.e. integer or boolean) are not supported as data type, but are transfered to doubles. In the FMI interface however, the double can be converted to its implicit type  */
+	
+    size_t i;
+    for (i = 0; i < nvr; i++)
+    {
+        value [i] = (%VARPREFIX%MEMORY[ vr[i] ] == 1.0);
+    }
+    return %FMI_PREFIX%OK;
 }
 FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%GetString(%FMI_PREFIX%Component c,
 								const %FMI_PREFIX%ValueReference vr[],
@@ -118,24 +132,33 @@ FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%SetReal(%FMI_PREFIX%Component c,
     }
     return %FMI_PREFIX%OK;
 }
+
 FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%SetInteger (%FMI_PREFIX%Component c,
 								const %FMI_PREFIX%ValueReference vr[],
 								size_t nvr,
 								const %FMI_PREFIX%Integer value[])
 {
-    return %FMI_PREFIX%Error;    /* not yet */
+	/* 20-sim generated C-code uses doubles for the model equation calculations. The variable type (i.e. integer or boolean) are not supported as data type, but are transfered to doubles. In the FMI interface however, the double can be converted to its implicit type  */
+	
+    size_t i;
+    for (i = 0; i < nvr; i++)
+    {
+        %VARPREFIX%MEMORY[ vr[i] ] = (XXDouble) value [i];
+    }
+    return %FMI_PREFIX%OK;
 }
 FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%SetBoolean(%FMI_PREFIX%Component c,
 								const %FMI_PREFIX%ValueReference vr[],
 								size_t nvr,
 								const %FMI_PREFIX%Boolean value[])
 {
+	/* temp implementation allowing boolean to real conversion, until proper boolean support is added. */
 	size_t i;
 	for (i = 0; i < nvr; i++)
 	{
 		%VARPREFIX%MEMORY[vr[i]] = value[i] ? 1.0 : 0.0;
 	}
-	return %FMI_PREFIX%OK;    /* temp implementation allowing boolean to real conversion, until proper boolean support is added. */
+	return %FMI_PREFIX%OK;    
 }
 FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%SetString(%FMI_PREFIX%Component c,
 								const %FMI_PREFIX%ValueReference vr[],
@@ -407,14 +430,14 @@ fmi2Status fmi2DoStep(fmi2Component c,
 
 %FMI_PREFIX%Status %FMI_PREFIX%GetIntegerStatus(%FMI_PREFIX%Component c, const %FMI_PREFIX%StatusKind s, %FMI_PREFIX%Integer* value)
 {
-    /* not yet */
-    return %FMI_PREFIX%Discard;
+    /* all fine? */
+    return %FMI_PREFIX%OK;
 }
 
 %FMI_PREFIX%Status %FMI_PREFIX%GetBooleanStatus(%FMI_PREFIX%Component c, const %FMI_PREFIX%StatusKind s, %FMI_PREFIX%Boolean* value)
 {
-    /* not yet */
-    return %FMI_PREFIX%Discard;
+    /* all fine? */
+    return %FMI_PREFIX%OK;
 }
 
 %FMI_PREFIX%Status %FMI_PREFIX%GetStringStatus(%FMI_PREFIX%Component c, const %FMI_PREFIX%StatusKind s, %FMI_PREFIX%String*  value)
