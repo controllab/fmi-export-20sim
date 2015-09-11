@@ -247,23 +247,7 @@
 			</xsl:if>
 %ENDIF%
 %IF%%FMI2%
-			<xsl:if test="string($modelvariable/kind)='parameter'">
-				<xsl:attribute name="start">
-					<xsl:call-template name="GetArrayValue">
-						<xsl:with-param name="stringarray" select="$modelvariable/value"/>
-						<xsl:with-param name="index" select="$index"/>
-					</xsl:call-template>
-				</xsl:attribute>
-			</xsl:if>
-			<xsl:if test="string($modelvariable/kind)='initial value'">
-				<xsl:attribute name="start">
-					<xsl:call-template name="GetArrayValue">
-						<xsl:with-param name="stringarray" select="$modelvariable/value"/>
-						<xsl:with-param name="index" select="$index"/>
-					</xsl:call-template>
-				</xsl:attribute>
-			</xsl:if>
-			<xsl:if test="string($modelvariable/kind)='input'">
+			<xsl:if test="string($modelvariable/kind)='parameter' or string($modelvariable/kind)='initial value' or string($modelvariable/kind)='input'">
 				<xsl:attribute name="start">
 					<xsl:call-template name="GetArrayValue">
 						<xsl:with-param name="stringarray" select="$modelvariable/value"/>
