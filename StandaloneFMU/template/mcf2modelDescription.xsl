@@ -111,7 +111,8 @@
 
 		<xsl:element name="DefaultExperiment">
 			<xsl:attribute name="startTime"><xsl:value-of select="run/startTime" /></xsl:attribute>
-			<xsl:attribute name="stopTime"><xsl:value-of select="run/finishTime" /></xsl:attribute>		
+			<xsl:attribute name="stopTime"><xsl:value-of select="run/finishTime" /></xsl:attribute>
+			<xsl:attribute name="stepSize"><xsl:value-of select="run/stepSize" /></xsl:attribute>
 		</xsl:element>
 		
 		<xsl:element name="ModelVariables">
