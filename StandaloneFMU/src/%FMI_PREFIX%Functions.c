@@ -399,7 +399,7 @@ fmi2Status fmi2DoStep(fmi2Component c,
 %IF%%FMI2%
 			if(g_fmiCallbackFunctions != NULL && g_fmiCallbackFunctions->logger != NULL)
 			{
-				g_fmiCallbackFunctions->logger(NULL, "bouncingBall", fmi2Error, "error",
+				g_fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
 					"Exceeded model finish time: %g > %g\n", %VARPREFIX%%XX_TIME%, %VARPREFIX%finish_time);
 			}
 %ENDIF%
