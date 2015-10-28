@@ -17,7 +17,7 @@
    for integers and doubles, see the xxfuncs.h file for more
    information on these types.
 
-   This means that all used functions follow the ANSI definition
+   This means that all used functions follow the ANSI definition.
 
    Please check the math.h file of your particular compiler
    to see if this is indeed the case. Otherwise, you might have
@@ -28,51 +28,62 @@
 /* The system include files */
 #include <stdlib.h>
 #include <math.h>
-%IF%%NUMBEROF_DELAYFUNCTION%
-/* Include the header for memcpy
- * You may need to change this into <memory.h> for older compilers
- */
-#include <string.h>
-%ENDIF%
 
 /* Our own include files */
 #include "xxfuncs.h"
 
 /* Constants that are used in our functions below */
-XXDouble xx_logarithm_2 =  0.6931471805599;
-XXDouble xx_logarithm_10 = 2.3025850929940;
+%IF%%NUMBEROF_LOG2FUNCTION%
+XXDouble xx_logarithm_2 =  0.6931471805599453;
+%ENDIF%
+%IF%%NUMBEROF_LOG10FUNCTION%
+XXDouble xx_logarithm_10 = 2.3025850929940457;
+%ENDIF%
 
-/* The 20-sim SIDOPS support functions */
+/* The 20-sim SIDOPS functions */
+%IF%%NUMBEROF_ABSFUNCTION%
 XXDouble XXAbsolute (XXDouble argument)
 {
 	return (XXDouble) fabs (argument);
 }
 
+%ENDIF%
+%IF%%NUMBEROF_ARCCOSHYPERBOLICFUNCTION%
 XXDouble XXArcCosineHyperbolic (XXDouble argument)
 {
 	return (XXDouble) log (argument + sqrt(argument * argument - 1.0));
 }
 
+%ENDIF%
+%IF%%NUMBEROF_ARCSINHYPERBOLICFUNCTION%
 XXDouble XXArcSineHyperbolic (XXDouble argument)
 {
 	return (XXDouble) log (argument + sqrt(argument * argument + 1.0));
 }
 
+%ENDIF%
+%IF%%NUMBEROF_ARCTANHYPERBOLICFUNCTION%
 XXDouble XXArcTangentHyperbolic (XXDouble argument)
 {
-	return (XXDouble) 0.5 * log ((1.0 + argument) / (1.0 - argument));;
+	return (XXDouble) 0.5 * log ((1.0 + argument) / (1.0 - argument));
 }
 
+%ENDIF%
+%IF%%NUMBEROF_EXP2FUNCTION%
 XXDouble XXExponent2 (XXDouble argument)
 {
 	return (XXDouble) exp (argument * xx_logarithm_2);
 }
 
+%ENDIF%
+%IF%%NUMBEROF_EXP10FUNCTION%
 XXDouble XXExponent10 (XXDouble argument)
 {
 	return (XXDouble) exp (argument * xx_logarithm_10);
 }
 
+%ENDIF%
+%IF%%NUMBEROF_DIVISION%
 XXDouble XXIntegerDivide (XXDouble argument1, XXDouble argument2)
 {
 	XXInteger value;
@@ -81,6 +92,8 @@ XXDouble XXIntegerDivide (XXDouble argument1, XXDouble argument2)
 	return (XXDouble) value;
 }
 
+%ENDIF%
+%IF%%NUMBEROF_MODULO%
 XXDouble XXIntegerModulo (XXDouble argument1, XXDouble argument2)
 {
 	XXInteger value;
@@ -89,16 +102,22 @@ XXDouble XXIntegerModulo (XXDouble argument1, XXDouble argument2)
 	return (XXDouble) argument1 - (value * argument2);
 }
 
+%ENDIF%
+%IF%%NUMBEROF_LOG2FUNCTION%
 XXDouble XXLogarithm2 (XXDouble argument)
 {
 	return (XXDouble) log (argument) / xx_logarithm_2;
 }
 
+%ENDIF%
+%IF%%NUMBEROF_LOG10FUNCTION%
 XXDouble XXLogarithm10 (XXDouble argument)
 {
 	return (XXDouble) log (argument) / xx_logarithm_10;
 }
 
+%ENDIF%
+%IF%%NUMBEROF_POWER%
 XXDouble XXPow2 (XXDouble argument)
 {
 	return argument * argument;
@@ -109,6 +128,8 @@ XXDouble XXPower (XXDouble argument1, XXDouble argument2)
 	return (XXDouble) pow (argument1, argument2);
 }
 
+%ENDIF%
+%IF%%OR(NUMBEROF_GAUSSFUNCTION,NUMBEROF_RANDOMFUNCTION)%
 XXDouble XXRandom (XXDouble argument)
 {
 	XXDouble value;
@@ -117,6 +138,8 @@ XXDouble XXRandom (XXDouble argument)
 	return argument * 2.0 * value;
 }
 
+%ENDIF%
+%IF%%NUMBEROF_RAMPFUNCTION%
 XXDouble XXRamp (XXDouble argument, XXDouble time)
 {
 	XXDouble value;
@@ -128,6 +151,8 @@ XXDouble XXRamp (XXDouble argument, XXDouble time)
 	return value;
 }
 
+%ENDIF%
+%IF%%NUMBEROF_SIGNFUNCTION%
 XXDouble XXSign (XXDouble argument)
 {
 	XXDouble value;
@@ -141,17 +166,21 @@ XXDouble XXSign (XXDouble argument)
 	return value;
 }
 
-XXDouble XXStep (XXDouble argument, XXDouble time)
+%ENDIF%
+%IF%%NUMBEROF_STEPFUNCTION%
+XXDouble XXStep (XXDouble steptime, XXDouble time)
 {
 	XXDouble value;
 
-	if (time < argument)
+	if (time < steptime)
 		value = 0.0;
 	else
 		value = 1.0;
 	return value;
 }
 
+%ENDIF%
+%IF%%NUMBEROF_IMPULSEFUNCTION%
 XXDouble XXImpulse (XXDouble impulsestarttime, XXDouble impulseduration, XXDouble currenttime, XXDouble stepsize)
 {
 	XXDouble value;
@@ -173,41 +202,15 @@ XXDouble XXImpulse (XXDouble impulsestarttime, XXDouble impulseduration, XXDoubl
 	return value;
 }
 
+%ENDIF%
+%IF%%NUMBEROF_XOR%
 XXDouble XXXor(XXDouble argument1, XXDouble argument2)
 {
 	return (argument1 || argument2) && !(argument1 && argument2);
 }
 
-%IF%%NUMBEROF_DELAYFUNCTION%
-XXDouble %VARPREFIX%delay_update_array[%NUMBEROF_DELAYFUNCTION%];
-XXDouble %VARPREFIX%delay_last_values[%NUMBEROF_DELAYFUNCTION%];
-void XXDelayUpdate()
-{
-	memcpy(%VARPREFIX%delay_update_array, %VARPREFIX%delay_last_values, %NUMBEROF_DELAYFUNCTION% * sizeof(XXDouble));
-}
-XXDouble XXDelay (XXDouble argument1, XXDouble argument2, XXInteger id)
-{
-	XXDouble value;
-
-	if (%VARPREFIX%%XX_INITIALIZE%)
-	{
-		value = argument2;
-	}
-	else
-	{
-		value = %VARPREFIX%delay_update_array[id];
-	}
-
-	if (%VARPREFIX%major)
-	{
-		%VARPREFIX%delay_last_values[id] = argument1;
-	}
-
-	return value;
-}
 %ENDIF%
-
-
+%IF%%NUMBEROF_ROUNDFUNCTION%
 XXDouble XXRound (XXDouble argument)
 {
 	XXDouble leftOver, result;
@@ -229,11 +232,36 @@ XXDouble XXRound (XXDouble argument)
 	return result;
 }
 
-%IF%%NUMBEROF_INITIALFUNCTION%
-XXDouble %VARPREFIX%initial_value_array[%NUMBEROF_INITIALFUNCTION%];
+%ENDIF%
+%IF%%NUMBEROF_DELAYFUNCTION%
+XXDouble XXDelay (XXDouble argument1, XXDouble argument2, XXInteger id)
+{
+	/* The storage arrays '%VARPREFIX%delay_update_array' and '%VARPREFIX%delay_last_values'
+	   are declared in xxmodel.c because their size is model dependent */
+	XXDouble value;
 
+	if (%VARPREFIX%%XX_INITIALIZE%)
+	{
+		value = argument2;
+	}
+	else
+	{
+		value = %VARPREFIX%delay_update_array[id];
+	}
+
+	if (%VARPREFIX%major)
+	{
+		%VARPREFIX%delay_last_values[id] = argument1;
+	}
+
+	return value;
+}
+
+%ENDIF%
+%IF%%NUMBEROF_INITIALFUNCTION%
 XXDouble XXInitialValue (XXDouble argument, XXInteger identifier)
 {
+	/* The storage array '%VARPREFIX%initial_value_array' is declared in xxmodel.c because its size is model dependent */
 	XXDouble value;
 
 	if (%VARPREFIX%%XX_INITIALIZE%)
@@ -247,26 +275,32 @@ XXDouble XXInitialValue (XXDouble argument, XXInteger identifier)
 	}
 	return value;
 }
-%ENDIF%
 
+%ENDIF%
+%IF%%NUMBEROF_BITAND%
 XXInteger XXBitAnd(XXInteger argument1, XXInteger argument2)
 {
 	/* bitwise and */
 	return (argument1 & argument2);
 }
-
+%ENDIF%
+%IF%%NUMBEROF_BITOR%
 XXInteger XXBitOr(XXInteger argument1, XXInteger argument2)
 {
 	/* bitwise or */
 	return  (argument1 | argument2);
 }
 
+%ENDIF%
+%IF%%NUMBEROF_BITXOR%
 XXInteger XXBitXor(XXInteger argument1, XXInteger argument2)
 {
 	/* bitwise xor */
 	return (argument1 ^ argument2);
 }
 
+%ENDIF%
+%IF%%NUMBEROF_BITCMP%
 XXInteger XXBitCmp(XXInteger argument, XXInteger nrBits)
 {
 	XXInteger bits = (XXInteger)(pow(2.0, (double)nrBits)) - 1;
@@ -275,23 +309,31 @@ XXInteger XXBitCmp(XXInteger argument, XXInteger nrBits)
 	return (bits - argument);
 }
 
+%ENDIF%
+%IF%%NUMBEROF_BITGET%
 XXInteger XXBitGet(XXInteger argument, XXInteger bitPos)
 {
 	return (argument & (1 << (bitPos - 1)));
 }
 
+%ENDIF%
+%IF%%NUMBEROF_BITSET%
 XXInteger XXBitSet(XXInteger argument, XXInteger bitPos)
 {
 	/* Set the bit to 1 */
 	return (argument | (1 << (bitPos - 1)));
 }
 
+%ENDIF%
+%IF%%NUMBEROF_BITCLEAR%
 XXInteger XXBitClear(XXInteger argument, XXInteger bitPos)
 {
 	/* Clear the bit */
 	return (argument & ~(1 << (bitPos - 1)));
 }
 
+%ENDIF%
+%IF%%NUMBEROF_BITSHIFT%
 XXInteger XXBitShift(XXInteger argument, XXInteger bitsToShift)
 {
 	if ( bitsToShift > 0 )
@@ -304,6 +346,8 @@ XXInteger XXBitShift(XXInteger argument, XXInteger bitsToShift)
 	}
 }
 
+%ENDIF%
+%IF%%NUMBEROF_BITSWAPBYTES%
 XXInteger XXSwapBytes(XXInteger argument)
 {
 	int arg1;
@@ -326,32 +370,74 @@ XXInteger XXSwapBytes(XXInteger argument)
 	return (XXInteger) result;
 }
 
+%ENDIF%
 /* 20-sim stubs. Implement them yourself if needed */
+%IF%%NUMBEROF_DATAFUNCTION%
 XXDouble XXData (XXString name, XXInteger column, XXInteger id)
 {
+#if defined _MSC_VER
+#pragma message("warning: The 20-sim 'data' function is not yet implemented in this code generation template")
+#elif defined __GNUC__
+#warning The 20-sim 'data' function is not yet implemented in this code generation template
+#endif
 	return 0;
 }
 
+%ENDIF%
+%IF%%NUMBEROF_TABLEFUNCTION%
 XXDouble XXTable (XXString name, XXDouble argument, XXInteger id)
 {
+#if defined _MSC_VER
+#pragma message("warning: The 20-sim 'table' function is not yet implemented in this code generation template")
+#elif defined __GNUC__
+#warning The 20-sim 'table' function is not yet implemented in this code generation template
+#endif
 	return 0;
 }
 
+%ENDIF%
+%IF%%NUMBEROF_EVENTFUNCTION%
 XXBoolean XXEvent (XXDouble argument, XXInteger id)
 {
+#if defined _MSC_VER
+#pragma message("warning: The 20-sim 'event' function is not yet implemented in this code generation template")
+#elif defined __GNUC__
+#warning The 20-sim 'event' function is not yet implemented in this code generation template
+#endif
 	return 0;
 }
 
+%ENDIF%
+%IF%%NUMBEROF_EVENTUPFUNCTION%
 XXBoolean XXEventUp (XXDouble argument, XXInteger id)
 {
+#if defined _MSC_VER
+#pragma message("warning: The 20-sim 'eventup' function is not yet implemented in this code generation template")
+#elif defined __GNUC__
+#warning The 20-sim 'eventup' function is not yet implemented in this code generation template
+#endif
 	return 0;
 }
 
+%ENDIF%
+%IF%%NUMBEROF_EVENTDOWNFUNCTION%
 XXBoolean XXEventDown (XXDouble argument, XXInteger id)
 {
+#if defined _MSC_VER
+#pragma message("warning: The 20-sim 'eventdown' function is not yet implemented in this code generation template")
+#elif defined __GNUC__
+#warning The 20-sim 'eventdown' function is not yet implemented in this code generation template
+#endif
 	return 0;
 }
 
+%ENDIF%
+%IF%%NUMBEROF_FREQUENCYEVENTFUNCTION%
+#if defined _MSC_VER
+#pragma message("warning: The 20-sim 'frequencyevent' function is not yet implemented in this code generation template")
+#elif defined __GNUC__
+#warning The 20-sim 'frequencyevent' function is not yet implemented in this code generation template
+#endif
 XXBoolean XXFrequencyEvent (XXDouble argument, XXInteger id)
 {
 	return 0;
@@ -362,23 +448,48 @@ XXBoolean XXFrequencyEvent1 (XXDouble argument1, XXDouble argument2, XXInteger i
 	return 0;
 }
 
+%ENDIF%
+%IF%%NUMBEROF_TIMEEVENTFUNCTION%
 XXBoolean XXTimeEvent (XXDouble argument, XXInteger id)
 {
+#if defined _MSC_VER
+#pragma message("warning: The 20-sim 'timeevent' function is not yet implemented in this code generation template")
+#elif defined __GNUC__
+#warning The 20-sim 'timeevent' function is not yet implemented in this code generation template
+#endif
 	return 0;
 }
 
+%ENDIF%
+%IF%%NUMBEROF_TDELAYFUNCTION%
 XXDouble XXTimeDelay (XXDouble argument, XXDouble time, XXInteger id)
 {
+#if defined _MSC_VER
+#pragma message("warning: The 20-sim 'tdelay' function is not yet implemented in this code generation template")
+#elif defined __GNUC__
+#warning The 20-sim 'tdelay' function is not yet implemented in this code generation template
+#endif
 	return 0;
 }
 
+%ENDIF%
+%IF%%NUMBEROF_WARNSTATEMENT%
 XXBoolean XXWarning (XXString message, XXInteger id)
 {
+#if defined _MSC_VER
+#pragma message("warning: The 20-sim 'warning' function is not yet implemented in this code generation template")
+#elif defined __GNUC__
+#warning The 20-sim 'warning' function is not yet implemented in this code generation template
+#endif
 	return 0;
 }
 
+%ENDIF%
+%IF%%NUMBEROF_STOPSTATEMENT%
 XXBoolean XXStopSimulation (XXString message, XXInteger id)
 {
 	%VARPREFIX%stop_simulation = XXTRUE;
 	return 0;
 }
+
+%ENDIF%

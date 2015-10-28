@@ -15,7 +15,6 @@
    functions
 */
 %IF%%NUMBEROF_DLL_MotionProfiles%
-
 #ifndef __MOTION_PROFILES_H
 #define __MOTION_PROFILES_H
 

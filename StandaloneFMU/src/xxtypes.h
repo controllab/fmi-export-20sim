@@ -53,6 +53,17 @@ typedef %FMI_PREFIX%Integer XXCharacter;
 typedef %FMI_PREFIX%Boolean XXBoolean;
 typedef %FMI_PREFIX%String XXString;
 
+%IF%%NUMBER_MATRICES%
+/* the matrix declaration */
+typedef struct
+{
+	XXDouble *mat;
+	XXInteger rows;
+	XXInteger columns;
+} XXMatrix;
+
+%ENDIF%
+
 /* Defines */
 #define XXTRUE  %FMI_PREFIX%True
 #define XXFALSE %FMI_PREFIX%False

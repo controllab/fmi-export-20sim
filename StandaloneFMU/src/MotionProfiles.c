@@ -16,7 +16,6 @@
 */
 
 %IF%%NUMBEROF_DLL_MotionProfiles%
-
 #include <math.h>
 #include <stdio.h>
 #include <string.h>

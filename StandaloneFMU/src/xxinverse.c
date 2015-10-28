@@ -11,6 +11,8 @@
  *  build: %GENERATION_BUILD%
  **********************************************************/
 
+%IF%%NUMBER_MATRICES%
+
 /* This file implements the functions necessary for calculating
    the inverse of a matrix
 */
@@ -38,7 +40,7 @@ void XXIndex (XXMatrix *v)
 		size = v->columns;
 
 	for(i = 0; i < size; i++)
-		v->mat[i] = i;
+		v->mat[i] = (XXDouble) i;
 }
 
 
@@ -139,7 +141,7 @@ XXInteger XXPivot (XXMatrix *dest, XXMatrix *p, XXInteger i)
 
 	for( k = i; k < rows; k++)
 	{
-		mki = fabs(dest->mat[k*columns+i]);
+		mki = (XXDouble) fabs(dest->mat[k*columns+i]);
 		if( mki > t )
 		{
 			t = mki;
@@ -316,7 +318,7 @@ XXDouble XXInverse (XXMatrix *mat_dest, XXMatrix *mat_source, XXDouble *workarra
 	return det;
 }
 
-
+%IF%%NUMBEROF_DETFUNCTION%
 /* take the determinant of the matrix source and put it in the scalar destination *
  * simply by reusing a lot of the inverse functionality
  * NOTE: can be improved */
@@ -348,7 +350,7 @@ XXDouble XXMatrixDeterminant (XXMatrix *mat_source, XXDouble *workarray)
 	/* and return the determinant */
 	return XXDecompose(&newMatrix, &p);
 }
-
+%ENDIF%
 
 /* take the inverse of a matrix source to a matrix destination
  * workarray size at least (3 * n * n + 2 * n)
@@ -428,3 +430,6 @@ void XXScalarMatrixDiv (XXMatrix *mat_dest, XXDouble s1, XXMatrix *mat_source2, 
 	for( i = 0; i < size; i++)
 		mat_dest->mat[i] *= s1;
 }
+%ELSE%
+/* No matrix support functions are needed for this model */
+%ENDIF%

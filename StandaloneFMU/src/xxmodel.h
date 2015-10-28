@@ -23,7 +23,9 @@
 
 /* Our own include files */
 #include "xxtypes.h"
+%IF%%NUMBER_MATRICES%
 #include "xxmatrix.h"
+%ENDIF%
 
 /* Simulation variables */
 extern XXDouble %VARPREFIX%start_time;
@@ -39,13 +41,25 @@ extern XXBoolean %VARPREFIX%stop_simulation;
 extern XXDouble %VARPREFIX%MEMORY[];
 extern XXDouble* %INPUT_ARRAY_NAME%;
 extern XXDouble* %OUTPUT_ARRAY_NAME%;
+%IF%%NUMBER_CONSTANTS%
 extern XXDouble* %VARPREFIX%%XX_CONSTANT_ARRAY_NAME%;
+%ENDIF%
+%IF%%NUMBER_PARAMETERS%
 extern XXDouble* %VARPREFIX%%XX_PARAMETER_ARRAY_NAME%;
+%ENDIF%
+%IF%%NUMBER_INITIAL_VALUES%
 extern XXDouble* %VARPREFIX%%XX_INITIAL_VALUE_ARRAY_NAME%;
+%ENDIF%
+%IF%%NUMBER_VARIABLES%
 extern XXDouble* %VARPREFIX%%XX_VARIABLE_ARRAY_NAME%;
+%ENDIF%
+%IF%%NUMBER_STATES%
 extern XXDouble* %VARPREFIX%%XX_STATE_ARRAY_NAME%;
 extern XXDouble* %VARPREFIX%%XX_RATE_ARRAY_NAME%;
+%ENDIF%
+%IF%%NUMBER_MATRICES%
 extern XXMatrix %VARPREFIX%%XX_MATRIX_ARRAY_NAME%[];
+%ENDIF%
 extern XXDouble %VARPREFIX%%XX_UNNAMED_ARRAY_NAME%[];
 %IF%%NUMBER_IMPORTS%
 extern XXDouble %VARPREFIX%%XX_EXT_IN_ARRAY_NAME%[];
@@ -53,16 +67,35 @@ extern XXDouble %VARPREFIX%%XX_EXT_IN_ARRAY_NAME%[];
 %IF%%NUMBER_EXPORTS%
 extern XXDouble %VARPREFIX%%XX_EXT_OUT_ARRAY_NAME%[];
 %ENDIF%
+%IF%%NUMBEROF_INITIALFUNCTION%
+extern XXDouble %VARPREFIX%initial_value_array[];
+%ENDIF%
+%IF%%NUMBEROF_DELAYFUNCTION%
+extern XXDouble %VARPREFIX%delay_update_array[];
+extern XXDouble %VARPREFIX%delay_last_values[];
+%ENDIF%
 
 /* The names of the variables as used in the arrays above
    uncomment this if you need the names (see source file too)
+%IF%%NUMBER_CONSTANTS%
 extern XXString %VARPREFIX%constant_names[];
+%ENDIF%
+%IF%%NUMBER_PARAMETERS%
 extern XXString %VARPREFIX%parameter_names[];
+%ENDIF%
+%IF%%NUMBER_INITIAL_VALUES%
 extern XXString %VARPREFIX%initial_value_names[];
+%ENDIF%
+%IF%%NUMBER_VARIABLES%
 extern XXString %VARPREFIX%variable_names[];
+%ENDIF%
+%IF%%NUMBER_STATES%
 extern XXString %VARPREFIX%state_names[];
 extern XXString %VARPREFIX%rate_names[];
+%ENDIF%
+%IF%%NUMBER_MATRICES%
 extern XXString %VARPREFIX%matrix_names[];
+%ENDIF%
 %IF%%NUMBER_IMPORTS%
 extern XXString %VARPREFIX%import_names[];
 %ENDIF%
@@ -82,5 +115,10 @@ void %FUNCTIONPREFIX%CalculateInput (void);
 void %FUNCTIONPREFIX%CalculateDynamic (void);
 void %FUNCTIONPREFIX%CalculateOutput (void);
 void %FUNCTIONPREFIX%CalculateFinal (void);
+
+%IF%%NUMBEROF_DELAYFUNCTION%
+/* delay methods */
+void %FUNCTIONPREFIX%DelayUpdate (void);
+%ENDIF%
 
 #endif

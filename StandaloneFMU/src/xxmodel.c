@@ -39,17 +39,26 @@
 /* 20-sim include files */
 #include "xxmodel.h"
 #include "xxfuncs.h"
+%IF%%NUMBER_MATRICES%
 #include "xxmatrix.h"
+%ENDIF%
+%IF%%NUMBEROF_DLL_MotionProfiles%
 #include "motionprofiles.h"
+%ENDIF%
+%IF%%NUMBEROF_DLL_EulerAngles%
 #include "EulerAngles.h"
+%ENDIF%
+%IF%%NUMBEROF_DELAYFUNCTION%
+#include <string.h> /* memcpy */
+%ENDIF%
 
 /* the global variables */
 XXDouble %VARPREFIX%start_time = %START_TIME%;
 XXDouble %VARPREFIX%finish_time = %FINISH_TIME%;
 XXDouble %VARPREFIX%step_size = %TIME_STEP_SIZE%;
-XXDouble %VARPREFIX%%XX_TIME%;
-XXInteger %VARPREFIX%steps;
-XXBoolean %VARPREFIX%%XX_INITIALIZE%;
+XXDouble %VARPREFIX%%XX_TIME% = 0.0;
+XXInteger %VARPREFIX%steps = 0;
+XXBoolean %VARPREFIX%%XX_INITIALIZE% = XXTRUE;
 XXBoolean %VARPREFIX%major = XXTRUE;
 XXBoolean %VARPREFIX%stop_simulation = XXFALSE;
 
@@ -61,47 +70,80 @@ XXDouble* %VARPREFIX%%XX_INITIAL_VALUE_ARRAY_NAME% = %VARPREFIX%MEMORY + %NUMBER
 XXDouble* %VARPREFIX%%XX_VARIABLE_ARRAY_NAME% = %VARPREFIX%MEMORY + %NUMBER_CONSTANTS% + %NUMBER_PARAMETERS% + %NUMBER_INITIAL_VALUES%;		/* variables */
 XXDouble* %VARPREFIX%%XX_STATE_ARRAY_NAME% = %VARPREFIX%MEMORY + %NUMBER_CONSTANTS% + %NUMBER_PARAMETERS% + %NUMBER_INITIAL_VALUES% + %NUMBER_VARIABLES%;		/* states */
 XXDouble *%VARPREFIX%%XX_RATE_ARRAY_NAME% = %VARPREFIX%MEMORY + %NUMBER_CONSTANTS% + %NUMBER_PARAMETERS% + %NUMBER_INITIAL_VALUES% + %NUMBER_VARIABLES% + %NUMBER_STATES%;		/* rates (or new states) */
-XXMatrix %VARPREFIX%%XX_MATRIX_ARRAY_NAME%[%NUMBER_MATRICES% + 1];		/* matrices */
-XXDouble %VARPREFIX%%XX_UNNAMED_ARRAY_NAME%[%NUMBER_UNNAMED% + 1];		/* unnamed */
-XXDouble %VARPREFIX%workarray[%WORK_ARRAY_SIZE% + 1];
-XXDouble %VARPREFIX%%XX_FAVORITE_PARS_ARRAY_NAME%[%NUMBER_FAVORITE_PARAMETERS% + 1];	/* favorite parameters */
-XXDouble %VARPREFIX%%XX_FAVORITE_VARS_ARRAY_NAME%[%NUMBER_FAVORITE_VARIABLES% + 1];		/* favorite variables */
+%IF%%NUMBER_MATRICES%
+XXMatrix %VARPREFIX%%XX_MATRIX_ARRAY_NAME%[%NUMBER_MATRICES%];		/* matrices */
+%ENDIF%
+%IF%%NUMBER_UNNAMED%
+XXDouble %VARPREFIX%%XX_UNNAMED_ARRAY_NAME%[%NUMBER_UNNAMED%];		/* unnamed */
+%ENDIF%
+%IF%%WORK_ARRAY_SIZE%
+XXDouble %VARPREFIX%workarray[%WORK_ARRAY_SIZE%];
+%ENDIF%
+%IF%%NUMBER_FAVORITE_PARAMETERS%
+XXDouble %VARPREFIX%%XX_FAVORITE_PARS_ARRAY_NAME%[%NUMBER_FAVORITE_PARAMETERS%];	/* favorite parameters */
+%ENDIF%
+%IF%%NUMBER_FAVORITE_VARIABLES%
+XXDouble %VARPREFIX%%XX_FAVORITE_VARS_ARRAY_NAME%[%NUMBER_FAVORITE_VARIABLES%];		/* favorite variables */
+%ENDIF%
 %IF%%NUMBER_IMPORTS%
 XXDouble %VARPREFIX%%XX_EXT_IN_ARRAY_NAME%[%NUMBER_IMPORTS%]; /* import variables */
 %ENDIF%
 %IF%%NUMBER_EXPORTS%
 XXDouble %VARPREFIX%%XX_EXT_OUT_ARRAY_NAME%[%NUMBER_EXPORTS%]; /* export variables */
 %ENDIF%
+%IF%%NUMBEROF_INITIALFUNCTION%
+XXDouble %VARPREFIX%initial_value_array[%NUMBEROF_INITIALFUNCTION%];	/* initial*/
+%ENDIF%
+%IF%%NUMBEROF_DELAYFUNCTION%
+XXDouble %VARPREFIX%delay_update_array[%NUMBEROF_DELAYFUNCTION%];
+XXDouble %VARPREFIX%delay_last_values[%NUMBEROF_DELAYFUNCTION%];
+%ENDIF%
 
 /* the names of the variables as used in the arrays above
    uncomment this part if these names are needed
+%IF%%NUMBER_CONSTANTS%
 XXCharacter *%VARPREFIX%constant_names[] = {
 %CONSTANT_NAMES%,	NULL
 };
+%ENDIF%
+%IF%%NUMBER_PARAMETERS%
 XXCharacter *%VARPREFIX%parameter_names[] = {
 %PARAMETER_NAMES%,	NULL
 };
+%ENDIF%
+%IF%%NUMBER_INITIAL_VALUES%
 XXCharacter *%VARPREFIX%initial_value_names[] = {
 %INITIAL_VALUE_NAMES%,	NULL
 };
+%ENDIF%
+%IF%%NUMBER_VARIABLES%
 XXCharacter *%VARPREFIX%variable_names[] = {
 %VARIABLE_NAMES%,	NULL
 };
+%ENDIF%
+%IF%%NUMBER_STATES%
 XXCharacter *%VARPREFIX%state_names[] = {
 %STATE_NAMES%,	NULL
 };
 XXCharacter *%VARPREFIX%rate_names[] = {
 %RATE_NAMES%,	NULL
 };
+%ENDIF%
+%IF%%NUMBER_MATRICES%
 XXCharacter *%VARPREFIX%matrix_names[] = {
 %MATRIX_NAMES%,	NULL
 };
+%ENDIF%
+%IF%%NUMBER_FAVORITE_PARAMETERS%
 XXString %VARPREFIX%favorite_par_names[] = {
 %FAVORITE_PARAMETER_NAMES%, NULL
 };
+%ENDIF%
+%IF%%NUMBER_FAVORITE_VARIABLES%
 XXString %VARPREFIX%favorite_var_names[] = {
 %FAVORITE_VARIABLE_NAMES%, NULL
 };
+%ENDIF%
 %IF%%NUMBER_IMPORTS%
 XXString %VARPREFIX%import_names[] = {
 %IMPORT_NAMES%, NULL
@@ -117,24 +159,36 @@ XXString %VARPREFIX%export_names[] = {
 /* this method is called before calculation is possible */
 void %FUNCTIONPREFIX%ModelInitialize (void)
 {
+%IF%%NUMBER_CONSTANTS%
 	/* set the constants */
 %INITIALIZE_CONSTANTS%
 
+%ENDIF%
+%IF%%NUMBER_PARAMETERS%
 	/* set the parameters */
 %INITIALIZE_PARAMETERS%
 
+%ENDIF%
+%IF%%NUMBER_INITIAL_VALUES%
 	/* set the initial values */
 %INITIALIZE_INITIAL_VALUES%
 
+%ENDIF%
+%IF%%NUMBER_STATES%
 	/* set the states */
 %INITIALIZE_STATES%
 
+%ENDIF%
+%IF%%NUMBER_MATRICES%
 	/* set the matrices */
 %INITIALIZE_MATRICES%
 
+%ENDIF%
+%IF%%OR(NUMBER_FAVORITE_PARAMETERS,NUMBER_FAVORITE_VARIABLES)%
 	/* set the favorites */
 %INITIALIZE_FAVORITE_PARS%
 %INITIALIZE_FAVORITE_VARS%
+%ENDIF%
 }
 
 /* This function calculates the initial equations of the model.
@@ -142,8 +196,10 @@ void %FUNCTIONPREFIX%ModelInitialize (void)
  */
 void %FUNCTIONPREFIX%CalculateInitial (void)
 {
+%IF%%NUMBER_FAVORITE_PARAMETERS%
 	/* the favorite parameters equations */
 %FAVORITE_PARS_EQUATIONS%
+%ENDIF%
 
 %INITIAL_EQUATIONS%
 }
@@ -162,9 +218,11 @@ void %FUNCTIONPREFIX%CalculateStatic (void)
  */
 void %FUNCTIONPREFIX%CalculateInput (void)
 {
+%IF%%NUMBER_FAVORITE_PARAMETERS%
 	/* the favorite parameters equations */
 %FAVORITE_PARS_EQUATIONS%
 
+%ENDIF%
 %INPUT_EQUATIONS%
 }
 
@@ -191,11 +249,13 @@ void %FUNCTIONPREFIX%CalculateOutput (void)
 %OUTPUT_EQUATIONS%
 %IF%%NUMBEROF_DELAYFUNCTION%
 	/* delay update */
-	XXDelayUpdate();
-%ENDIF%
+	%FUNCTIONPREFIX%DelayUpdate();
 
+%ENDIF%
+%IF%%NUMBER_FAVORITE_VARIABLES%
 	/* set the favorite variables */
 %FAVORITE_VARS_EQUATIONS%
+%ENDIF%
 }
 
 /* This function calculates the final equations of the model.
@@ -211,3 +271,11 @@ void %FUNCTIONPREFIX%CalculateFinal (void)
 void %FUNCTIONPREFIX%ModelTerminate(void)
 {
 }
+
+%IF%%NUMBEROF_DELAYFUNCTION%
+void %FUNCTIONPREFIX%DelayUpdate()
+{
+	memcpy(%VARPREFIX%delay_update_array, %VARPREFIX%delay_last_values, %NUMBEROF_DELAYFUNCTION% * sizeof(XXDouble));
+}
+
+%ENDIF%

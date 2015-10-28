@@ -10,7 +10,7 @@
  *  from:  %COMPANY_NAME%
  *  build: %GENERATION_BUILD%
  **********************************************************/
-
+%IF%%NUMBER_MATRICES%
 /* This file implements the functions necessary for matrix
    operations
 */
@@ -23,35 +23,6 @@
 /* 20-sim include files */
 #include "xxtypes.h"
 #include "xxmatrix.h"
-
-/* fill in a matrix struct with a given array, rows and columns
-*/
-void XXCreateMatrixStruct (XXMatrix *mat_dest, XXInteger rows, XXInteger columns, XXDouble *values)
-{
-	mat_dest->rows = rows;
-	mat_dest->columns = columns;
-	mat_dest->mat = values;
-}
-
-
-/* allocate a matrix struct with rows and columns
-void XXAllocateMatrixStruct (XXMatrix *mat_dest, XXInteger rows, XXInteger columns)
-{
-	mat_dest->rows = rows;
-	mat_dest->columns = columns;
-	mat_dest->mat = (XXDouble*)calloc(rows * columns + 1, sizeof(XXDouble));
-}
-*/
-
-/* free a matrix struct with rows and columns
-void XXFreeMatrixStruct (XXMatrix *mat_dest)
-{
-	mat_dest->rows = 0;
-	mat_dest->columns = 0;
-	free(mat_dest->mat);
-	mat_dest->mat = NULL;
-}
-*/
 
 /* copy a matrix source to a matrix destination
 */
@@ -142,7 +113,7 @@ void XXMatrixSetColumn (XXMatrix *mat_dest, XXMatrix *mat_source, XXInteger colu
 		mat_dest->mat[columns * i + column] = mat_source->mat[i];
 }
 
-
+%IF%%NUMBEROF_DIAGFUNCTION%
 /* use the source vector as elements of the diagonal in the
    destination matrix
 */
@@ -163,7 +134,7 @@ void XXMatrixDiag (XXMatrix *mat_dest, XXMatrix *mat_source)
 	}
 }
 
-
+%ENDIF%
 /* add a matrix source1 to a matrix source2 to a matrix destination
 */
 void XXMatrixAdd (XXMatrix *mat_dest, XXMatrix *mat_source1, XXMatrix *mat_source2)
@@ -499,7 +470,7 @@ void XXMatrixTranspose (XXMatrix *mat_dest, XXMatrix *mat_source)
 			d[i * columns + j] = s[ j * rows + i];
 }
 
-
+%IF%%NUMBEROF_ELEMENTMUL%
 /* multiply all elements element-wise to the destination
 */
 void XXMatrixMulElement (XXMatrix *mat_dest, XXMatrix *mat_source1, XXMatrix *mat_source2)
@@ -518,7 +489,8 @@ void XXMatrixMulElement (XXMatrix *mat_dest, XXMatrix *mat_source1, XXMatrix *ma
 	}
 }
 
-
+%ENDIF%
+%IF%%NUMBEROF_ELEMENTDIV%
 /* divide all elements element-wise to the destination
 */
 void XXMatrixDivElement (XXMatrix *mat_dest, XXMatrix *mat_source1, XXMatrix *mat_source2)
@@ -537,7 +509,8 @@ void XXMatrixDivElement (XXMatrix *mat_dest, XXMatrix *mat_source1, XXMatrix *ma
 	}
 }
 
-
+%ENDIF%
+%IF%%NUMBEROF_ELEMENTPOWER%
 /* pow all elements element-wise to the destination
 */
 void XXMatrixPowElement (XXMatrix *mat_dest, XXMatrix *mat_source1, XXMatrix *mat_source2)
@@ -556,6 +529,7 @@ void XXMatrixPowElement (XXMatrix *mat_dest, XXMatrix *mat_source1, XXMatrix *ma
 	}
 }
 
+%ENDIF%
 
 /* use the source1 as an integer index for the destination
    and copy the scalar value of source2 at this point
@@ -586,7 +560,7 @@ void XXMatrixMovAbsRel (XXDouble *dest, XXMatrix *mat_source1, XXDouble s2)
 	*dest = mat_source1->mat[linIndex];
 }
 
-
+%IF%%NUMBEROF_MINFUNCTION%
 /* find the minimum value in a matrix source and place this in
    the destination
 */
@@ -611,7 +585,8 @@ void XXMatrixMinimum (XXDouble *dest, XXMatrix *mat_source)
 	}
 }
 
-
+%ENDIF%
+%IF%%NUMBEROF_MAXFUNCTION%
 /* find the maximum value in a matrix source and place this in
    the destination
 */
@@ -636,6 +611,7 @@ void XXMatrixMaximum (XXDouble *dest, XXMatrix *mat_source)
 	}
 }
 
+%ENDIF%
 
 /* summize all the elements of the matrix and put the result in the dest
 */
@@ -692,7 +668,7 @@ void XXMatrixPow (XXMatrix *mat_dest, XXMatrix *mat_source1,
 	XXInteger i, pow_val, offset;
 	XXMatrix workMatrix;
 
-	abssrc2 = fabs(s2);
+	abssrc2 = (XXDouble) fabs(s2);
 	pow_val = (XXInteger)(abssrc2  + 0.1);
 
 	/* map the work array on a local matrix */
@@ -737,13 +713,13 @@ void XXScalarScalarPow (XXMatrix *mat_dest, XXDouble s1, XXDouble s2)
 	XXDouble value;
 	XXInteger i, size;
 
-	value = pow(s1, s2);
+	value = (XXDouble) pow(s1, s2);
 	size = mat_dest->rows * mat_dest->columns;
 	for(i = 0; i < size; i++)
 		mat_dest->mat[i] = value;
 }
 
-
+%IF%%NUMBEROF_CROSSFUNCTION%
 /* take the cross product of matrix source1 and matrix source2
    to a destination matrix. all matrices must be 3x1
 */
@@ -761,7 +737,8 @@ void XXMatrixCrossProduct (XXMatrix *mat_dest, XXMatrix *mat_source1, XXMatrix *
 	(*d) = s1[0] * s2[1] - s1[1] * s2[0];
 }
 
-
+%ENDIF%
+%IF%%NUMBEROF_INNERFUNCTION%
 /* take the inner product of matrix source1 and matrix source2
    to a scalar destination. the source matrices must be nx1
 */
@@ -783,7 +760,8 @@ void XXMatrixInnerProduct (XXDouble *dest, XXMatrix *mat_source1, XXMatrix *mat_
 	}
 }
 
-
+%ENDIF%
+%IF%%NUMBEROF_NORMFUNCTION%
 /* take the 2-norm of matrix source to a scalar destination
 */
 void XXMatrixNorm (XXDouble *dest, XXMatrix *mat_source)
@@ -808,7 +786,8 @@ void XXMatrixNorm (XXDouble *dest, XXMatrix *mat_source)
 	*dest = sqrt(t);
 }
 
-
+%ENDIF%
+%IF%%NUMBEROF_NORMINFFUNCTION%
 /* take the inf norm of matrix source to a scalar destination
 */
 void XXMatrixNormInf (XXDouble *dest, XXMatrix *mat_source)
@@ -833,7 +812,8 @@ void XXMatrixNormInf (XXDouble *dest, XXMatrix *mat_source)
 	}
 }
 
-
+%ENDIF%
+%IF%%NUMBEROF_TRACEFUNCTION%
 /* take the Trace of the matrix source to the scalar destination.
    The trace is defined as the sum of the diagonal values
 */
@@ -857,7 +837,8 @@ XXDouble XXMatrixTrace (XXMatrix *mat_source)
 	return dest;
 }
 
-
+%ENDIF%
+%IF%%NUMBEROF_SYMMETRICFUNCTION%
 /* take the symetric value of the source matrix.
    the result is placed in the destination matrix.
    the work array must have the same size as the source
@@ -882,7 +863,8 @@ void XXMatrixSym (XXMatrix *mat_dest, XXMatrix *mat_source, XXDouble *workarray)
 	XXMatrixScalarDiv(mat_dest, &workMatrix, 2.0);
 }
 
-
+%ENDIF%
+%IF%%NUMBEROF_ANTISYMMETRICFUNCTION%
 /* take the anti symetric value of the source matrix.
    the result is placed in the destination matrix.
    the work array must have the same size as the source
@@ -907,7 +889,8 @@ void XXMatrixAsym (XXMatrix *mat_dest, XXMatrix *mat_source, XXDouble *workarray
 	XXMatrixScalarDiv(mat_dest, &workMatrix, 2.0);
 }
 
-
+%ENDIF%
+%IF%%NUMBEROF_SKEWFUNCTION%
 /* take the skew of the source matrix to a matrix destination
    source = 3x1, destination is 3x3
 */
@@ -934,7 +917,8 @@ void XXMatrixSkew (XXMatrix *mat_dest, XXMatrix *mat_source)
 	(*d) = 0; d++;
 }
 
-
+%ENDIF%
+%IF%%NUMBEROF_HOMOGENEOUSFUNCTION%
 /* take the skew of the source1 matrix and source2 matrix
    to a matrix destination.
    source1 is 3x3 and soure2 = 3x1, destination is 4x4
@@ -972,7 +956,8 @@ void XXMatrixHomogeneous (XXMatrix *mat_dest, XXMatrix *mat_source1, XXMatrix *m
 	(*d) = 1;
 }
 
-
+%ENDIF%
+%IF%%NUMBEROF_INVERSEHOMOGENEOUSFUNCTION%
 /* take the inverse of a sourceH matrix to a destination matrix
    the source is 4x4 and the destination matrix is 4x4
 */
@@ -1010,7 +995,8 @@ void XXMatrixInverseH (XXMatrix *mat_dest, XXMatrix *mat_source)
 	d[15] = 1;
 }
 
-
+%ENDIF%
+%IF%%NUMBEROF_ADJOINTFUNCTION%
 /* Create an Adjoint matrix.
    source matrix is 4x4, destination matrix is 6x6
 */
@@ -1257,7 +1243,8 @@ void XXMatrixadjoint1 (XXMatrix *mat_dest, XXMatrix *mat_source1, XXMatrix *mat_
 	(*d) = 0;
 }
 
-
+%ENDIF%
+%IF%%NUMBEROF_TILDEFUNCTION%
 /* calcalate the tilde matrix from a source matrix
    source1 matrix is 6x1
    destination matrix is 4x4
@@ -1333,6 +1320,7 @@ void XXMatrixTilde1 (XXMatrix *mat_dest, XXMatrix *mat_source1, XXMatrix *mat_so
 	(*d) = 0;
 }
 
+%ENDIF%
 /* calculate the solution of A x = b towards x 
    inside 20-sim this is done with an advanced linear solver
    NOTE: current code generation uses the x=inverse(A)*b approach instead */
@@ -1352,3 +1340,6 @@ void XXLinearSolve (XXMatrix *mat_dest, XXMatrix *mat_source1, XXMatrix *mat_sou
 	/* and multiply with b */
 	XXMatrixMul (mat_dest, &workMatrix, mat_source2);
 }
+%ELSE%
+/* Empty file, no matix support functions are needed for this model */
+%ENDIF%
