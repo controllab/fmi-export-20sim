@@ -1,7 +1,7 @@
 @ECHO OFF
 rem ----Usage----
 rem build [clean|noclean]
-rem vs2008 for compiling with visual studio 2008
+rem vs2010 for compiling with visual studio 2010
 rem clean to force a full rebuild
 rem noclean to force a build without clean
 rem noprompt to avoid all prompts
@@ -14,7 +14,7 @@ rem If you get an error that Visual studio was not found, SET your path for VSNE
 rem -------------------------------------------------------------
 rem	CONFIG START
 SET CURPATH=%~dp0
-SET comp=vs2013
+SET comp=vs2015
 SET promptlevel=prompt
 SET exitcode=0
 SET buildmode=clean
@@ -38,6 +38,7 @@ set DOC_DIR=%FMU_DIR%\documentation
 FOR %%b in (%1, %2, %3, %4, %5) DO (
 	IF %%b==vs2010 SET comp=vs2010
 	IF %%b==vs2013 SET comp=vs2013
+	IF %%b==vs2015 SET comp=vs2015
 	IF %%b==clean SET buildmode=clean
 	IF %%b==noclean SET buildmode=noclean
 	IF %%b==noprompt SET promptlevel=noprompt
@@ -52,15 +53,30 @@ ECHO 20-sim standalone co-simulation FMU export for '%SUBMODEL_NAME%'
 ECHO ------------------------------------------------------------
 ECHO Searching for Visual C++ compiler...
 
+rem Seach for VS 2015 / VS 2015 Express
+IF %comp%==vs2015 (
+	set PROJ_DIR=VS2015
+	IF EXIST "%VS140COMNTOOLS%\vsvars32.bat" (
+		set VSVARS32="%VS140COMNTOOLS%\vsvars32.bat"
+		ECHO Found Visual C++ 2015
+	) ELSE IF EXIST "%ProgramFiles%\Microsoft Visual Studio 14.0\Common7\Tools\vsvars32.bat" (
+		set VSVARS32="%VS120COMNTOOLS%\vsvars32.bat"
+		ECHO Found Visual C++ 2015
+	) ELSE (
+		rem Try an older compiler
+		set comp=vs2013
+	)
+)
+
 rem Seach for VS 2013 / VS 2013 Express / VS 2013 Community edition
 IF %comp%==vs2013 (
 	set PROJ_DIR=VS2013
 	IF EXIST "%VS120COMNTOOLS%\vsvars32.bat" (
 		set VSVARS32="%VS120COMNTOOLS%\vsvars32.bat"
-		ECHO Found Visual C++ for Desktop 2013
+		ECHO Found Visual C++ 2013
 	) ELSE IF EXIST "%ProgramFiles%\Microsoft Visual Studio 12.0\Common7\Tools\vsvars32.bat" (
 		set VSVARS32="%VS120COMNTOOLS%\vsvars32.bat"
-		ECHO Found Visual C++ for Desktop 2013
+		ECHO Found Visual C++ 2013
 	) ELSE (
 		rem Try an older compiler
 		set comp=vs2010
