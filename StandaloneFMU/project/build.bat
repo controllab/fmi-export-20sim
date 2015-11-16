@@ -111,14 +111,13 @@ IF %DEVENV% NEQ "" (
 	)
 )
 
-IF %VSVARS32% NEQ "" (
+REM Remove potential " from the path, otherwise loading vsvar32 fails
+set PATH=%PATH:"=%
+
+IF DEFINED VSVARS32 (
 	echo Loading vsvar32
 	call %VSVARS32%
 )
-
-rem ECHO %PROJ_DIR%
-rem ECHO %OPTS_DLL%
-rem ECHO %CLEAN_DLL%
 
 ECHO ------------------------------------------------------------
 rem	CONFIG END
