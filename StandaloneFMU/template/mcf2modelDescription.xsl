@@ -112,7 +112,9 @@
 		<xsl:element name="DefaultExperiment">
 			<xsl:attribute name="startTime"><xsl:value-of select="run/startTime" /></xsl:attribute>
 			<xsl:attribute name="stopTime"><xsl:value-of select="run/finishTime" /></xsl:attribute>
+%IF%%FMI2%
 			<xsl:attribute name="stepSize"><xsl:value-of select="run/stepSize" /></xsl:attribute>
+%ENDIF%
 		</xsl:element>
 		
 		<xsl:element name="ModelVariables">
@@ -210,6 +212,7 @@
 %ENDIF%
 				<xsl:when test="string($modelvariable/kind)='constant'">constant</xsl:when>
 				<xsl:when test="string(document(concat($SOURCEDIRECTORY, '\tokens.xml'))/tokens/token[@name='MODEL_IS_DISCRETE']) = 'XXTRUE'">discrete</xsl:when>
+				<xsl:when test="string($modelvariable/type)='boolean'">discrete</xsl:when>
 				<xsl:otherwise>continuous</xsl:otherwise>
 			</xsl:choose>
 		</xsl:attribute>
