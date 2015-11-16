@@ -153,4 +153,7 @@ XXBoolean XXWarning (XXString message, XXInteger id);
 %IF%%NUMBEROF_STOPSTATEMENT%
 XXBoolean XXStopSimulation (XXString message, XXInteger id);
 %ENDIF%
+%IF%%NUMBEROF_REALTIME%
+XXDouble XXRealTime(void);
+%ENDIF%
 #endif

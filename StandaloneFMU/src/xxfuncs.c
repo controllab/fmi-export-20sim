@@ -493,3 +493,11 @@ XXBoolean XXStopSimulation (XXString message, XXInteger id)
 }
 
 %ENDIF%
+%IF%%NUMBEROF_REALTIME%
+XXDouble XXRealTime(void)
+{
+	/* Return the elapsed amount of seconds since the start of this program (preferably with millisecond accuracy) */
+	return 0.0;
+}
+
+%ENDIF%
