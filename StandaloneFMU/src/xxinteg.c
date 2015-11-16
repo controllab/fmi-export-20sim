@@ -222,6 +222,8 @@ static XXDouble %VARPREFIX%q4 [%VARPREFIX%STATE_SIZE];
 /*********************************************************************
  * the initialization of the RungeKutta4 integration method
  */
+static const XXDouble OneOverSix = 1.0 / 6.0;
+
 void %FUNCTIONPREFIX%RungeKutta4Initialize (void)
 {
 %IF%%NUMBER_STATES%
@@ -318,8 +320,7 @@ void %FUNCTIONPREFIX%RungeKutta4Step (void)
 		/*********************************************************************************/
 
 		/* calculate the next state = classical Runge-Kutta integration step */
-		%VARPREFIX%%XX_STATE_ARRAY_NAME% [index] = %VARPREFIX%q0 [index] +
-		%VARPREFIX%q1 [index] / 6 + %VARPREFIX%q2 [index] / 3 + %VARPREFIX%q3 [index] / 3 + %VARPREFIX%q4 [index] / 6;
+		%VARPREFIX%%XX_STATE_ARRAY_NAME%[index] = %VARPREFIX%q0[index] + (%VARPREFIX%q1[index] + %VARPREFIX%q2[index] + %VARPREFIX%q2[index] + %VARPREFIX%q3[index] + %VARPREFIX%q3[index] + %VARPREFIX%q4[index]) * OneOverSix;
 	}
 %ELSE%
 	/* no states in the model */
