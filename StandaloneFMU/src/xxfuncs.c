@@ -28,6 +28,9 @@
 /* The system include files */
 #include <stdlib.h>
 #include <math.h>
+%IF%%NUMBEROF_REALTIME%
+#include <time.h>
+%ENDIF%
 
 /* Our own include files */
 #include "xxfuncs.h"
@@ -342,7 +345,7 @@ XXInteger XXBitShift(XXInteger argument, XXInteger bitsToShift)
 	}
 	else
 	{
-		return (argument >> bitsToShift);
+		return (argument >> (-bitsToShift));
 	}
 }
 
@@ -494,10 +497,25 @@ XXBoolean XXStopSimulation (XXString message, XXInteger id)
 
 %ENDIF%
 %IF%%NUMBEROF_REALTIME%
+static time_t xx_start_run_time = 0;
+
+/* Return the elapsed amount of seconds since the start of this program
+ * This reference implementation has an accuracy of 1 {s}
+ */
 XXDouble XXRealTime(void)
 {
-	/* Return the elapsed amount of seconds since the start of this program (preferably with millisecond accuracy) */
-	return 0.0;
+	XXDouble seconds = 0.0;
+	
+	if (xx_start_run_time == 0)
+	{
+		time(&xx_start_run_time);
+	}
+	else
+	{
+		seconds = (XXDouble) difftime(time(NULL), xx_start_run_time);
+	}
+	
+	return seconds;
 }
 
 %ENDIF%

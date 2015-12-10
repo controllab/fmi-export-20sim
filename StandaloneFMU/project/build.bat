@@ -26,6 +26,7 @@ cd %CURPATH%
 SET FMU=%ROOTPATH%\%SUBMODEL_NAME%.fmu
 SET DLL=%SUBMODEL_NAME%.dll
 SET ZIPTOOL=%TEMPLATE_DIR%\bin\7z.exe
+rem The Github hosted template includes these two tools in order to support older 20-sim versions
 SET XSLTTOOL=%TEMPLATE_DIR%\bin\msxsl.exe
 SET GUIDTOOL=%TEMPLATE_DIR%\bin\GenerateGuid.exe
 
@@ -34,6 +35,41 @@ set BIN32_DIR=%FMU_DIR%\binaries\win32
 set BIN64_DIR=%FMU_DIR%\binaries\win64
 set SRC_DIR=%FMU_DIR%\sources
 set DOC_DIR=%FMU_DIR%\documentation
+
+ECHO ------------------------------------------------------------
+ECHO 20-sim standalone co-simulation FMU export for '%SUBMODEL_NAME%'
+ECHO ------------------------------------------------------------
+ECHO Creating an empty FMU
+if not exist "%FMU_DIR%" mkdir "%FMU_DIR%"
+if not exist "%SRC_DIR%" mkdir "%SRC_DIR%"
+if not exist "%DOC_DIR%" mkdir "%DOC_DIR%"
+
+REM Generate a new GUID
+REM -------------------
+ECHO |SET /p=Generating a GUID: 
+"%GUIDTOOL%" > "%ROOTPATH%\src\guid.txt"
+type "%ROOTPATH%\src\guid.txt"
+ECHO.
+
+rem generate GUID header
+FOR /f "tokens=*" %%g IN (%ROOTPATH%\src\guid.txt) DO (
+	rem generate a header with a define for the GUID
+	echo #define FMI_GUID "{%%g}" > "%ROOTPATH%\src\fmiGUID.h"
+
+	REM Generate a xml file (token format) with the generated GUID
+	(
+		echo ^<?xml version="1.0" encoding="UTF-8"?^>
+		echo ^<tokens^>
+		echo ^<token name="GUID"^>^<![CDATA[%%g]]^>^</token^>
+		echo ^</tokens^>
+	) > "%ROOTPATH%\src\GUID.xml"
+)
+
+ECHO Generating the modelDescription.xml
+"%XSLTTOOL%"  "%ROOTPATH%\src\ModelConfiguration.xml" "%ROOTPATH%\template\mcf2modelDescription.xsl" -o "%FMU_DIR%\modelDescription.xml" SOURCEDIRECTORY="%ROOTPATH%\src"
+
+ECHO ------------------------------------------------------------
+ECHO Searching for Visual C++ compiler...
 
 FOR %%b in (%1, %2, %3, %4, %5) DO (
 	IF %%b==vs2010 SET comp=vs2010
@@ -47,11 +83,6 @@ FOR %%b in (%1, %2, %3, %4, %5) DO (
 SET buildconfig=Release
 SET DEVENV=""
 SET VSVARS32=""
-
-ECHO ------------------------------------------------------------
-ECHO 20-sim standalone co-simulation FMU export for '%SUBMODEL_NAME%'
-ECHO ------------------------------------------------------------
-ECHO Searching for Visual C++ compiler...
 
 rem Seach for VS 2015 / VS 2015 Express
 IF %comp%==vs2015 (
@@ -105,8 +136,8 @@ IF %comp%==vs2010 (
 
 IF %DEVENV% NEQ "" (
 	IF NOT EXIST %DEVENV% (
-		echo "Could not find a suitable Visual C++ (Express) compiler. Supported versions: 2010, 2013 Community/Desktop (including Express editions)."
-		echo "You can use the generated Makefile to compile the DLL using the MinGW compiler"
+		echo "Could not find a suitable Visual C++ (Express) compiler. Supported versions: 2010, 2013, 2015 (including Community and Express editions)."
+		echo "You can use the generated Makefile to compile the FMU using the MinGW compiler"
 		pause
 	)
 )
@@ -117,25 +148,6 @@ set PATH=%PATH:"=%
 IF DEFINED VSVARS32 (
 	echo Loading vsvar32
 	call %VSVARS32%
-)
-
-ECHO ------------------------------------------------------------
-rem	CONFIG END
-rem -------------------------------------------------------------
-
-"%GUIDTOOL%" > "%ROOTPATH%\src\guid.txt"
-rem generate GUID header
-FOR /f "tokens=*" %%g IN (%ROOTPATH%\src\guid.txt) DO (
-	rem generate a header with a define for the GUID
-	echo #define FMI_GUID "{%%g}" > "%ROOTPATH%\src\fmiGUID.h"
-
-	REM Generate a xml file (token format) with the generated GUID
-	(  
-		echo ^<?xml version="1.0" encoding="UTF-8"?^>
-		echo ^<tokens^>
-		echo ^<token name="GUID"^>^<![CDATA[%%g]]^>^</token^>
-		echo ^</tokens^>
-	) > "%ROOTPATH%\src\GUID.xml"
 )
 
 :FMU_COMPILE
@@ -198,22 +210,16 @@ FOR /f "tokens=*" %%g IN (%ROOTPATH%\src\guid.txt) DO (
 
 :MAKE_FMI
   cd %CURPATH%
-  ECHO Creating an empty FMU
-  if not exist "%FMU_DIR%" mkdir "%FMU_DIR%"
   if not exist "%BIN32_DIR%" mkdir "%BIN32_DIR%"
   if not exist "%BIN64_DIR%" mkdir "%BIN64_DIR%"
-  if not exist "%SRC_DIR%" mkdir "%SRC_DIR%"
-  if not exist "%DOC_DIR%" mkdir "%DOC_DIR%"
   ECHO Copy the compiled DLL %PROJ_DIR%\Win32\%buildconfig%\%DLL% to %BIN32_DIR%
   copy "%PROJ_DIR%\Win32\%buildconfig%\%DLL%" "%BIN32_DIR%"
   ECHO Copy the compiled DLL %PROJ_DIR%\x64\%buildconfig%\%DLL% to %BIN64_DIR%
   copy "%PROJ_DIR%\x64\%buildconfig%\%DLL%" "%BIN64_DIR%"
 
   ECHO copy the generated sources to %SRC_DIR%
-  copy "%ROOTPATH%\src\*.*" "%SRC_DIR%"
-
-  ECHO Generate the modelDescription.xml
-  "%XSLTTOOL%"  "%ROOTPATH%\src\ModelConfiguration.xml" "%ROOTPATH%\template\mcf2modelDescription.xsl" -o "%FMU_DIR%\modelDescription.xml" SOURCEDIRECTORY="%ROOTPATH%\src"
+  copy "%ROOTPATH%\src\*.c" "%SRC_DIR%"
+  copy "%ROOTPATH%\src\*.h" "%SRC_DIR%"
 
   ECHO Generate the FMU
   cd "%FMU_DIR%"
