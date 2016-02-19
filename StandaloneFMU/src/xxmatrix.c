@@ -511,8 +511,27 @@ void XXMatrixDivElement (XXMatrix *mat_dest, XXMatrix *mat_source1, XXMatrix *ma
 
 %ENDIF%
 %IF%%NUMBEROF_ELEMENTPOWER%
+/* pow all elements element-wise with the same scalar value to the destination
+ * M = X .^ y
+ */
+void XXMatrixScalarPowElement (XXMatrix *mat_dest, XXMatrix *mat_source1, XXDouble scalar_source2)
+{
+	XXInteger i;
+	XXDouble *d, *s1;
+	d = mat_dest->mat;
+	s1 = mat_source1->mat;
+
+	i = mat_source1->rows * mat_source1->columns;
+	while(i)
+	{
+		*d = pow((*s1), scalar_source2);
+		d++; s1++; i--;
+	}
+}
+
 /* pow all elements element-wise to the destination
-*/
+ * M = X .^ Y
+ */
 void XXMatrixPowElement (XXMatrix *mat_dest, XXMatrix *mat_source1, XXMatrix *mat_source2)
 {
 	XXInteger i;

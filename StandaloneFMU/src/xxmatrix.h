@@ -103,7 +103,9 @@ void XXMatrixMulElement (XXMatrix *mat_dest, XXMatrix *mat_source1, XXMatrix *ma
 void XXMatrixDivElement (XXMatrix *mat_dest, XXMatrix *mat_source1, XXMatrix *mat_source2);
 %ENDIF%
 %IF%%NUMBEROF_ELEMENTPOWER%
-/* pow all elements element-wise to the destination */
+/* pow all elements element-wise with the same scalar value to the destination: M = X .^ y */
+void XXMatrixScalarPowElement (XXMatrix *mat_dest, XXMatrix *mat_source1, XXDouble scalar_source2);
+/* pow all elements element-wise to the destination: M = X .^ Y */
 void XXMatrixPowElement (XXMatrix *mat_dest, XXMatrix *mat_source1, XXMatrix *mat_source2);
 %ENDIF%
 
