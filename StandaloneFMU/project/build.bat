@@ -26,9 +26,9 @@ cd %CURPATH%
 SET FMU=%ROOTPATH%\%SUBMODEL_NAME%.fmu
 SET DLL=%SUBMODEL_NAME%.dll
 SET ZIPTOOL=%TEMPLATE_DIR%\bin\7z.exe
-rem The Github hosted template includes these two tools in order to support older 20-sim versions
-SET XSLTTOOL=%TEMPLATE_DIR%\bin\msxsl.exe
-SET GUIDTOOL=%TEMPLATE_DIR%\bin\GenerateGuid.exe
+rem Tools found in the 20-sim bin directory (starting from 20-sim 4.6)
+SET XSLTTOOL=%20SIM_DIR%\bin\msxsl.exe
+SET GUIDTOOL=%20SIM_DIR%\bin\GenerateGuid.exe
 
 set FMU_DIR=%CURPATH%fmu
 set BIN32_DIR=%FMU_DIR%\binaries\win32
@@ -83,6 +83,7 @@ FOR %%b in (%1, %2, %3, %4, %5) DO (
 SET buildconfig=Release
 SET DEVENV=""
 SET VSVARS32=""
+SET BUILD_X64=1
 
 rem Seach for VS 2015 / VS 2015 Express
 IF %comp%==vs2015 (
@@ -91,7 +92,7 @@ IF %comp%==vs2015 (
 		set VSVARS32="%VS140COMNTOOLS%\vsvars32.bat"
 		ECHO Found Visual C++ 2015
 	) ELSE IF EXIST "%ProgramFiles%\Microsoft Visual Studio 14.0\Common7\Tools\vsvars32.bat" (
-		set VSVARS32="%VS120COMNTOOLS%\vsvars32.bat"
+		set VSVARS32="%ProgramFiles%\Microsoft Visual Studio 14.0\Common7\Tools\vsvars32.bat"
 		ECHO Found Visual C++ 2015
 	) ELSE (
 		rem Try an older compiler
@@ -106,7 +107,7 @@ IF %comp%==vs2013 (
 		set VSVARS32="%VS120COMNTOOLS%\vsvars32.bat"
 		ECHO Found Visual C++ 2013
 	) ELSE IF EXIST "%ProgramFiles%\Microsoft Visual Studio 12.0\Common7\Tools\vsvars32.bat" (
-		set VSVARS32="%VS120COMNTOOLS%\vsvars32.bat"
+		set VSVARS32="%ProgramFiles%\Microsoft Visual Studio 12.0\Common7\Tools\vsvars32.bat"
 		ECHO Found Visual C++ 2013
 	) ELSE (
 		rem Try an older compiler
@@ -117,22 +118,25 @@ IF %comp%==vs2013 (
 rem Seach for VS 2010 / VS 2010 Express
 IF %comp%==vs2010 (
 	set PROJ_DIR=VS2010
-	IF EXIST "%VS100COMNTOOLS%\..\IDE\devenv.exe" (
-		set DEVENV="%VS100COMNTOOLS%\..\IDE\devenv.exe"
+	IF EXIST "%VS100COMNTOOLS%\vsvars32.bat" (
+		set VSVARS32="%VS100COMNTOOLS%\vsvars32.bat"
+		IF EXIST "%VS100COMNTOOLS%\..\IDE\devenv.exe" (
+			ECHO Found Visual C++ 2010
+		) ELSE (
+			REM The VC2010 express edition does not support x64 compilation
+			ECHO Found Visual C++ 2010 express
+			set BUILD_X64=0
+		)
+		
+	) ELSE IF EXIST "%ProgramFiles%\Microsoft Visual Studio 10.0\Common7\Tools\vsvars32.bat" (
+		set VSVARS32="%ProgramFiles%\Microsoft Visual Studio 10.0\Common7\Tools\vsvars32.bat"
 		ECHO Found Visual C++ 2010
-	) ELSE IF EXIST "%VS100COMNTOOLS%\..\IDE\VCExpress.exe" (
-		set DEVENV="%VS100COMNTOOLS%\..\IDE\VCExpress.exe"
-		ECHO Found Visual C++ Express 2010
-	) ELSE IF EXIST "%ProgramFiles%\Microsoft Visual Studio 10.0\Common7\IDE\VCExpress.exe" (
-		set DEVENV="%ProgramFiles%\Microsoft Visual Studio 10.0\Common7\IDE\VCExpress.exe"
-		ECHO Found Visual C++ Express 2010
 	) ELSE (
-		echo "Could not find a supported Visual C++ (Express) compiler. Currently supported versions in this template: 2010 and 2013"
+		echo "Could not find a supported Visual C++ (Express) compiler. Currently supported versions in this template: 2010, 2013 and 2015"
 		pause
 		goto END
 	)
 )
-
 
 IF %DEVENV% NEQ "" (
 	IF NOT EXIST %DEVENV% (
@@ -177,7 +181,9 @@ IF DEFINED VSVARS32 (
 :COMPILE_FMU
   IF EXIST "%FMU%" del /Q "%FMU%"
   msbuild.exe "%PROJ_DIR%\%SUBMODEL_NAME%.sln" /p:Configuration=%buildconfig%;Platform=win32 /t:Build /verbosity:minimal
-  msbuild.exe "%PROJ_DIR%\%SUBMODEL_NAME%.sln" /p:Configuration=%buildconfig%;Platform=x64 /t:Build /verbosity:minimal
+  IF %BUILD_X64%==1 (
+    msbuild.exe "%PROJ_DIR%\%SUBMODEL_NAME%.sln" /p:Configuration=%buildconfig%;Platform=x64 /t:Build /verbosity:minimal
+  )
 
   REM Check whether the 32-bits dll has been generated.
   REM note: 64-bits will not for all visual studio installations be possible
@@ -190,13 +196,9 @@ IF DEFINED VSVARS32 (
 
   
 :COMPILE_NO_CLEAN_FMU
-  IF %DEVENV% NEQ "" (
-    ECHO Compiling 20-sim FMU for submodel "%SUBMODEL_NAME%"
-    msbuild.exe "%PROJ_DIR%\%SUBMODEL_NAME%.sln" /p:Configuration=%buildconfig%;Platform=win32 /t:Build /verbosity:minimal
-    msbuild.exe "%PROJ_DIR%\%SUBMODEL_NAME%.sln" /p:Configuration=%buildconfig%;Platform=x64 /t:Build /verbosity:minimal
-  ) ELSE (
-    ECHO Compiling 20-sim FMU for submodel "%SUBMODEL_NAME%"
-    msbuild.exe "%PROJ_DIR%\%SUBMODEL_NAME%.vcxproj" /p:Configuration=%buildconfig% /t:Build /verbosity:minimal
+  ECHO Compiling 20-sim FMU for submodel "%SUBMODEL_NAME%"
+  msbuild.exe "%PROJ_DIR%\%SUBMODEL_NAME%.vcxproj" /p:Configuration=%buildconfig%;Platform=win32 /t:Build /verbosity:minimal
+  IF %BUILD_X64%==1 (
     msbuild.exe "%PROJ_DIR%\%SUBMODEL_NAME%.vcxproj" /p:Configuration=%buildconfig%;Platform=x64 /t:Build /verbosity:minimal
   )
 
@@ -211,11 +213,13 @@ IF DEFINED VSVARS32 (
 :MAKE_FMI
   cd %CURPATH%
   if not exist "%BIN32_DIR%" mkdir "%BIN32_DIR%"
-  if not exist "%BIN64_DIR%" mkdir "%BIN64_DIR%"
   ECHO Copy the compiled DLL %PROJ_DIR%\Win32\%buildconfig%\%DLL% to %BIN32_DIR%
   copy "%PROJ_DIR%\Win32\%buildconfig%\%DLL%" "%BIN32_DIR%"
-  ECHO Copy the compiled DLL %PROJ_DIR%\x64\%buildconfig%\%DLL% to %BIN64_DIR%
-  copy "%PROJ_DIR%\x64\%buildconfig%\%DLL%" "%BIN64_DIR%"
+  IF %BUILD_X64%==1 (
+    if not exist "%BIN64_DIR%" mkdir "%BIN64_DIR%"
+    ECHO Copy the compiled DLL %PROJ_DIR%\x64\%buildconfig%\%DLL% to %BIN64_DIR%
+    copy "%PROJ_DIR%\x64\%buildconfig%\%DLL%" "%BIN64_DIR%"
+  )
 
   ECHO copy the generated sources to %SRC_DIR%
   copy "%ROOTPATH%\src\*.c" "%SRC_DIR%"
