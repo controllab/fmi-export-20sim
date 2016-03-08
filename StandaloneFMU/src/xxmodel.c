@@ -156,6 +156,10 @@ XXString %VARPREFIX%export_names[] = {
 %ENDIF%
 */
 
+#if (%NUMBER_PARAMETERS% > 8192) && defined _MSC_VER
+#pragma optimize("", off)
+#endif
+
 /* this method is called before calculation is possible */
 void %FUNCTIONPREFIX%ModelInitialize (void)
 {
@@ -190,6 +194,9 @@ void %FUNCTIONPREFIX%ModelInitialize (void)
 %INITIALIZE_FAVORITE_VARS%
 %ENDIF%
 }
+#if (%NUMBER_PARAMETERS% > 8192) && defined _MSC_VER
+#pragma optimize("", on)
+#endif
 
 /* This function calculates the initial equations of the model.
  * These equations are calculated before anything else
