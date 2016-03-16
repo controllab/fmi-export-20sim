@@ -43,6 +43,27 @@ XXDouble xx_logarithm_2 =  0.6931471805599453;
 XXDouble xx_logarithm_10 = 2.3025850929940457;
 %ENDIF%
 
+typedef union
+{
+	double m_double;
+	const char* m_char;
+}str2dbl;
+
+XXDouble XXString2Double(const char* argument)
+{
+	str2dbl myConversion;
+	myConversion.m_char = argument;
+	return myConversion.m_double;
+
+}
+
+const char* XXDouble2String(XXDouble argument)
+{
+	str2dbl myConversion;
+	myConversion.m_double = argument;
+	return myConversion.m_char;
+}
+
 /* The 20-sim SIDOPS functions */
 %IF%%NUMBEROF_ABSFUNCTION%
 XXDouble XXAbsolute (XXDouble argument)

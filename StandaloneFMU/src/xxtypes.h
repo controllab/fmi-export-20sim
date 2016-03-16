@@ -68,8 +68,4 @@ typedef struct
 #define XXTRUE  %FMI_PREFIX%True
 #define XXFALSE %FMI_PREFIX%False
 
-/* String defines */
-#define XXString2Double *(XXDouble *)&
-#define XXDouble2String *(XXString *)&
-
 #endif

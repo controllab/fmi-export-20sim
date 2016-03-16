@@ -31,6 +31,10 @@ extern XXBoolean %VARPREFIX%%XX_INITIALIZE%;
 extern XXBoolean %VARPREFIX%major;
 extern XXBoolean %VARPREFIX%stop_simulation;
 
+/* Wrapper functions around strings */
+XXDouble XXString2Double(const char* argument);
+const char* XXDouble2String(XXDouble argument);
+
 /* 20-sim function prototypes */
 %IF%%NUMBEROF_ABSFUNCTION%
 XXDouble XXAbsolute (XXDouble argument);

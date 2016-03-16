@@ -51,6 +51,9 @@
 %IF%%NUMBEROF_DELAYFUNCTION%
 #include <string.h> /* memcpy */
 %ENDIF%
+%IF%%NUMBEROF_DLL_Table2D%
+#include "Table2D.h"
+%ENDIF%
 
 /* the global variables */
 XXDouble %VARPREFIX%start_time = %START_TIME%;
