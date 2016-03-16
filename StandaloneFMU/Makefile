@@ -17,7 +17,8 @@ XXSIM_SOURCES = EulerAngles.c \
 	xxinverse.c \
 	xxmatrix.c \
 	xxmodel.c \
-	xxsubmod.c
+	xxsubmod.c \
+	Table2D.c
 
 FMU_SOURCES = %FMI_PREFIX%Functions.c $(XXSIM_SOURCES)
 
