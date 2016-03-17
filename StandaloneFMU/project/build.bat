@@ -26,9 +26,9 @@ cd %CURPATH%
 SET FMU=%ROOTPATH%\%SUBMODEL_NAME%.fmu
 SET DLL=%SUBMODEL_NAME%.dll
 SET ZIPTOOL=%TEMPLATE_DIR%\bin\7z.exe
-rem Tools found in the 20-sim bin directory (starting from 20-sim 4.6)
-SET XSLTTOOL=%20SIM_DIR%\bin\msxsl.exe
-SET GUIDTOOL=%20SIM_DIR%\bin\GenerateGuid.exe
+rem The Github hosted template includes these two tools in order to support older 20-sim versions
+SET XSLTTOOL=%TEMPLATE_DIR%\bin\msxsl.exe
+SET GUIDTOOL=%TEMPLATE_DIR%\bin\GenerateGuid.exe
 
 set FMU_DIR=%CURPATH%fmu
 set BIN32_DIR=%FMU_DIR%\binaries\win32

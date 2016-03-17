@@ -20,7 +20,7 @@
 
 #include "xxtypes.h"
 #include "xxfuncs.h"
-#include "Table2D.h"
+#include "xxTable2D.h"
 
 static char g_lastError[512];
 
@@ -40,9 +40,9 @@ typedef struct
     XXDouble* data;
 } LookupTable;
 
-/* TODO Create a global variable to hold lookup tables
-LookupTable g_table2dFiles[%NUMBEROF_DLL_Table2D_Table2DInit%]; */
-LookupTable* g_table;
+/* Create a global variable to hold lookup tables */
+LookupTable *g_table2dFiles[%NUMBEROF_DLL_Table2D_Table2DInit%]; 
+static int g_table_count = 0;
 
 LookupTable* LookupTable_create(XXInteger rows, XXInteger columns);
 void LookupTable_destroy(LookupTable* table);
@@ -59,7 +59,11 @@ void Table2D_Initialize()
 void Table2D_Terminate()
 {
     /* Free allocated memory */
-    LookupTable_destroy(g_table);
+	for (int i = 0; i < %NUMBEROF_DLL_Table2D_Table2DInit%; ++i)
+	{
+		LookupTable_destroy(g_table2dFiles[i]);
+		g_table2dFiles[i] = NULL;
+	}
 }
 
 XXString Table2D_LastErrorMessage()
@@ -69,6 +73,13 @@ XXString Table2D_LastErrorMessage()
 
 XXInteger Table2D_Table2DInit(XXDouble* inarr, XXInteger inputs, XXDouble* outarr, XXInteger outputs, XXInteger major)
 {
+	/* is it possible to allocate more tables */
+	if (g_table_count > %NUMBEROF_DLL_Table2D_Table2DInit%)
+	{
+		strncpy(g_lastError, "All tables already allocated", 512);
+		return 1;
+	}
+
     /* Get the input file name */
     const char* filePath = XXDouble2String(inarr[0]);
 
@@ -82,21 +93,38 @@ XXInteger Table2D_Table2DInit(XXDouble* inarr, XXInteger inputs, XXDouble* outar
 
     /* TODO Add to global variable of lookup tables */
     int rows, cols;
-    if (!count_data_dimensions(fStream, &rows, &cols)){
+    if (!count_data_dimensions(fStream, &rows, &cols))
+	{
         strncpy(g_lastError, "Invalid data file", 512);
+		/* Clean up */
+		fclose(fStream);
         return 1;
     }
 
     /* Allocate memory for 2D lookup table */
-    g_table = LookupTable_create(rows, cols);
-    if (!LookupTable_populate(g_table, fStream)){
+	g_table2dFiles[g_table_count] = LookupTable_create(rows, cols);
+	/* before updating the table count, first try to populate the table */
+	if (!LookupTable_populate(g_table2dFiles[g_table_count], fStream))
+	{
         strncpy(g_lastError, "Error reading file", 512);
+
+		/* clean this entry */
+		LookupTable_destroy(g_table2dFiles[g_table_count]);
+		g_table2dFiles[g_table_count] = NULL;
+
+		/* Clean up */
+		fclose(fStream);
         return 1;
     }
 
     /* Clean up */
     fclose(fStream);
 
+	/* and return the id */
+	outarr[0] = g_table_count;
+
+	/* and mark the next empty count*/
+	g_table_count++;
     return 0;
 }
 
@@ -119,6 +147,9 @@ XXInteger Table2D_TableRead(XXDouble* inarr, XXInteger inputs, XXDouble* outarr,
 	XXDouble a, b, c;
 	XXDouble leftTop, leftBottom, rightTop, rightBottom;
 
+	int id;
+	LookupTable *theTable;
+
 	if (inputs != 3)
 	{
 		strncpy(g_lastError, "Wrong input values for reading 2D table", 512);
@@ -129,12 +160,24 @@ XXInteger Table2D_TableRead(XXDouble* inarr, XXInteger inputs, XXDouble* outarr,
 		strncpy(g_lastError, "Wrong output values for reading 2D table", 512);
 		return 1;
 	}
+	id = (int)inarr[0];
+	if (id < 0 || id > 1) // check for correct id.
+	{
+		strncpy(g_lastError, "Incorrect id passed", 512);
+		return 1;
+	}
+	theTable = g_table2dFiles[id];
+	if (theTable == NULL)
+	{
+		strncpy(g_lastError, "No table allocated yet", 512);
+		return 1;
+	}
 
 	xValue = inarr[2];
 	yValue = inarr[1];
 
-	posX = findPosition(xValue, g_table->xValues, g_table->nColumns);
-	posY = findPosition(yValue, g_table->yValues, g_table->nRows);
+	posX = findPosition(xValue, theTable->xValues, theTable->nColumns);
+	posY = findPosition(yValue, theTable->yValues, theTable->nRows);
 
 	tableCase = 0;
 	if (posY < 0)
@@ -143,19 +186,19 @@ XXInteger Table2D_TableRead(XXDouble* inarr, XXInteger inputs, XXDouble* outarr,
 		if (posX < 0)
 			tableCase = 1;	/* left top */
 		else
-			if (posX >= g_table->nColumns)
+			if (posX >= theTable->nColumns)
 				tableCase = 3; /* mid top */
 			else
 				tableCase = 2; /* mid top*/
 	}
 	else {
-		if (posY >= g_table->nRows)
+		if (posY >= theTable->nRows)
 		{
 			/* at bottom */
 			if (posX < 0)
 				tableCase = 7;	/* left top */
 			else
-				if (posX >= g_table->nColumns)
+				if (posX >= theTable->nColumns)
 					tableCase = 9; /* mid top */
 				else
 					tableCase = 8; /* mid top*/
@@ -165,7 +208,7 @@ XXInteger Table2D_TableRead(XXDouble* inarr, XXInteger inputs, XXDouble* outarr,
 			if (posX < 0)
 				tableCase = 4;	/* left top */
 			else
-				if (posX >= g_table->nColumns)
+				if (posX >= theTable->nColumns)
 					tableCase = 6; /* mid top */
 				else
 					tableCase = 5; /* mid top*/
@@ -176,34 +219,34 @@ XXInteger Table2D_TableRead(XXDouble* inarr, XXInteger inputs, XXDouble* outarr,
 	{
 		case 1: /* left top */
 				/* return the left top value */
-				outarr[0] = LookupTable_element(g_table, 0, 0);
+			outarr[0] = LookupTable_element(theTable, 0, 0);
 				break;
 		case 2: /* mid top */
 				/* interpolate the top two column values*/
-				a = LookupTable_element(g_table, 0, posX);
-				b = LookupTable_element(g_table, 0, posX + 1);
-				c = calcDistance(xValue, posX, g_table->xValues, g_table->nColumns);
+				a = LookupTable_element(theTable, 0, posX);
+				b = LookupTable_element(theTable, 0, posX + 1);
+				c = calcDistance(xValue, posX, theTable->xValues, theTable->nColumns);
 				outarr[0] = (1.0 - c) * a + c * b;
 				break;
 		case 3: /* right top */
 				/* return the right top value */
-				outarr[0] = LookupTable_element(g_table, 0, g_table->nColumns - 1);
+			outarr[0] = LookupTable_element(theTable, 0, theTable->nColumns - 1);
 				break;
 		case 4: /* left mid */
 				/* interpolate the left two rows values*/
-				a = LookupTable_element(g_table, posY, 0);
-				b = LookupTable_element(g_table, posY + 1, 0);
-				c = calcDistance(yValue, posY, g_table->yValues, g_table->nRows);
+				a = LookupTable_element(theTable, posY, 0);
+				b = LookupTable_element(theTable, posY + 1, 0);
+				c = calcDistance(yValue, posY, theTable->yValues, theTable->nRows);
 				outarr[0] = (1.0 - c) * a + c * b;
 				break;
 		case 5: /* mid mid */
 				/* this is the normal case inside the table */
-				leftTop = LookupTable_element(g_table, posY, posX);
-				rightTop = LookupTable_element(g_table, posY, posX + 1);
-				leftBottom = LookupTable_element(g_table, posY + 1, posX);
-				rightBottom = LookupTable_element(g_table, posY + 1, posX + 1);
-				a = calcDistance(xValue, posX, g_table->xValues, g_table->nColumns);
-				b = calcDistance(yValue, posY, g_table->yValues, g_table->nRows);
+				leftTop = LookupTable_element(theTable, posY, posX);
+				rightTop = LookupTable_element(theTable, posY, posX + 1);
+				leftBottom = LookupTable_element(theTable, posY + 1, posX);
+				rightBottom = LookupTable_element(theTable, posY + 1, posX + 1);
+				a = calcDistance(xValue, posX, theTable->xValues, theTable->nColumns);
+				b = calcDistance(yValue, posY, theTable->yValues, theTable->nRows);
 							
 				outarr[0] = (1.0 - a) * (1.0 - b) * leftTop +
 								   a  * (1.0 - b) * rightTop +
@@ -212,25 +255,25 @@ XXInteger Table2D_TableRead(XXDouble* inarr, XXInteger inputs, XXDouble* outarr,
 				break;
 		case 6: /* right mid */
 				/* interpolate the right two rows values*/
-				a = LookupTable_element(g_table, posY, g_table->nColumns - 1);
-				b = LookupTable_element(g_table, posY + 1, g_table->nColumns - 1);
-				c = calcDistance(yValue, posY, g_table->yValues, g_table->nRows);
+				a = LookupTable_element(theTable, posY, theTable->nColumns - 1);
+				b = LookupTable_element(theTable, posY + 1, theTable->nColumns - 1);
+				c = calcDistance(yValue, posY, theTable->yValues, theTable->nRows);
 				outarr[0] = (1.0 - c) * a + c * b;
 				break;
 		case 7: /* left bottom */
 				/* return the left bottom value */
-				outarr[0] = LookupTable_element(g_table, g_table->nRows - 1, 0);
+				outarr[0] = LookupTable_element(theTable, theTable->nRows - 1, 0);
 				break;
 		case 8: /* mid bottom */
 				/* interpolate the top bottom column values*/
-				a = LookupTable_element(g_table, g_table->nRows - 1, posX);
-				b = LookupTable_element(g_table, g_table->nRows - 1, posX + 1);
-				c = calcDistance(xValue, posX, g_table->xValues, g_table->nColumns);
+				a = LookupTable_element(theTable, theTable->nRows - 1, posX);
+				b = LookupTable_element(theTable, theTable->nRows - 1, posX + 1);
+				c = calcDistance(xValue, posX, theTable->xValues, theTable->nColumns);
 				outarr[0] = (1.0 - c) * a + c * b;
 				break;
 		case 9: /* right bottom */
 				/* return the right bottom value */
-				outarr[0] = LookupTable_element(g_table, g_table->nRows - 1, g_table->nColumns - 1);
+				outarr[0] = LookupTable_element(theTable, theTable->nRows - 1, theTable->nColumns - 1);
 				break;
 		default:
 			outarr[0] = 0.0;
@@ -241,7 +284,7 @@ XXInteger Table2D_TableRead(XXDouble* inarr, XXInteger inputs, XXDouble* outarr,
 
 LookupTable* LookupTable_create(XXInteger rows, XXInteger columns)
 {
-    LookupTable* table = malloc(sizeof(LookupTable));
+    LookupTable* table = (LookupTable*)malloc(sizeof(LookupTable));
     table->nRows = rows;
     table->nColumns = columns;
     table->xValues = (XXDouble*) malloc(columns * sizeof(XXDouble));
@@ -253,9 +296,12 @@ LookupTable* LookupTable_create(XXInteger rows, XXInteger columns)
 
 void LookupTable_destroy(LookupTable* table)
 {
-	free(table->data);
-	free(table->yValues);
-	free(table->xValues);
+	if (table == NULL)
+		return;
+
+	if (table->data != NULL ) free(table->data);
+	if (table->yValues != NULL) free(table->yValues);
+	if (table->xValues != NULL) free(table->xValues);
     free(table);
 }
 
@@ -299,6 +345,10 @@ XXBoolean count_data_dimensions(FILE* fp, XXInteger* rows, XXInteger* columns)
     do
     {
         c = fgetc(fp);
+		if (c == EOF)
+		{
+			break;
+		}
         if (ferror(fp))
 		{
             return XXFALSE;

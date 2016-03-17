@@ -52,7 +52,7 @@
 #include <string.h> /* memcpy */
 %ENDIF%
 %IF%%NUMBEROF_DLL_Table2D%
-#include "Table2D.h"
+#include "xxTable2D.h"
 %ENDIF%
 
 /* the global variables */
@@ -162,7 +162,6 @@ XXString %VARPREFIX%export_names[] = {
 #if (%NUMBER_PARAMETERS% > 8192) && defined _MSC_VER
 #pragma optimize("", off)
 #endif
-
 /* this method is called before calculation is possible */
 void %FUNCTIONPREFIX%ModelInitialize (void)
 {
