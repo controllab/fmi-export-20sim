@@ -213,6 +213,7 @@
 				<xsl:when test="string($modelvariable/kind)='constant'">constant</xsl:when>
 				<xsl:when test="string(document(concat($SOURCEDIRECTORY, '\tokens.xml'))/tokens/token[@name='MODEL_IS_DISCRETE']) = 'XXTRUE'">discrete</xsl:when>
 				<xsl:when test="string($modelvariable/type)='boolean'">discrete</xsl:when>
+				<xsl:when test="string($modelvariable/type)='integer'">discrete</xsl:when>
 				<xsl:otherwise>continuous</xsl:otherwise>
 			</xsl:choose>
 		</xsl:attribute>
