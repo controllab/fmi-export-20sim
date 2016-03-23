@@ -141,23 +141,22 @@
 					<xsl:attribute name="canBeInstantiatedOnlyOncePerProcess">true</xsl:attribute>
 					<xsl:attribute name="canNotUseMemoryManagementFunctions">true</xsl:attribute>
 				</xsl:element>
-			</xsl:element>		
+			</xsl:element>
 		</xsl:element>
 %ENDIF%
 %IF%%FMI2%
 		<xsl:element name="ModelStructure">
 			<xsl:if test="modelVariables/modelVariable[string(kind) = 'output']">
 				<xsl:element name="Outputs">
-					<xsl:for-each select="modelVariables/modelVariable[string(kind) = 'output']">
-						<!-- Add 1-based index to the corresponding model variable -->
-						<xsl:element name="Unknown">
-							<xsl:attribute name="index">
-								<xsl:value-of select="count(preceding-sibling::modelVariable) + 1" />
-							</xsl:attribute>
-						</xsl:element>	
-					</xsl:for-each>				
-				</xsl:element>			
-			</xsl:if>			
+					<xsl:for-each select="modelVariables/modelVariable[string(type) = 'real' or string(type) = 'integer' or string(type) = 'boolean']">
+						<xsl:call-template name="OutputsUnknown">
+							<xsl:with-param name="modelvariable" select="."/>
+							<xsl:with-param name="isArray" select="boolean(size and (number(size/rows) > 1 or number(size/columns) > 1)) "/>
+							<xsl:with-param name="index" select="0"/>
+						</xsl:call-template>
+					</xsl:for-each>
+				</xsl:element>
+			</xsl:if>
 		</xsl:element>
 %ENDIF%
 		
@@ -237,7 +236,7 @@
 %IF%%FMI1%
 		<xsl:if test="$modelvariable/aliasOf">
 			<xsl:attribute name="alias">alias</xsl:attribute>
-		</xsl:if>		
+		</xsl:if>
 %ENDIF%
 		<!-- end of attributes assignment -->
 	
@@ -269,9 +268,20 @@
 				</xsl:attribute>
 			</xsl:if>
 %ENDIF%
-
 		</xsl:element>
 	</xsl:element>
+	<!-- Debug code that prints the index number of all scalar variables
+	<xsl:comment>
+		<xsl:text> index = </xsl:text>
+		<xsl:call-template name="scalarVariableIndex">
+			<xsl:with-param name="modelvariables" select="preceding-sibling::modelVariable"/>
+			<xsl:with-param name="counter" select="position()"/>
+			<xsl:with-param name="index" select="$index"/>
+			<xsl:with-param name="prevcount" select="0"/>
+		</xsl:call-template>
+		<xsl:text> </xsl:text>
+	</xsl:comment>
+	//-->
 
 	<!-- In case of an array, retrieve the next variable -->
 	<xsl:if test="$isArray and number($index + 1) &lt; number($modelvariable/size/rows) * number($modelvariable/size/columns)">
@@ -280,6 +290,87 @@
 			<xsl:with-param name="isArray" select="$isArray"/>
 			<xsl:with-param name="index" select="number($index + 1)"/>
 		</xsl:call-template>
+	</xsl:if>
+</xsl:template>
+
+<!-- Calculate the index of the ScalarVariable based on the sum of the size of all previous ScalarVariables recursively
+	@modelVariables	The list with model variables upto this point
+	@counter		Current index in the modelVariables array
+	@prevcount      Where to start counting
+	@index			The index within the array. Zero for scalar variables
+-->
+<xsl:template name="scalarVariableIndex">
+	<xsl:param name="modelvariables" />
+	<xsl:param name="counter" />
+	<xsl:param name="prevcount" />
+	<xsl:param name="index" />
+
+	<xsl:choose>
+		<xsl:when test="$modelvariables[$counter]/size">
+			<!-- call template again if the preceding set is not zero //-->
+			<xsl:choose>
+				<xsl:when test="$counter > 1">
+					<xsl:call-template name="scalarVariableIndex">
+						<xsl:with-param name="modelvariables" select="$modelvariables"/>
+						<xsl:with-param name="counter" select="number($counter - 1)"/>
+						<xsl:with-param name="index" select="$index"/>
+						<xsl:with-param name="prevcount" select="$prevcount + ($modelvariables[$counter]/size/columns * $modelvariables[$counter]/size/rows) + $index"/>
+					</xsl:call-template>
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:value-of select="$prevcount + ($modelvariables[$counter]/size/columns * $modelvariables[$counter]/size/rows)"/>
+				</xsl:otherwise>
+			</xsl:choose>
+		</xsl:when>
+		<xsl:otherwise>
+			<!-- call template again if the preceding set is not zero //-->
+			<xsl:choose>
+				<xsl:when test="$counter > 1">
+					<xsl:call-template name="scalarVariableIndex">
+						<xsl:with-param name="modelvariables" select="$modelvariables"/>
+						<xsl:with-param name="counter" select="number($counter - 1)"/>
+						<xsl:with-param name="index" select="$index"/>
+						<xsl:with-param name="prevcount" select="$prevcount + 1"/>
+					</xsl:call-template>
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:value-of select="$prevcount + 1 + $index"/>
+				</xsl:otherwise>
+			</xsl:choose>
+		</xsl:otherwise>
+	</xsl:choose>
+</xsl:template>
+
+<!-- Put the indices of the output scalars also in the unknown
+	@modelVariable	The model variable
+	@isArray		Boolean indicating if the current variable is an array
+	@index			The index within the array. Zero for scalar variables
+-->
+<xsl:template name="OutputsUnknown">
+	<xsl:param name="modelvariable"/>
+	<xsl:param name="isArray"/>
+	<xsl:param name="index"/>
+
+	<xsl:if test="kind = 'output'">
+		<!-- Add 1-based index to the corresponding model variable -->
+		<xsl:element name="Unknown">
+			<xsl:attribute name="index">
+				<xsl:call-template name="scalarVariableIndex">
+					<xsl:with-param name="modelvariables" select="preceding-sibling::modelVariable"/>
+					<xsl:with-param name="counter" select="position()"/>
+					<xsl:with-param name="index" select="$index"/>
+					<xsl:with-param name="prevcount" select="0"/>
+				</xsl:call-template>
+			</xsl:attribute>
+		</xsl:element>
+		<!-- In case of an output array, retrieve the next element of this output -->
+		<xsl:if test="$isArray and number($index + 1) &lt; number($modelvariable/size/rows) * number($modelvariable/size/columns)">
+			<xsl:call-template name="OutputsUnknown">
+				<xsl:with-param name="modelvariable" select="$modelvariable"/>
+				<xsl:with-param name="isArray" select="$isArray"/>
+				<xsl:with-param name="index" select="number($index + 1)"/>
+			</xsl:call-template>
+		</xsl:if>
 	</xsl:if>
 </xsl:template>
 
