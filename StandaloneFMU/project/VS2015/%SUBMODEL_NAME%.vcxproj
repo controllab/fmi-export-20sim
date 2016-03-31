@@ -245,7 +245,7 @@
     <ClInclude Include="..\..\src\fmi2FunctionTypes.h" />
     <ClInclude Include="..\..\src\fmi2TypesPlatform.h" />
 %ENDIF%
-	<ClInclude Include="..\..\src\fmiGUID.h" />
+    <ClInclude Include="..\..\src\fmiGUID.h" />
     <ClInclude Include="..\..\src\xxTable2D.h" />
   </ItemGroup>
   <ItemGroup>
