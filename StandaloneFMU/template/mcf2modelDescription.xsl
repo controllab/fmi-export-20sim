@@ -101,7 +101,7 @@
 			<xsl:attribute name="canInterpolateInputs">false</xsl:attribute>
 			<xsl:attribute name="maxOutputDerivativeOrder">0</xsl:attribute>
 			<xsl:attribute name="canRunAsynchronuously">false</xsl:attribute>
-			<xsl:attribute name="canBeInstantiatedOnlyOncePerProcess">false</xsl:attribute>
+			<xsl:attribute name="canBeInstantiatedOnlyOncePerProcess">true</xsl:attribute>
 			<xsl:attribute name="canNotUseMemoryManagementFunctions">true</xsl:attribute>
 			<xsl:attribute name="canGetAndSetFMUstate">false</xsl:attribute>
 			<xsl:attribute name="canSerializeFMUstate">false</xsl:attribute>
