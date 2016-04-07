@@ -34,6 +34,7 @@ current_dir = $(shell pwd)
 ifeq ($(OS),Windows_NT)
 	# Windows
 	WINDOWS=1
+	DEFINES=-DWIN32
 	# For now, assume 32-bit
 	# TODO detect MinGW 64
 	OS_BITS=32
@@ -43,11 +44,13 @@ else
 	# Other OS (Linux/MacOSX)
 	ifeq ($(shell uname), Linux)
 		LINUX=1
+		DEFINES=-DLINUX
 		DLL_EXT=so
 		BUILD_DLL=-shared
 	endif
 	ifeq ($(shell uname), Darwin)
 		MACOSX=1
+		DEFINES=-DMACOSX
 		DLL_EXT=so
 		BUILD_DLL=-dynamiclib
 	endif
@@ -74,10 +77,10 @@ ifeq ($(MACOSX),1)
 endif
 
 ifeq ($(MAKECMDGOALS),debug)
-  CFLAGS=-g -DDEBUG -fPIC
+  CFLAGS=-g -DDEBUG $(DEFINES) -fPIC
   DEBUG=1
 else
-  CFLAGS=-O2 -Wall -fPIC
+  CFLAGS=-O2 -Wall  $(DEFINES) -fPIC
   DEBUG=0
 endif
 

@@ -71,8 +71,18 @@ XXString Table2D_LastErrorMessage()
     return g_lastError;
 }
 
+%IF%%FMI2%
+extern const char* g_fmuResourceLocation;
+%ENDIF%
+
+#define MAX_FILENAME_LEN 2048
+
 XXInteger Table2D_Table2DInit(XXDouble* inarr, XXInteger inputs, XXDouble* outarr, XXInteger outputs, XXInteger major)
 {
+%IF%%FMI2%
+	char fileName[MAX_FILENAME_LEN];
+	fileName[MAX_FILENAME_LEN - 1] = '\0';
+%ENDIF%
 	/* is it possible to allocate more tables */
 	if (g_table_count > %NUMBEROF_DLL_Table2D_Table2DInit%)
 	{
@@ -80,33 +90,54 @@ XXInteger Table2D_Table2DInit(XXDouble* inarr, XXInteger inputs, XXDouble* outar
 		return 1;
 	}
 
-    /* Get the input file name */
-    const char* filePath = XXDouble2String(inarr[0]);
+	/* Get the input file name */
+	const char* filePath = XXDouble2String(inarr[0]);
 
-    /* Try to open data file */
-    FILE* fStream = fopen(filePath, "r");
-    if (fStream == NULL)
-    {
-        strncpy(g_lastError, "Error opening file", 512);
-        return 1;
-    }
-
-    /* TODO Add to global variable of lookup tables */
-    int rows, cols;
-    if (!count_data_dimensions(fStream, &rows, &cols))
+	/* Try to open data file */
+%IF%%FMI2%
+	/* Use the FMU resources folder as base path */
+	if (strlen(g_fmuResourceLocation) > 0)
 	{
-        strncpy(g_lastError, "Invalid data file", 512);
+		strncpy(fileName, g_fmuResourceLocation, MAX_FILENAME_LEN - 1);
+	}
+
+	/* Get rid of the absolute path of the data file
+	 * 20-sim will always store a Windows oriented path, so we need to check
+	 * for the backslash here
+	 */
+	char* pch = strrchr(g_fmuResourceLocation, '\\');
+	if (pch != NULL)
+		filePath = ++pch;
+
+	/* Add the filename */
+	strncat(fileName, filePath, MAX_FILENAME_LEN - 1);
+	/* and open the file */
+	FILE* fStream = fopen(fileName, "r");
+%ELSE%
+	FILE* fStream = fopen(filePath, "r");
+%ENDIF%
+	if (fStream == NULL)
+	{
+		strncpy(g_lastError, "Error opening file", 512);
+		return 1;
+	}
+
+	/* TODO Add to global variable of lookup tables */
+	int rows, cols;
+	if (!count_data_dimensions(fStream, &rows, &cols))
+	{
+		strncpy(g_lastError, "Invalid data file", 512);
 		/* Clean up */
 		fclose(fStream);
-        return 1;
-    }
+		return 1;
+	}
 
-    /* Allocate memory for 2D lookup table */
+	/* Allocate memory for 2D lookup table */
 	g_table2dFiles[g_table_count] = LookupTable_create(rows, cols);
 	/* before updating the table count, first try to populate the table */
 	if (!LookupTable_populate(g_table2dFiles[g_table_count], fStream))
 	{
-        strncpy(g_lastError, "Error reading file", 512);
+		strncpy(g_lastError, "Error reading file", 512);
 
 		/* clean this entry */
 		LookupTable_destroy(g_table2dFiles[g_table_count]);
@@ -114,18 +145,18 @@ XXInteger Table2D_Table2DInit(XXDouble* inarr, XXInteger inputs, XXDouble* outar
 
 		/* Clean up */
 		fclose(fStream);
-        return 1;
-    }
+		return 1;
+	}
 
-    /* Clean up */
-    fclose(fStream);
+	/* Clean up */
+	fclose(fStream);
 
 	/* and return the id */
 	outarr[0] = g_table_count;
 
 	/* and mark the next empty count*/
 	g_table_count++;
-    return 0;
+	return 0;
 }
 
 XXInteger Table2D_TableRead(XXDouble* inarr, XXInteger inputs, XXDouble* outarr, XXInteger outputs, XXInteger major)

@@ -42,8 +42,89 @@
 %IF%%FMI2%
 /* Global pointer to co-simulator callback functions */
 const fmi2CallbackFunctions* g_fmiCallbackFunctions = NULL;
-%ENDIF%
 
+/* Store the path to the extracted resource folder location provided by the
+ * co-simulation engine
+ */
+const char* g_fmuResourceLocation = NULL;
+
+#if defined WIN32 || defined WIN64
+static const char native_path_separator = '\\';
+static const char foreign_path_separator = '/';
+#else
+static const char native_path_separator = '/';
+static const char foreign_path_separator = '\\';
+#endif
+
+/**
+ * Convert an uri provided by the the co-simulator to a native path
+ * @param uri Input path. native and file:/ and file:/// uri's right now
+ * @return Natve path that ends with a path separator.
+ * Note that the caller is responsible for free-ing the allocated string buffer
+ * memory
+ */
+const char* URIToNativePath(const char* uri)
+{
+	const char* path_start = NULL;
+	char* retval = NULL;
+	int path_len = 0;
+	char* pch = NULL;
+
+	path_len = (int) strlen(uri);
+
+	if (path_len == 0)
+		return NULL;
+
+	/* Check if we got a file:/// uri */
+	if (strncmp(uri, "file:///", 8) == 0)
+	{
+		path_start = &uri[8];
+	}
+	/* Check if we got a file:/ uri */
+	else if (strncmp(uri, "file:/", 6) == 0)
+	{
+		path_start = &uri[6];
+	}
+	/* Assume that it is a native path */
+	else
+	{
+		path_start = uri;
+	}
+
+	/* Check the length of the remaining string */
+	path_len = (int) strlen(path_start);
+	if (path_len == 0)
+		return NULL;
+
+	/* Allocate memory for the return value including terminating \0 and extra path separator */
+	retval = (char*) malloc(path_len + 2);
+	/* Copy the remainder of the uri */
+	strncpy(retval, path_start, path_len);
+
+	/* Translate slashes to backslashes on Windows and backslashes to slashes on other OSses */
+	pch = strchr(retval, foreign_path_separator);
+	while(pch != NULL)
+	{
+		*pch = native_path_separator;
+		pch = strchr(retval, foreign_path_separator);
+	}
+
+	/* Check if we need to add a path separator at the end */
+	if (retval[path_len - 1] == native_path_separator)
+	{
+		retval[path_len] = '\0';
+	}
+	else
+	{
+		retval[path_len] = native_path_separator;
+	}
+	/* Make sure that the string is always NULL terminated */
+	retval[path_len + 1] = '\0';
+
+	return retval;
+}
+
+%ENDIF%
 /* Inquire version numbers of header files */
 FMI_Dll_Export const char* %FMI_PREFIX%GetTypesPlatform()
 {
@@ -231,6 +312,10 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 	{
 		/* Register the callback */
 		g_fmiCallbackFunctions = functions;
+		/* Remember the resource folder location */
+		if (g_fmuResourceLocation != NULL)
+			free((void*)g_fmuResourceLocation);
+		g_fmuResourceLocation = URIToNativePath(fmuResourceLocation);
 	}
 	
 	/* Check whether the given GUID equals our GUID */
@@ -313,6 +398,8 @@ fmi2Status fmi2Terminate(fmi2Component c)
 {
 	/* Perform the final calculations */
 	%FUNCTIONPREFIX%TerminateSubmodel (%VARPREFIX%%XX_TIME%);
+
+	free((void*)g_fmuResourceLocation);
 
     /* all done */
     return %FMI_PREFIX%OK;
