@@ -30,11 +30,15 @@ rem The Github hosted template includes these two tools in order to support olde
 SET XSLTTOOL=%TEMPLATE_DIR%\bin\msxsl.exe
 SET GUIDTOOL=%TEMPLATE_DIR%\bin\GenerateGuid.exe
 
+SET PYTHON="C:\ProgramData\Controllab Products B.V\Python34\python.exe"
+SET RESOURCES_SCRIPT=%TEMPLATE_DIR%\bin\include_resources.py
+
 set FMU_DIR=%CURPATH%fmu
 set BIN32_DIR=%FMU_DIR%\binaries\win32
 set BIN64_DIR=%FMU_DIR%\binaries\win64
 set SRC_DIR=%FMU_DIR%\sources
 set DOC_DIR=%FMU_DIR%\documentation
+set RES_DIR=%FMU_DIR%\resources
 
 ECHO ------------------------------------------------------------
 ECHO 20-sim standalone co-simulation FMU export for '%SUBMODEL_NAME%'
@@ -43,6 +47,7 @@ ECHO Creating an empty FMU
 if not exist "%FMU_DIR%" mkdir "%FMU_DIR%"
 if not exist "%SRC_DIR%" mkdir "%SRC_DIR%"
 if not exist "%DOC_DIR%" mkdir "%DOC_DIR%"
+if not exist "%RES_DIR%" mkdir "%RES_DIR%"
 
 REM Generate a new GUID
 REM -------------------
@@ -67,6 +72,14 @@ FOR /f "tokens=*" %%g IN (%ROOTPATH%\src\guid.txt) DO (
 
 ECHO Generating the modelDescription.xml
 "%XSLTTOOL%"  "%ROOTPATH%\src\ModelConfiguration.xml" "%ROOTPATH%\template\mcf2modelDescription.xsl" -o "%FMU_DIR%\modelDescription.xml" SOURCEDIRECTORY="%ROOTPATH%\src"
+
+ECHO Collecting resources
+IF EXIST %PYTHON% (
+	start %PYTHON% %RESOURCES_SCRIPT% "%ROOTPATH%\src\ModelConfiguration.xml" "%RES_DIR%"
+) ELSE (
+	ECHO Unable to collect resources. Could not find Python in %PYTHON%
+	ECHO Please re-install 20-sim 4.6 with Python support enabled.
+)
 
 ECHO ------------------------------------------------------------
 ECHO Searching for Visual C++ compiler...
