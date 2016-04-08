@@ -31,7 +31,7 @@ SET XSLTTOOL=%TEMPLATE_DIR%\bin\msxsl.exe
 SET GUIDTOOL=%TEMPLATE_DIR%\bin\GenerateGuid.exe
 
 SET PYTHON="C:\ProgramData\Controllab Products B.V\Python34\python.exe"
-SET RESOURCES_SCRIPT=%TEMPLATE_DIR%\bin\include_resources.py
+SET RESOURCES_SCRIPT="%TEMPLATE_DIR%\bin\include_resources.py"
 
 set FMU_DIR=%CURPATH%fmu
 set BIN32_DIR=%FMU_DIR%\binaries\win32
