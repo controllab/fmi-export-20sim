@@ -105,7 +105,7 @@ XXInteger Table2D_Table2DInit(XXDouble* inarr, XXInteger inputs, XXDouble* outar
 	 * 20-sim will always store a Windows oriented path, so we need to check
 	 * for the backslash here
 	 */
-	char* pch = strrchr(g_fmuResourceLocation, '\\');
+	char* pch = strrchr(filePath, '\\');
 	if (pch != NULL)
 		filePath = ++pch;
 
