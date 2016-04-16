@@ -129,20 +129,20 @@ const char* URIToNativePath(const char* uri)
 FMI_Dll_Export const char* %FMI_PREFIX%GetTypesPlatform()
 {
 %IF%%FMI1%
-    return fmiPlatform;
+	return fmiPlatform;
 %ENDIF%
 %IF%%FMI2%
-    return fmi2TypesPlatform;
+	return fmi2TypesPlatform;
 %ENDIF%
 }
 FMI_Dll_Export const char* %FMI_PREFIX%GetVersion()
 {
-    return %FMI_PREFIX%Version;
+	return %FMI_PREFIX%Version;
 }
 %IF%%FMI1%
 FMI_Dll_Export fmiStatus fmiSetDebugLogging  (fmiComponent c, fmiBoolean loggingOn)
 {
-    return fmiOK;       /* not yet */
+	return fmiOK;       /* not yet */
 }
 %ENDIF%
 %IF%%FMI2%
@@ -150,7 +150,7 @@ FMI_Dll_Export fmi2Status fmi2SetDebugLogging  (fmi2Component c, fmi2Boolean log
 											size_t nCategories,
 											const fmi2String categories[])
 {
-    return fmi2OK;       /* not yet */
+	return fmi2OK;       /* not yet */
 }
 %ENDIF%
 /* Data Exchange Functions*/
@@ -158,12 +158,12 @@ FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%GetReal(%FMI_PREFIX%Component c,
 									 const %FMI_PREFIX%ValueReference vr[],
 									 size_t nvr, %FMI_PREFIX%Real value[])
 {
-    size_t i;
-    for (i = 0; i < nvr; i++)
-    {
-        value [i] = %VARPREFIX%MEMORY[ vr[i] ];
-    }
-    return %FMI_PREFIX%OK;
+	size_t i;
+	for (i = 0; i < nvr; i++)
+	{
+		value [i] = %VARPREFIX%MEMORY[ vr[i] ];
+	}
+	return %FMI_PREFIX%OK;
 }
 FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%GetInteger(%FMI_PREFIX%Component c,
 								const %FMI_PREFIX%ValueReference vr[],
@@ -172,12 +172,12 @@ FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%GetInteger(%FMI_PREFIX%Component c
 {
 	/* 20-sim generated C-code uses doubles for the model equation calculations. The variable type (i.e. integer or boolean) are not supported as data type, but are transfered to doubles. In the FMI interface however, the double can be converted to its implicit type  */
 	
-    size_t i;
-    for (i = 0; i < nvr; i++)
-    {
-        value [i] = (%FMI_PREFIX%Integer) %VARPREFIX%MEMORY[ vr[i] ];
-    }
-    return %FMI_PREFIX%OK;
+	size_t i;
+	for (i = 0; i < nvr; i++)
+	{
+		value [i] = (%FMI_PREFIX%Integer) %VARPREFIX%MEMORY[ vr[i] ];
+	}
+	return %FMI_PREFIX%OK;
 }
 FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%GetBoolean(%FMI_PREFIX%Component c,
 								const %FMI_PREFIX%ValueReference vr[],
@@ -186,19 +186,19 @@ FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%GetBoolean(%FMI_PREFIX%Component c
 {
 	/* 20-sim generated C-code uses doubles for the model equation calculations. The variable type (i.e. integer or boolean) are not supported as data type, but are transfered to doubles. In the FMI interface however, the double can be converted to its implicit type  */
 	
-    size_t i;
-    for (i = 0; i < nvr; i++)
-    {
-        value [i] = (%VARPREFIX%MEMORY[ vr[i] ] == 1.0);
-    }
-    return %FMI_PREFIX%OK;
+	size_t i;
+	for (i = 0; i < nvr; i++)
+	{
+		value [i] = (%VARPREFIX%MEMORY[ vr[i] ] == 1.0);
+	}
+	return %FMI_PREFIX%OK;
 }
 FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%GetString(%FMI_PREFIX%Component c,
 								const %FMI_PREFIX%ValueReference vr[],
 								size_t nvr,
 								%FMI_PREFIX%String value[])
 {
-    return %FMI_PREFIX%Error;    /* not yet */
+	return %FMI_PREFIX%Error;    /* not yet */
 }
 
 FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%SetReal(%FMI_PREFIX%Component c,
@@ -206,12 +206,12 @@ FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%SetReal(%FMI_PREFIX%Component c,
 								size_t nvr,
 								const %FMI_PREFIX%Real value[])
 {
-    size_t i;
-    for (i = 0; i < nvr; i++)
-    {
-        %VARPREFIX%MEMORY[ vr[i] ] = value [i];
-    }
-    return %FMI_PREFIX%OK;
+	size_t i;
+	for (i = 0; i < nvr; i++)
+	{
+		%VARPREFIX%MEMORY[ vr[i] ] = value [i];
+	}
+	return %FMI_PREFIX%OK;
 }
 
 FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%SetInteger (%FMI_PREFIX%Component c,
@@ -221,12 +221,12 @@ FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%SetInteger (%FMI_PREFIX%Component 
 {
 	/* 20-sim generated C-code uses doubles for the model equation calculations. The variable type (i.e. integer or boolean) are not supported as data type, but are transfered to doubles. In the FMI interface however, the double can be converted to its implicit type  */
 	
-    size_t i;
-    for (i = 0; i < nvr; i++)
-    {
-        %VARPREFIX%MEMORY[ vr[i] ] = (XXDouble) value [i];
-    }
-    return %FMI_PREFIX%OK;
+	size_t i;
+	for (i = 0; i < nvr; i++)
+	{
+		%VARPREFIX%MEMORY[ vr[i] ] = (XXDouble) value [i];
+	}
+	return %FMI_PREFIX%OK;
 }
 FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%SetBoolean(%FMI_PREFIX%Component c,
 								const %FMI_PREFIX%ValueReference vr[],
@@ -246,16 +246,16 @@ FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%SetString(%FMI_PREFIX%Component c,
 								size_t nvr,
 								const %FMI_PREFIX%String  value[])
 {
-    return %FMI_PREFIX%Error;   /* not yet */
+	return %FMI_PREFIX%Error;   /* not yet */
 }
 %IF%%FMI1%
 /* FMI functions for Co-Simulation 1.0 */
 fmiComponent fmiInstantiateSlave(fmiString instanceName,
-								 fmiString GUID,
-								 fmiString fmuLocation,
-								 fmiString mimeType,
-								 fmiReal timeout,
-								 fmiBoolean visible,
+								fmiString GUID,
+								fmiString fmuLocation,
+								fmiString mimeType,
+								fmiReal timeout,
+								fmiBoolean visible,
 								fmiBoolean interactive,
 								fmiCallbackFunctions functions,
 								fmiBoolean loggingOn) 
@@ -263,12 +263,13 @@ fmiComponent fmiInstantiateSlave(fmiString instanceName,
  	/* we should remember the functions pointer in order to make callback functions */
 
 	if (!functions.logger) 
-        return NULL; // we cannot even log this problem
-    if (!instanceName || strlen(instanceName)==0) { 
-        functions.logger(NULL, "?", fmiError, "error",
-                "Missing instance name.");
-        return NULL;
-    }
+		return NULL; // we cannot even log this problem
+	if (!instanceName || strlen(instanceName)==0)
+	{
+		functions.logger(NULL, "?", fmiError, "error",
+				"Missing instance name.");
+		return NULL;
+	}
 
 	/* Check whether the given GUID equals our GUID */
 	if( strncmp(GUID, FMI_GUID, strlen(GUID)) != 0 )
@@ -278,8 +279,8 @@ fmiComponent fmiInstantiateSlave(fmiString instanceName,
 		return NULL;
 	}
 
-    /* only one static instance for now */
-    return (fmiComponent) xxComponent;
+	/* only one static instance for now */
+	return (fmiComponent) xxComponent;
 }
 %ENDIF%
 
@@ -294,20 +295,21 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 {
 	/* we should remember the functions pointer in order to make callback functions */
 
-    if (!functions)
+	if (!functions)
 	{
-        return NULL; // we cannot even log this problem
+		return NULL; // we cannot even log this problem
 	}
 	
-    if (!functions->logger)
+	if (!functions->logger)
 	{
-        return NULL; // we cannot even log this problem
+		return NULL; // we cannot even log this problem
 	}
-    if (!instanceName || strlen(instanceName)==0) { 
-        functions->logger(NULL, "?", fmi2Error, "error",
-                "Missing instance name.");
-        return NULL;
-    }
+	if (!instanceName || strlen(instanceName)==0)
+	{
+		functions->logger(NULL, "?", fmi2Error, "error",
+				"Missing instance name.");
+		return NULL;
+	}
 	else
 	{
 		/* Register the callback */
@@ -333,8 +335,8 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 		return NULL;
 	}
 
-    /* only one static instance for now */
-    return (fmi2Component) xxComponent;
+	/* only one static instance for now */
+	return (fmi2Component) xxComponent;
 }
 %ENDIF%
 %IF%%FMI1%
@@ -343,18 +345,18 @@ fmiStatus fmiInitializeSlave(fmiComponent c,
 							 fmiBoolean StopTimeDefined,
 							 fmiReal tStop) 
 {
-    /* copy the arguments */
-    %VARPREFIX%start_time = tStart;
-    if (StopTimeDefined == fmiTrue) 
-    {
-        %VARPREFIX%finish_time = tStop;
-    }
+	/* copy the arguments */
+	%VARPREFIX%start_time = tStart;
+	if (StopTimeDefined == fmiTrue)
+	{
+		%VARPREFIX%finish_time = tStop;
+	}
 
-    /* initialize the submodel itself */
-    %FUNCTIONPREFIX%InitializeSubmodel (tStart);
+	/* initialize the submodel itself */
+	%FUNCTIONPREFIX%InitializeSubmodel (tStart);
 
-    /* all done */
-    return fmiOK;
+	/* all done */
+	return fmiOK;
 }
 %ENDIF%
 %IF%%FMI2%
@@ -365,28 +367,28 @@ fmi2Status fmi2SetupExperiment(fmi2Component c,
 							fmi2Boolean stopTimeDefined,
 							fmi2Real stopTime)
 {
-    /* copy the arguments */
-    %VARPREFIX%start_time = startTime;
-    if (stopTimeDefined == fmi2True) 
-    {
-        %VARPREFIX%finish_time = stopTime;
-    }
+	/* copy the arguments */
+	%VARPREFIX%start_time = startTime;
+	if (stopTimeDefined == fmi2True)
+	{
+		%VARPREFIX%finish_time = stopTime;
+	}
 
-    /* initialize the submodel itself */
-    %FUNCTIONPREFIX%InitializeSubmodel (startTime);
+	/* initialize the submodel itself */
+	%FUNCTIONPREFIX%InitializeSubmodel (startTime);
 
-    /* all done */
-    return fmi2OK;
+	/* all done */
+	return fmi2OK;
 }
 fmi2Status fmi2EnterInitializationMode(fmi2Component c)
 {
-   /* nothing to do for now */
-   return fmi2OK;
+	/* nothing to do for now */
+	return fmi2OK;
 }
 fmi2Status fmi2ExitInitializationMode(fmi2Component c)
 {
-   /* nothing to do for now */
-   return fmi2OK;
+	/* nothing to do for now */
+	return fmi2OK;
 }
 %ENDIF%
 %IF%%FMI1%
@@ -401,8 +403,8 @@ fmi2Status fmi2Terminate(fmi2Component c)
 
 	free((void*)g_fmuResourceLocation);
 
-    /* all done */
-    return %FMI_PREFIX%OK;
+	/* all done */
+	return %FMI_PREFIX%OK;
 }
 %IF%%FMI1%
 fmiStatus fmiResetSlave(fmiComponent c) 
@@ -411,11 +413,11 @@ fmiStatus fmiResetSlave(fmiComponent c)
 fmi2Status fmi2Reset(fmi2Component c) 
 %ENDIF%
 {
-    /* initialize the submodel itself */
-    %FUNCTIONPREFIX%InitializeSubmodel (%VARPREFIX%start_time);
+	/* initialize the submodel itself */
+	%FUNCTIONPREFIX%InitializeSubmodel (%VARPREFIX%start_time);
 
-    /* all done */
-    return %FMI_PREFIX%OK;
+	/* all done */
+	return %FMI_PREFIX%OK;
 }
 
 %IF%%FMI1%
@@ -443,8 +445,8 @@ void fmi2FreeInstance(fmi2Component c)
 									const %FMI_PREFIX%Integer order[],
 									%FMI_PREFIX%Real value[]) 
 {
-    /* not yet */
-    return %FMI_PREFIX%Error;
+	/* not yet */
+	return %FMI_PREFIX%Error;
 }
 
 %IF%%FMI1%
@@ -454,8 +456,8 @@ fmiStatus fmiCancelStep(fmiComponent c)
 fmi2Status fmi2CancelStep(fmi2Component c) 
 %ENDIF%
 {
-    /* not yet */
-    return %FMI_PREFIX%Error;
+	/* not yet */
+	return %FMI_PREFIX%Error;
 }
 
 %IF%%FMI1%
@@ -471,18 +473,18 @@ fmi2Status fmi2DoStep(fmi2Component c,
 					fmi2Boolean noSetFMUStatePriorToCurrentPoint)
 %ENDIF%
 {
-    /* Treat also case of zero step, i.e. during an event iteration */
-    if (communicationStepSize == 0) 
-    {
-        return %FMI_PREFIX%OK;
-    }
+	/* Treat also case of zero step, i.e. during an event iteration */
+	if (communicationStepSize == 0)
+	{
+		return %FMI_PREFIX%OK;
+	}
 
-    /* as long as we are not passed our communication point */
-    while (%VARPREFIX%%XX_TIME% < (currentCommunicationPoint + communicationStepSize))
-    {
-        /* check for termination first */
-        if ( (%VARPREFIX%finish_time > 0.0) && (%VARPREFIX%%XX_TIME% > %VARPREFIX%finish_time) )
-        {
+	/* as long as we are not passed our communication point */
+	while (%VARPREFIX%%XX_TIME% < (currentCommunicationPoint + communicationStepSize))
+	{
+		/* check for termination first */
+		if ( (%VARPREFIX%finish_time > 0.0) && (%VARPREFIX%%XX_TIME% > %VARPREFIX%finish_time) )
+		{
 %IF%%FMI2%
 			if(g_fmiCallbackFunctions != NULL && g_fmiCallbackFunctions->logger != NULL)
 			{
@@ -491,46 +493,46 @@ fmi2Status fmi2DoStep(fmi2Component c,
 			}
 %ENDIF%
 			
-            /* we're done */
-            return %FMI_PREFIX%Error;
-        }
-        
+			/* we're done */
+			return %FMI_PREFIX%Error;
+		}
+
 		/* Call the submodel to calculate the output, and increase the time as well */
 		%FUNCTIONPREFIX%CalculateSubmodel (%VARPREFIX%%XX_TIME%);
-    }
-    
-    /* for now */
-    return %FMI_PREFIX%OK;
+	}
+
+	/* for now */
+	return %FMI_PREFIX%OK;
 }
 
 %FMI_PREFIX%Status %FMI_PREFIX%GetStatus(%FMI_PREFIX%Component c, const %FMI_PREFIX%StatusKind s, %FMI_PREFIX%Status* value) 
 {
-    /* all fine? */
-    return %FMI_PREFIX%OK;
+	/* all fine? */
+	return %FMI_PREFIX%OK;
 }
 
 %FMI_PREFIX%Status %FMI_PREFIX%GetRealStatus(%FMI_PREFIX%Component c, const %FMI_PREFIX%StatusKind s, %FMI_PREFIX%Real* value)
 {
-    /* all fine? */
-    return %FMI_PREFIX%OK;
+	/* all fine? */
+	return %FMI_PREFIX%OK;
 }
 
 %FMI_PREFIX%Status %FMI_PREFIX%GetIntegerStatus(%FMI_PREFIX%Component c, const %FMI_PREFIX%StatusKind s, %FMI_PREFIX%Integer* value)
 {
-    /* all fine? */
-    return %FMI_PREFIX%OK;
+	/* all fine? */
+	return %FMI_PREFIX%OK;
 }
 
 %FMI_PREFIX%Status %FMI_PREFIX%GetBooleanStatus(%FMI_PREFIX%Component c, const %FMI_PREFIX%StatusKind s, %FMI_PREFIX%Boolean* value)
 {
-    /* all fine? */
-    return %FMI_PREFIX%OK;
+	/* all fine? */
+	return %FMI_PREFIX%OK;
 }
 
 %FMI_PREFIX%Status %FMI_PREFIX%GetStringStatus(%FMI_PREFIX%Component c, const %FMI_PREFIX%StatusKind s, %FMI_PREFIX%String*  value)
 {
-    /* not yet */
-    return %FMI_PREFIX%Discard;
+	/* not yet */
+	return %FMI_PREFIX%Discard;
 }
 
 %IF%%FMI2%
@@ -558,37 +560,48 @@ fmi2Status fmi2GetContinuousStates(fmi2Component c, fmi2Real x[], size_t nx)
 %ENDIF%
 
 %IF%%FMI2%
-fmi2Status fmi2GetFMUstate (fmi2Component c, fmi2FMUstate* FMUstate) {
-    
-/* not yet */
-    return fmi2Discard;
+fmi2Status fmi2GetFMUstate (fmi2Component c, fmi2FMUstate* FMUstate)
+{
+	/* not yet */
+	return fmi2Discard;
 }
-fmi2Status fmi2SetFMUstate (fmi2Component c, fmi2FMUstate FMUstate) {
-    /* not yet */
-    return fmi2Discard;
+
+fmi2Status fmi2SetFMUstate (fmi2Component c, fmi2FMUstate FMUstate)
+{
+	/* not yet */
+	return fmi2Discard;
 }
-fmi2Status fmi2FreeFMUstate(fmi2Component c, fmi2FMUstate* FMUstate) {
-    /* not yet */
-    return fmi2Discard;
+
+fmi2Status fmi2FreeFMUstate(fmi2Component c, fmi2FMUstate* FMUstate)
+{
+	/* not yet */
+	return fmi2Discard;
 }
-fmi2Status fmi2SerializedFMUstateSize(fmi2Component c, fmi2FMUstate FMUstate, size_t *size) {
-    /* not yet */
-    return fmi2Discard;
+
+fmi2Status fmi2SerializedFMUstateSize(fmi2Component c, fmi2FMUstate FMUstate, size_t *size)
+{
+	/* not yet */
+	return fmi2Discard;
 }
-fmi2Status fmi2SerializeFMUstate (fmi2Component c, fmi2FMUstate FMUstate, fmi2Byte serializedState[], size_t size) {
-    /* not yet */
-    return fmi2Discard;
+
+fmi2Status fmi2SerializeFMUstate (fmi2Component c, fmi2FMUstate FMUstate, fmi2Byte serializedState[], size_t size)
+{
+	/* not yet */
+	return fmi2Discard;
 }
+
 fmi2Status fmi2DeSerializeFMUstate (fmi2Component c, const fmi2Byte serializedState[], size_t size,
-                                    fmi2FMUstate* FMUstate) {
-    /* not yet */
-    return fmi2Discard;
+                                    fmi2FMUstate* FMUstate)
+{
+	/* not yet */
+	return fmi2Discard;
 }
 
 fmi2Status fmi2GetDirectionalDerivative(fmi2Component c, const fmi2ValueReference vUnknown_ref[], size_t nUnknown,
                                         const fmi2ValueReference vKnown_ref[] , size_t nKnown,
-                                        const fmi2Real dvKnown[], fmi2Real dvUnknown[]) {
-    /* not yet */
-    return fmi2Discard;
+                                        const fmi2Real dvKnown[], fmi2Real dvUnknown[])
+{
+	/* not yet */
+	return fmi2Discard;
 }
 %ENDIF%
