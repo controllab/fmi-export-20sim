@@ -257,50 +257,6 @@ XXDouble XXRound (XXDouble argument)
 }
 
 %ENDIF%
-%IF%%NUMBEROF_DELAYFUNCTION%
-XXDouble XXDelay (XXDouble argument1, XXDouble argument2, XXInteger id)
-{
-	/* The storage arrays '%VARPREFIX%delay_update_array' and '%VARPREFIX%delay_last_values'
-	   are declared in xxmodel.c because their size is model dependent */
-	XXDouble value;
-
-	if (%VARPREFIX%%XX_INITIALIZE%)
-	{
-		value = argument2;
-	}
-	else
-	{
-		value = %VARPREFIX%delay_update_array[id];
-	}
-
-	if (%VARPREFIX%major)
-	{
-		%VARPREFIX%delay_last_values[id] = argument1;
-	}
-
-	return value;
-}
-
-%ENDIF%
-%IF%%NUMBEROF_INITIALFUNCTION%
-XXDouble XXInitialValue (XXDouble argument, XXInteger identifier)
-{
-	/* The storage array '%VARPREFIX%initial_value_array' is declared in xxmodel.c because its size is model dependent */
-	XXDouble value;
-
-	if (%VARPREFIX%%XX_INITIALIZE%)
-	{
-		value = argument;
-		%VARPREFIX%initial_value_array[identifier] = value;
-	}
-	else
-	{
-		value = %VARPREFIX%initial_value_array[identifier];
-	}
-	return value;
-}
-
-%ENDIF%
 %IF%%NUMBEROF_BITAND%
 XXInteger XXBitAnd(XXInteger argument1, XXInteger argument2)
 {

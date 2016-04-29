@@ -29,10 +29,6 @@
 #include "xxinteg.h"
 #include "xxmodel.h"
 
-/* global variables prototypes */
-extern XXDouble %VARPREFIX%%XX_TIME%;
-extern XXDouble %VARPREFIX%step_size;
-
 %IF%%NUMBER_STATES%
 #define %VARPREFIX%STATE_SIZE %NUMBER_STATES%
 %ENDIF%
@@ -43,20 +39,20 @@ extern XXDouble %VARPREFIX%step_size;
  *********************************************************************/
 
 /* the initialization of the Discrete integration method */
-void %FUNCTIONPREFIX%DiscreteInitialize (void)
+void %FUNCTIONPREFIX%DiscreteInitialize (XXModelInstance* %VARPREFIX%model_instance)
 {
 	/* nothing to be done */
-	%VARPREFIX%major = XXTRUE;
+	%VARPREFIX%model_instance->major = XXTRUE;
 }
 
 /* the termination of the Discrete integration method */
-void %FUNCTIONPREFIX%DiscreteTerminate (void)
+void %FUNCTIONPREFIX%DiscreteTerminate (XXModelInstance* %VARPREFIX%model_instance)
 {
 	/* nothing to be done */
 }
 
 /* the Discrete integration method itself */
-void %FUNCTIONPREFIX%DiscreteStep (void)
+void %FUNCTIONPREFIX%DiscreteStep (XXModelInstance* %VARPREFIX%model_instance)
 {
 %IF%%NUMBER_STATES%
 	XXInteger index;
@@ -65,18 +61,18 @@ void %FUNCTIONPREFIX%DiscreteStep (void)
 	for (index = 0; index < %VARPREFIX%STATE_SIZE; index++)
 	{
 		/* just a move of the new state */
-		%VARPREFIX%%XX_STATE_ARRAY_NAME% [index] = %VARPREFIX%%XX_RATE_ARRAY_NAME% [index];
+		%VARPREFIX%model_instance->%XX_STATE_ARRAY_NAME% [index] = %VARPREFIX%model_instance->%XX_RATE_ARRAY_NAME% [index];
 	}
 %ELSE%
 	/* no states in the model */
 %ENDIF%
 	/* increment the simulation time */
-	%VARPREFIX%%XX_TIME% += %VARPREFIX%step_size;
+	%VARPREFIX%model_instance->time += %VARPREFIX%model_instance->step_size;
 
-	%VARPREFIX%major = XXTRUE;
+	%VARPREFIX%model_instance->major = XXTRUE;
 
 	/* evaluate the dynamic part to calculate the new rates */
-	%FUNCTIONPREFIX%CalculateDynamic ();
+	%FUNCTIONPREFIX%CalculateDynamic (%VARPREFIX%model_instance);
 }
 #endif /* Discrete_METHOD */
 
@@ -87,20 +83,20 @@ void %FUNCTIONPREFIX%DiscreteStep (void)
  *********************************************************************/
 
 /* the initialization of the Euler integration method */
-void %FUNCTIONPREFIX%EulerInitialize (void)
+void %FUNCTIONPREFIX%EulerInitialize (XXModelInstance* %VARPREFIX%model_instance)
 {
 	/* nothing to be done */
-	%VARPREFIX%major = XXTRUE;
+	%VARPREFIX%model_instance->major = XXTRUE;
 }
 
 /* the termination of the Euler integration method */
-void %FUNCTIONPREFIX%EulerTerminate (void)
+void %FUNCTIONPREFIX%EulerTerminate (XXModelInstance* %VARPREFIX%model_instance)
 {
 	/* nothing to be done */
 }
 
 /* the Euler integration method itself */
-void %FUNCTIONPREFIX%EulerStep (void)
+void %FUNCTIONPREFIX%EulerStep (XXModelInstance* %VARPREFIX%model_instance)
 {
 %IF%%NUMBER_STATES%
 	XXInteger index;
@@ -109,18 +105,18 @@ void %FUNCTIONPREFIX%EulerStep (void)
 	for (index = 0; index < %VARPREFIX%STATE_SIZE; index++)
 	{
 		/* calculate the new state */
-		%VARPREFIX%%XX_STATE_ARRAY_NAME% [index] = %VARPREFIX%%XX_STATE_ARRAY_NAME% [index] + %VARPREFIX%%XX_RATE_ARRAY_NAME% [index] * %VARPREFIX%step_size;
+		%VARPREFIX%model_instance->%XX_STATE_ARRAY_NAME% [index] = %VARPREFIX%model_instance->%XX_STATE_ARRAY_NAME% [index] + %VARPREFIX%model_instance->%XX_RATE_ARRAY_NAME% [index] * %VARPREFIX%model_instance->step_size;
 	}
 %ELSE%
 	/* no states in the model */
 %ENDIF%
 	/* increment the simulation time */
-	%VARPREFIX%%XX_TIME% += %VARPREFIX%step_size;
+	%VARPREFIX%model_instance->time += %VARPREFIX%model_instance->step_size;
 
-	%VARPREFIX%major = XXTRUE;
+	%VARPREFIX%model_instance->major = XXTRUE;
 
 	/* evaluate the dynamic part to calculate the new rates */
-	%FUNCTIONPREFIX%CalculateDynamic ();
+	%FUNCTIONPREFIX%CalculateDynamic (%VARPREFIX%model_instance);
 }
 #endif /* Euler_METHOD */
 
@@ -129,29 +125,24 @@ void %FUNCTIONPREFIX%EulerStep (void)
 /*********************************************************************
  * RungeKutta2 integration method
  *********************************************************************/
-%IF%%NUMBER_STATES%
-/* static variables for the selected integration method */
-static XXDouble %VARPREFIX%q0 [%VARPREFIX%STATE_SIZE];
-%ENDIF%
-
 /* the initialization of the RungeKutta2 integration method */
-void %FUNCTIONPREFIX%RungeKutta2Initialize (void)
+void %FUNCTIONPREFIX%RungeKutta2Initialize (XXModelInstance* %VARPREFIX%model_instance)
 {
 %IF%%NUMBER_STATES%
 	/* empty our static arrays */
-	memset (%VARPREFIX%q0, 0, %VARPREFIX%STATE_SIZE * sizeof (XXDouble));
+	memset (%VARPREFIX%model_instance->q0, 0, %VARPREFIX%STATE_SIZE * sizeof (XXDouble));
 %ENDIF%
 }
 
 /* the termination of the RungeKutta2 integration method */
-void %FUNCTIONPREFIX%RungeKutta2Terminate (void)
+void %FUNCTIONPREFIX%RungeKutta2Terminate (XXModelInstance* %VARPREFIX%model_instance)
 {
 	/* nothing yet (our arrays are static) */
 }
 
 
 /* the Runge-Kutta-2 integration method itself */
-void %FUNCTIONPREFIX%RungeKutta2Step (void)
+void %FUNCTIONPREFIX%RungeKutta2Step (XXModelInstance* %VARPREFIX%model_instance)
 {
 %IF%%NUMBER_STATES%
 	XXInteger index;
@@ -163,22 +154,22 @@ void %FUNCTIONPREFIX%RungeKutta2Step (void)
 	/*********************************************************************************/
 
 	/* cache the simulation time */
-	rktime = %VARPREFIX%%XX_TIME%;
+	rktime = %VARPREFIX%model_instance->time;
 
 	/* the q0 will hold the value of the last evaluation. This is used multiple times
 	   so remember the complete state array in this vector. */
-	memcpy (%VARPREFIX%q0, %VARPREFIX%%XX_STATE_ARRAY_NAME%, %VARPREFIX%STATE_SIZE * sizeof (XXDouble));
+	memcpy (%VARPREFIX%model_instance->q0, %VARPREFIX%model_instance->%XX_STATE_ARRAY_NAME%, %VARPREFIX%STATE_SIZE * sizeof (XXDouble));
 
 	/* calculate f (states, t) * 1/2 * dt  =  rates * 1/2 * dt  */
 	for (index = 0; index < %VARPREFIX%STATE_SIZE; index++)
 	{
 		/* set the new states to use */
-		%VARPREFIX%%XX_STATE_ARRAY_NAME% [index] = %VARPREFIX%q0 [index] + %VARPREFIX%%XX_RATE_ARRAY_NAME% [index] * 0.5 * %VARPREFIX%step_size;
+		%VARPREFIX%model_instance->%XX_STATE_ARRAY_NAME% [index] = %VARPREFIX%model_instance->q0 [index] + %VARPREFIX%model_instance->%XX_RATE_ARRAY_NAME% [index] * 0.5 * %VARPREFIX%model_instance->step_size;
 	}
 
-	%VARPREFIX%%XX_TIME% = rktime + 0.5 * %VARPREFIX%step_size;
-	%VARPREFIX%major = XXFALSE;
-	%FUNCTIONPREFIX%CalculateDynamic ();
+	%VARPREFIX%model_instance->time = rktime + 0.5 * %VARPREFIX%model_instance->step_size;
+	%VARPREFIX%model_instance->major = XXFALSE;
+	%FUNCTIONPREFIX%CalculateDynamic (%VARPREFIX%model_instance);
 
 	/* for each state */
 	for (index = 0; index < %VARPREFIX%STATE_SIZE; index++)
@@ -188,20 +179,20 @@ void %FUNCTIONPREFIX%RungeKutta2Step (void)
 		/*********************************************************************************/
 
 		/* calculate the next state = classical Runge-Kutta integration step */
-		%VARPREFIX%%XX_STATE_ARRAY_NAME% [index] = %VARPREFIX%q0 [index] +	%VARPREFIX%%XX_RATE_ARRAY_NAME% [index] * %VARPREFIX%step_size;
+		%VARPREFIX%model_instance->%XX_STATE_ARRAY_NAME% [index] = %VARPREFIX%model_instance->q0 [index] +	%VARPREFIX%model_instance->%XX_RATE_ARRAY_NAME% [index] * %VARPREFIX%model_instance->step_size;
 	}
-	%VARPREFIX%%XX_TIME% = rktime + %VARPREFIX%step_size;
+	%VARPREFIX%model_instance->time = rktime + %VARPREFIX%model_instance->step_size;
 
 %ELSE%
 	/* no states in the model */
 	/* increment the simulation time */
-	%VARPREFIX%%XX_TIME% += %VARPREFIX%step_size;
+	%VARPREFIX%model_instance->time += %VARPREFIX%model_instance->step_size;
 
 %ENDIF%
-	%VARPREFIX%major = XXTRUE;
+	%VARPREFIX%model_instance->major = XXTRUE;
 
 	/* evaluate the derivative model to calculate the new rates */
-	%FUNCTIONPREFIX%CalculateDynamic ();
+	%FUNCTIONPREFIX%CalculateDynamic (%VARPREFIX%model_instance);
 }
 #endif /* RungeKutta2_METHOD */
 
@@ -210,41 +201,33 @@ void %FUNCTIONPREFIX%RungeKutta2Step (void)
 /*********************************************************************
  * RungeKutta4 integration method
  *********************************************************************/
-%IF%%NUMBER_STATES%
-/* static variables for the selected integration method */
-static XXDouble %VARPREFIX%q0 [%VARPREFIX%STATE_SIZE];
-static XXDouble %VARPREFIX%q1 [%VARPREFIX%STATE_SIZE];
-static XXDouble %VARPREFIX%q2 [%VARPREFIX%STATE_SIZE];
-static XXDouble %VARPREFIX%q3 [%VARPREFIX%STATE_SIZE];
-static XXDouble %VARPREFIX%q4 [%VARPREFIX%STATE_SIZE];
-%ENDIF%
 
 /*********************************************************************
  * the initialization of the RungeKutta4 integration method
  */
 static const XXDouble OneOverSix = 1.0 / 6.0;
 
-void %FUNCTIONPREFIX%RungeKutta4Initialize (void)
+void %FUNCTIONPREFIX%RungeKutta4Initialize (XXModelInstance* %VARPREFIX%model_instance)
 {
 %IF%%NUMBER_STATES%
 	/* empty our static arrays */
-	memset (%VARPREFIX%q0, 0, %VARPREFIX%STATE_SIZE * sizeof (XXDouble));
-	memset (%VARPREFIX%q1, 0, %VARPREFIX%STATE_SIZE * sizeof (XXDouble));
-	memset (%VARPREFIX%q2, 0, %VARPREFIX%STATE_SIZE * sizeof (XXDouble));
-	memset (%VARPREFIX%q3, 0, %VARPREFIX%STATE_SIZE * sizeof (XXDouble));
-	memset (%VARPREFIX%q4, 0, %VARPREFIX%STATE_SIZE * sizeof (XXDouble));
+	memset (%VARPREFIX%model_instance->q0, 0, %VARPREFIX%STATE_SIZE * sizeof (XXDouble));
+	memset (%VARPREFIX%model_instance->q1, 0, %VARPREFIX%STATE_SIZE * sizeof (XXDouble));
+	memset (%VARPREFIX%model_instance->q2, 0, %VARPREFIX%STATE_SIZE * sizeof (XXDouble));
+	memset (%VARPREFIX%model_instance->q3, 0, %VARPREFIX%STATE_SIZE * sizeof (XXDouble));
+	memset (%VARPREFIX%model_instance->q4, 0, %VARPREFIX%STATE_SIZE * sizeof (XXDouble));
 %ENDIF%
 }
 
 /* the termination of the RungeKutta4 integration method */
-void %FUNCTIONPREFIX%RungeKutta4Terminate (void)
+void %FUNCTIONPREFIX%RungeKutta4Terminate (XXModelInstance* %VARPREFIX%model_instance)
 {
 	/* nothing yet (our arrays are static) */
 }
 
 
 /* the Runge-Kutta-4 integration method itself */
-void %FUNCTIONPREFIX%RungeKutta4Step (void)
+void %FUNCTIONPREFIX%RungeKutta4Step (XXModelInstance* %VARPREFIX%model_instance)
 {
 %IF%%NUMBER_STATES%
 	XXInteger index;
@@ -256,81 +239,81 @@ void %FUNCTIONPREFIX%RungeKutta4Step (void)
 	/*********************************************************************************/
 
 	/* cache the simulation time */
-	rktime = %VARPREFIX%%XX_TIME%;
+	rktime = %VARPREFIX%model_instance->time;
 
 	/* the q0 will hold the value of the last evaluation. This is used multiple times
 	   so remember the complete state array in this vector. */
-	memcpy (%VARPREFIX%q0, %VARPREFIX%%XX_STATE_ARRAY_NAME%, %VARPREFIX%STATE_SIZE * sizeof (XXDouble));
+	memcpy (%VARPREFIX%model_instance->q0, %VARPREFIX%model_instance->%XX_STATE_ARRAY_NAME%, %VARPREFIX%STATE_SIZE * sizeof (XXDouble));
 
 	/* calculate q1 = f (states, t) * dt  =  rates * dt  */
 	for (index = 0; index < %VARPREFIX%STATE_SIZE; index++)
 	{
 		/* set the intermediate q1 */
-		%VARPREFIX%q1 [index] = %VARPREFIX%%XX_RATE_ARRAY_NAME% [index] * %VARPREFIX%step_size;
+		%VARPREFIX%model_instance->q1 [index] = %VARPREFIX%model_instance->%XX_RATE_ARRAY_NAME% [index] * %VARPREFIX%model_instance->step_size;
 
 		/* set the new states to use  for q2 */
-		%VARPREFIX%%XX_STATE_ARRAY_NAME% [index] = %VARPREFIX%q0 [index] + %VARPREFIX%q1 [index] / 2;
+		%VARPREFIX%model_instance->%XX_STATE_ARRAY_NAME% [index] = %VARPREFIX%model_instance->q0 [index] + %VARPREFIX%model_instance->q1 [index] / 2;
 	}
 
 	/* calculate q2 = f (states + q1 / 2, t + dt / 2) * dt  */
-	%VARPREFIX%%XX_TIME% = rktime + %VARPREFIX%step_size / 2;
+	%VARPREFIX%model_instance->time = rktime + %VARPREFIX%model_instance->step_size / 2;
 
-	%VARPREFIX%major = XXFALSE;
+	%VARPREFIX%model_instance->major = XXFALSE;
 
-	%FUNCTIONPREFIX%CalculateDynamic ();
-	memcpy (%VARPREFIX%q2, %VARPREFIX%%XX_RATE_ARRAY_NAME%, %VARPREFIX%STATE_SIZE * sizeof (XXDouble));
+	%FUNCTIONPREFIX%CalculateDynamic (%VARPREFIX%model_instance);
+	memcpy (%VARPREFIX%model_instance->q2, %VARPREFIX%model_instance->%XX_RATE_ARRAY_NAME%, %VARPREFIX%STATE_SIZE * sizeof (XXDouble));
 
 	/* for each state */
 	for (index = 0; index < %VARPREFIX%STATE_SIZE; index++)
 	{
 		/* set the ultimate q2 */
-		%VARPREFIX%q2 [index] = %VARPREFIX%q2 [index] * %VARPREFIX%step_size;
+		%VARPREFIX%model_instance->q2 [index] = %VARPREFIX%model_instance->q2 [index] * %VARPREFIX%model_instance->step_size;
 
 		/* set the new states to use */
-		%VARPREFIX%%XX_STATE_ARRAY_NAME% [index] = %VARPREFIX%q0 [index] + %VARPREFIX%q2 [index] / 2;
+		%VARPREFIX%model_instance->%XX_STATE_ARRAY_NAME% [index] = %VARPREFIX%model_instance->q0 [index] + %VARPREFIX%model_instance->q2 [index] / 2;
 	}
 
 	/* calculate q3 = f (states + q2 / 2, t + dt / 2) * dt  */
-	%FUNCTIONPREFIX%CalculateDynamic ();
-	memcpy (%VARPREFIX%q3, %VARPREFIX%%XX_RATE_ARRAY_NAME%, %VARPREFIX%STATE_SIZE * sizeof (XXDouble));
+	%FUNCTIONPREFIX%CalculateDynamic (%VARPREFIX%model_instance);
+	memcpy (%VARPREFIX%model_instance->q3, %VARPREFIX%model_instance->%XX_RATE_ARRAY_NAME%, %VARPREFIX%STATE_SIZE * sizeof (XXDouble));
 
 	/* for each state */
 	for (index = 0; index < %VARPREFIX%STATE_SIZE; index++)
 	{
 		/* set the ultimate q3 */
-		%VARPREFIX%q3 [index] = %VARPREFIX%q3 [index] * %VARPREFIX%step_size;
+		%VARPREFIX%model_instance->q3 [index] = %VARPREFIX%model_instance->q3 [index] * %VARPREFIX%model_instance->step_size;
 
 		/* set the new states */
-		%VARPREFIX%%XX_STATE_ARRAY_NAME% [index] = %VARPREFIX%q0 [index] + %VARPREFIX%q3 [index];
+		%VARPREFIX%model_instance->%XX_STATE_ARRAY_NAME% [index] = %VARPREFIX%model_instance->q0 [index] + %VARPREFIX%model_instance->q3 [index];
 	}
 
 	/* calculate q4 = f (states + q3, t + dt) * dt */
-	%VARPREFIX%%XX_TIME% = rktime + %VARPREFIX%step_size;
-	%FUNCTIONPREFIX%CalculateDynamic ();
-	memcpy (%VARPREFIX%q4, %VARPREFIX%%XX_RATE_ARRAY_NAME%, %VARPREFIX%STATE_SIZE * sizeof (XXDouble));
+	%VARPREFIX%model_instance->time = rktime + %VARPREFIX%model_instance->step_size;
+	%FUNCTIONPREFIX%CalculateDynamic (%VARPREFIX%model_instance);
+	memcpy (%VARPREFIX%model_instance->q4, %VARPREFIX%model_instance->%XX_RATE_ARRAY_NAME%, %VARPREFIX%STATE_SIZE * sizeof (XXDouble));
 
 	/* for each state */
 	for (index = 0; index < %VARPREFIX%STATE_SIZE; index++)
 	{
 		/* set the ultimate q4 */
-		%VARPREFIX%q4 [index] = %VARPREFIX%q4 [index] * %VARPREFIX%step_size;
+		%VARPREFIX%model_instance->q4 [index] = %VARPREFIX%model_instance->q4 [index] * %VARPREFIX%model_instance->step_size;
 
 		/*********************************************************************************/
 		/*          calculate the next state from the intermediate results               */
 		/*********************************************************************************/
 
 		/* calculate the next state = classical Runge-Kutta integration step */
-		%VARPREFIX%%XX_STATE_ARRAY_NAME%[index] = %VARPREFIX%q0[index] + (%VARPREFIX%q1[index] + %VARPREFIX%q2[index] + %VARPREFIX%q2[index] + %VARPREFIX%q3[index] + %VARPREFIX%q3[index] + %VARPREFIX%q4[index]) * OneOverSix;
+		%VARPREFIX%model_instance->%XX_STATE_ARRAY_NAME%[index] = %VARPREFIX%model_instance->q0[index] + (%VARPREFIX%model_instance->q1[index] + %VARPREFIX%model_instance->q2[index] + %VARPREFIX%model_instance->q2[index] + %VARPREFIX%model_instance->q3[index] + %VARPREFIX%model_instance->q3[index] + %VARPREFIX%model_instance->q4[index]) * OneOverSix;
 	}
 %ELSE%
 	/* no states in the model */
 	/* increment the simulation time */
-	%VARPREFIX%%XX_TIME% += %VARPREFIX%step_size;
+	%VARPREFIX%model_instance->time += %VARPREFIX%model_instance->step_size;
 %ENDIF%
 
-	%VARPREFIX%major = XXTRUE;
+	%VARPREFIX%model_instance->major = XXTRUE;
 
 	/* evaluate the derivative model to calculate the new rates */
-	%FUNCTIONPREFIX%CalculateDynamic ();
+	%FUNCTIONPREFIX%CalculateDynamic (%VARPREFIX%model_instance);
 }
 #endif /* RungeKutta4_METHOD */

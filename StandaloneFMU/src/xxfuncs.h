@@ -27,8 +27,6 @@ extern XXDouble xx_logarithm_2;
 %IF%%NUMBEROF_LOG10FUNCTION%
 extern XXDouble xx_logarithm_10;
 %ENDIF%
-extern XXBoolean %VARPREFIX%%XX_INITIALIZE%;
-extern XXBoolean %VARPREFIX%major;
 extern XXBoolean %VARPREFIX%stop_simulation;
 
 /* Wrapper functions around strings */
@@ -88,15 +86,8 @@ XXDouble XXStep (XXDouble argument, XXDouble time);
 %IF%%NUMBEROF_IMPULSEFUNCTION%
 XXDouble XXImpulse (XXDouble impulsestarttime, XXDouble impulseduration, XXDouble currenttime, XXDouble stepsize);
 %ENDIF%
-%IF%%NUMBEROF_DELAYFUNCTION%
-XXDouble XXDelay (XXDouble argument1, XXDouble argument2, XXInteger id);
-void XXDelayUpdate(void);
-%ENDIF%
 %IF%%NUMBEROF_XOR%
 XXDouble XXXor (XXDouble argument1, XXDouble argument2);
-%ENDIF%
-%IF%%NUMBEROF_INITIALFUNCTION%
-XXDouble XXInitialValue (XXDouble argument, XXInteger identifier);
 %ENDIF%
 %IF%%NUMBEROF_BITAND%
 XXInteger XXBitAnd(XXInteger argument1, XXInteger argument2);
