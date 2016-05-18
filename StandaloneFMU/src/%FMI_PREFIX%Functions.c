@@ -68,6 +68,9 @@ const char* URIToNativePath(const char* uri)
 	int path_len = 0;
 	char* pch = NULL;
 
+	if (!uri)
+		return NULL;
+
 	path_len = (int) strlen(uri);
 
 	if (path_len == 0)
