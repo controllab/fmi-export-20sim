@@ -367,12 +367,13 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 	}
 	if( strncmp(fmuGUID, FMI_GUID, strlen(fmuGUID)) != 0 )
 	{
-		g_fmiCallbackFunctions->logger(NULL, instanceName, fmi2Error, "error",
+		functions->logger(NULL, instanceName, fmi2Error, "error",
 			"fmi2Instantiate: Wrong GUID %s. Expected %s.", fmuGUID, FMI_GUID);
 		return NULL;
 	}
 	
 	%VARPREFIX%model_instance = (XXModelInstance *)functions->allocateMemory(1, sizeof(XXModelInstance));
+	memset(%VARPREFIX%model_instance, 0, sizeof(XXModelInstance));
 
 	if(!%VARPREFIX%model_instance)
 	{
