@@ -95,7 +95,14 @@ const char* URIToNativePath(const char* uri)
 		return NULL;
 
 	/* Allocate memory for the return value including terminating \0 and extra path separator */
-	retval = (char*) malloc(path_len + 2);
+	if ((g_fmiCallbackFunctions) &&( g_fmiCallbackFunctions->allocateMemory != NULL))
+	{
+		retval = (char*) g_fmiCallbackFunctions->allocateMemory(path_len + 2);
+	}
+	else
+	{
+		retval = (char*) malloc(path_len + 2);
+	}
 	/* Copy the remainder of the uri */
 	strncpy(retval, path_start, path_len);
 
@@ -318,9 +325,21 @@ fmiComponent fmiInstantiateSlave(fmiString instanceName,
 	}
 	strcpy((char *)%VARPREFIX%model_instance->instanceName, (char *)instanceName);
 
+	/* Register the callback */
+	g_fmiCallbackFunctions = functions;
+
 	/* Remember the resource folder location */
 	if (g_fmuResourceLocation != NULL)
-		free((void*)g_fmuResourceLocation);
+	{
+		if ((g_fmiCallbackFunctions) &&( g_fmiCallbackFunctions->freeMemory != NULL))
+		{
+			g_fmiCallbackFunctions->freeMemory((void*)g_fmuResourceLocation);
+		}
+		else
+		{
+			free((void*)g_fmuResourceLocation);
+		}
+	}
 	g_fmuResourceLocation = URIToNativePath(fmuLocation);	
 
 	return (fmiComponent) %VARPREFIX%model_instance;
@@ -424,7 +443,16 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 	g_fmiCallbackFunctions = functions;
 	/* Remember the resource folder location */
 	if (g_fmuResourceLocation != NULL)
-		free((void*)g_fmuResourceLocation);
+	{
+		if ((g_fmiCallbackFunctions) &&( g_fmiCallbackFunctions->freeMemory != NULL))
+		{
+			g_fmiCallbackFunctions->freeMemory((void*)g_fmuResourceLocation);
+		}
+		else
+		{
+			free((void*)g_fmuResourceLocation);
+		}
+	}
 	g_fmuResourceLocation = URIToNativePath(fmuResourceLocation);
 	
 	/* check if we are setup for co-simulation, that's the only possible option for now */
@@ -506,7 +534,14 @@ fmi2Status fmi2Terminate(fmi2Component c)
 	/* Perform the final calculations */
 	%FUNCTIONPREFIX%TerminateSubmodel (%VARPREFIX%model_instance, %VARPREFIX%model_instance->time);
 
-	free((void*)g_fmuResourceLocation);
+	if ((g_fmiCallbackFunctions) &&( g_fmiCallbackFunctions->freeMemory != NULL))
+	{
+		g_fmiCallbackFunctions->freeMemory((void*)g_fmuResourceLocation);
+	}
+	else
+	{
+		free((void*)g_fmuResourceLocation);
+	}
 
 	/* all done */
 	return %FMI_PREFIX%OK;
@@ -532,11 +567,16 @@ void fmiFreeSlaveInstance(fmiComponent c)
 {
 	XXModelInstance* %VARPREFIX%model_instance = (XXModelInstance*) c;
 
-	if(%VARPREFIX%model_instance->instanceName)
+	if ((g_fmiCallbackFunctions) &&( g_fmiCallbackFunctions->freeMemory != NULL))
 	{
-		g_fmiCallbackFunctions.freeMemory((void *)%VARPREFIX%model_instance->instanceName);
+		if(%VARPREFIX%model_instance->instanceName)
+		{
+			g_fmiCallbackFunctions->freeMemory((void *)%VARPREFIX%model_instance->instanceName);
+			%VARPREFIX%model_instance->instanceName = NULL;
+		}
+		g_fmiCallbackFunctions->freeMemory((void *) %VARPREFIX%model_instance);
+		%VARPREFIX%model_instance = NULL;
 	}
-	g_fmiCallbackFunctions.freeMemory((void *) %VARPREFIX%model_instance);
 }
 %ENDIF%
 %IF%%FMI2%
