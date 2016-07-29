@@ -73,7 +73,7 @@ typedef struct XXModelInstance
 		%VARPREFIX%state_count /* states */ +
 		%VARPREFIX%state_count /* rates */ +
 %ENDIF%
-		+ 1
+		1
 	];
 %IF%%NUMBER_MATRICES%
 	XXMatrix %XX_MATRIX_ARRAY_NAME%[%NUMBER_MATRICES%];		/* matrices */
@@ -117,12 +117,22 @@ typedef struct XXModelInstance
 #endif
 %ENDIF%
 	/* Memory offset pointers */
+%IF%%NUMBER_CONSTANTS%
 	XXDouble* %XX_CONSTANT_ARRAY_NAME%;	/* constants */
+%ENDIF%
+%IF%%NUMBER_PARAMETERS%
 	XXDouble* %XX_PARAMETER_ARRAY_NAME%;	/* parameters */
+%ENDIF%
+%IF%%NUMBER_INITIAL_VALUES%
 	XXDouble* %XX_INITIAL_VALUE_ARRAY_NAME%;		/* initial values */
+%ENDIF%
+%IF%%NUMBER_VARIABLES%
 	XXDouble* %XX_VARIABLE_ARRAY_NAME%;		/* variables */
+%ENDIF%
+%IF%%NUMBER_STATES%
 	XXDouble* %XX_STATE_ARRAY_NAME%;		/* states */
 	XXDouble* %XX_RATE_ARRAY_NAME%;		/* rates (or new states) */
+%ENDIF%
 } XXModelInstance;
 
 
