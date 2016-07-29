@@ -100,7 +100,7 @@ const char* URIToNativePath(const char* uri)
 	/* Allocate memory for the return value including terminating \0 and extra path separator */
 	if ((g_fmiCallbackFunctions) &&( g_fmiCallbackFunctions->allocateMemory != NULL))
 	{
-		retval = (char*) g_fmiCallbackFunctions->allocateMemory(path_len + 2);
+		retval = (char*) g_fmiCallbackFunctions->allocateMemory(path_len + 2, sizeof(char));
 	}
 	else
 	{
