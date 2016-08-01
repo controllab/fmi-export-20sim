@@ -165,6 +165,7 @@ typedef struct XXModelInstance
 %ENDIF%
 #define %VARPREFIX%step_size %VARPREFIX%model_instance->step_size
 #define %VARPREFIX%%XX_INITIALIZE% %VARPREFIX%model_instance->%XX_INITIALIZE%
+#define %VARPREFIX%major %VARPREFIX%model_instance->major
 
 /* Initialization methods */
 void %FUNCTIONPREFIX%ModelInitialize (XXModelInstance* %VARPREFIX%model_instance);
