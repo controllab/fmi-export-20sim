@@ -75,7 +75,7 @@ ECHO Generating the modelDescription.xml
 
 ECHO Collecting resources
 IF EXIST %PYTHON% (
-	start %PYTHON% %RESOURCES_SCRIPT% "%ROOTPATH%\src\ModelConfiguration.xml" "%RES_DIR%"
+	%PYTHON% %RESOURCES_SCRIPT% "%ROOTPATH%\src\ModelConfiguration.xml" "%RES_DIR%"
 ) ELSE (
 	ECHO Unable to collect resources. Could not find Python in %PYTHON%
 	ECHO Please re-install 20-sim 4.6 with Python support enabled.

@@ -24,35 +24,31 @@ that are supplied for computation.
 
 /* 20-sim include files */
 #include "xxtypes.h"
-
-/* the chosen integration method */
-#define %INTEGRATION_METHOD_NAME%_METHOD
+#include "xxmodel.h" /* For the XXModelInstance typedef */
 
 /* the integration methods */
 #ifdef Discrete_METHOD
-void %FUNCTIONPREFIX%DiscreteInitialize (void);
-void %FUNCTIONPREFIX%DiscreteTerminate (void);
-void %FUNCTIONPREFIX%DiscreteStep (void);
+void %FUNCTIONPREFIX%DiscreteInitialize (XXModelInstance* %VARPREFIX%model_instance);
+void %FUNCTIONPREFIX%DiscreteTerminate (XXModelInstance* %VARPREFIX%model_instance);
+void %FUNCTIONPREFIX%DiscreteStep (XXModelInstance* %VARPREFIX%model_instance);
 #endif 
 
 #ifdef Euler_METHOD
-void %FUNCTIONPREFIX%EulerInitialize (void);
-void %FUNCTIONPREFIX%EulerTerminate (void);
-void %FUNCTIONPREFIX%EulerStep (void);
+void %FUNCTIONPREFIX%EulerInitialize (XXModelInstance* %VARPREFIX%model_instance);
+void %FUNCTIONPREFIX%EulerTerminate (XXModelInstance* %VARPREFIX%model_instance);
+void %FUNCTIONPREFIX%EulerStep (XXModelInstance* %VARPREFIX%model_instance);
 #endif 
 
 #ifdef RungeKutta2_METHOD
-void %FUNCTIONPREFIX%RungeKutta2Initialize (void);
-void %FUNCTIONPREFIX%RungeKutta2Terminate (void);
-void %FUNCTIONPREFIX%RungeKutta2Step (void);
+void %FUNCTIONPREFIX%RungeKutta2Initialize (XXModelInstance* %VARPREFIX%model_instance);
+void %FUNCTIONPREFIX%RungeKutta2Terminate (XXModelInstance* %VARPREFIX%model_instance);
+void %FUNCTIONPREFIX%RungeKutta2Step (XXModelInstance* %VARPREFIX%model_instance);
 #endif
 
 #ifdef RungeKutta4_METHOD
-void %FUNCTIONPREFIX%RungeKutta4Initialize (void);
-void %FUNCTIONPREFIX%RungeKutta4Terminate (void);
-void %FUNCTIONPREFIX%RungeKutta4Step (void);
+void %FUNCTIONPREFIX%RungeKutta4Initialize (XXModelInstance* %VARPREFIX%model_instance);
+void %FUNCTIONPREFIX%RungeKutta4Terminate (XXModelInstance* %VARPREFIX%model_instance);
+void %FUNCTIONPREFIX%RungeKutta4Step (XXModelInstance* %VARPREFIX%model_instance);
 #endif
-
-extern XXBoolean %VARPREFIX%major;
 
 #endif

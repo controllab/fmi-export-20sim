@@ -33,15 +33,13 @@
 #define FMI_Dll_Export FMI2_Export
 %ENDIF%
 
-/* our own component identifier 
-   this can become a pointer to a full structure that is filled when instantiating
-   for now a simple non-NULL string pointer is returned
-*/
-#define xxComponent "%SUBMODEL_NAME%"
-
-%IF%%FMI2%
 /* Global pointer to co-simulator callback functions */
+%IF%%FMI1%
+fmiCallbackFunctions g_fmiCallbackFunctions;
+%ENDIF%
+%IF%%FMI2%
 const fmi2CallbackFunctions* g_fmiCallbackFunctions = NULL;
+%ENDIF%
 
 /* Store the path to the extracted resource folder location provided by the
  * co-simulation engine
@@ -100,7 +98,14 @@ const char* URIToNativePath(const char* uri)
 		return NULL;
 
 	/* Allocate memory for the return value including terminating \0 and extra path separator */
-	retval = (char*) malloc(path_len + 2);
+	if ((g_fmiCallbackFunctions) &&( g_fmiCallbackFunctions->allocateMemory != NULL))
+	{
+		retval = (char*) g_fmiCallbackFunctions->allocateMemory(path_len + 2, sizeof(char));
+	}
+	else
+	{
+		retval = (char*) malloc(path_len + 2);
+	}
 	/* Copy the remainder of the uri */
 	strncpy(retval, path_start, path_len);
 
@@ -127,7 +132,6 @@ const char* URIToNativePath(const char* uri)
 	return retval;
 }
 
-%ENDIF%
 /* Inquire version numbers of header files */
 FMI_Dll_Export const char* %FMI_PREFIX%GetTypesPlatform()
 {
@@ -162,9 +166,11 @@ FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%GetReal(%FMI_PREFIX%Component c,
 									 size_t nvr, %FMI_PREFIX%Real value[])
 {
 	size_t i;
+	XXModelInstance* %VARPREFIX%model_instance = (XXModelInstance*) c;
+
 	for (i = 0; i < nvr; i++)
 	{
-		value [i] = %VARPREFIX%MEMORY[ vr[i] ];
+		value [i] = %VARPREFIX%model_instance->MEMORY[ vr[i] ];
 	}
 	return %FMI_PREFIX%OK;
 }
@@ -173,12 +179,16 @@ FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%GetInteger(%FMI_PREFIX%Component c
 								size_t nvr,
 								%FMI_PREFIX%Integer value[])
 {
-	/* 20-sim generated C-code uses doubles for the model equation calculations. The variable type (i.e. integer or boolean) are not supported as data type, but are transfered to doubles. In the FMI interface however, the double can be converted to its implicit type  */
-	
+	XXModelInstance* %VARPREFIX%model_instance = (XXModelInstance*) c;
+
+	/* 20-sim generated C-code uses doubles for the model equation calculations.
+	   The variable type (i.e. integer or boolean) are not supported as data type,
+	   but are transfered to doubles. In the FMI interface however, the double 
+	   can be converted to its implicit type  */
 	size_t i;
 	for (i = 0; i < nvr; i++)
 	{
-		value [i] = (%FMI_PREFIX%Integer) %VARPREFIX%MEMORY[ vr[i] ];
+		value [i] = (%FMI_PREFIX%Integer) %VARPREFIX%model_instance->MEMORY[ vr[i] ];
 	}
 	return %FMI_PREFIX%OK;
 }
@@ -187,12 +197,17 @@ FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%GetBoolean(%FMI_PREFIX%Component c
 								size_t nvr,
 								%FMI_PREFIX%Boolean value[])
 {
-	/* 20-sim generated C-code uses doubles for the model equation calculations. The variable type (i.e. integer or boolean) are not supported as data type, but are transfered to doubles. In the FMI interface however, the double can be converted to its implicit type  */
-	
+	XXModelInstance* %VARPREFIX%model_instance = (XXModelInstance*) c;
+
+	/* 20-sim generated C-code uses doubles for the model equation calculations.
+	   The variable type (i.e. integer or boolean) are not supported as data type,
+	   but are transfered to doubles. In the FMI interface however, the double
+	   can be converted to its implicit type  */
+
 	size_t i;
 	for (i = 0; i < nvr; i++)
 	{
-		value [i] = (%VARPREFIX%MEMORY[ vr[i] ] == 1.0);
+		value [i] = (%VARPREFIX%model_instance->MEMORY[ vr[i] ] == 1.0);
 	}
 	return %FMI_PREFIX%OK;
 }
@@ -209,10 +224,11 @@ FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%SetReal(%FMI_PREFIX%Component c,
 								size_t nvr,
 								const %FMI_PREFIX%Real value[])
 {
+	XXModelInstance* %VARPREFIX%model_instance = (XXModelInstance*) c;
 	size_t i;
 	for (i = 0; i < nvr; i++)
 	{
-		%VARPREFIX%MEMORY[ vr[i] ] = value [i];
+		%VARPREFIX%model_instance->MEMORY[ vr[i] ] = value [i];
 	}
 	return %FMI_PREFIX%OK;
 }
@@ -222,12 +238,16 @@ FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%SetInteger (%FMI_PREFIX%Component 
 								size_t nvr,
 								const %FMI_PREFIX%Integer value[])
 {
-	/* 20-sim generated C-code uses doubles for the model equation calculations. The variable type (i.e. integer or boolean) are not supported as data type, but are transfered to doubles. In the FMI interface however, the double can be converted to its implicit type  */
-	
+	XXModelInstance* %VARPREFIX%model_instance = (XXModelInstance*) c;
+
+	/* 20-sim generated C-code uses doubles for the model equation calculations.
+	   The variable type (i.e. integer or boolean) are not supported as data type,
+	   but are transfered to doubles. In the FMI interface however, the double
+	   can be converted to its implicit type  */
 	size_t i;
 	for (i = 0; i < nvr; i++)
 	{
-		%VARPREFIX%MEMORY[ vr[i] ] = (XXDouble) value [i];
+		%VARPREFIX%model_instance->MEMORY[ vr[i] ] = (XXDouble) value [i];
 	}
 	return %FMI_PREFIX%OK;
 }
@@ -236,11 +256,12 @@ FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%SetBoolean(%FMI_PREFIX%Component c
 								size_t nvr,
 								const %FMI_PREFIX%Boolean value[])
 {
+	XXModelInstance* %VARPREFIX%model_instance = (XXModelInstance*) c;
 	/* temp implementation allowing boolean to real conversion, until proper boolean support is added. */
 	size_t i;
 	for (i = 0; i < nvr; i++)
 	{
-		%VARPREFIX%MEMORY[vr[i]] = value[i] ? 1.0 : 0.0;
+		%VARPREFIX%model_instance->MEMORY[vr[i]] = value[i] ? 1.0 : 0.0;
 	}
 	return %FMI_PREFIX%OK;    
 }
@@ -263,8 +284,9 @@ fmiComponent fmiInstantiateSlave(fmiString instanceName,
 								fmiCallbackFunctions functions,
 								fmiBoolean loggingOn) 
 {
+	XXModelInstance* %VARPREFIX%model_instance;
+	
  	/* we should remember the functions pointer in order to make callback functions */
-
 	if (!functions.logger) 
 		return NULL; // we cannot even log this problem
 	if (!instanceName || strlen(instanceName)==0)
@@ -281,9 +303,49 @@ fmiComponent fmiInstantiateSlave(fmiString instanceName,
 			"Wrong GUID %s. Expected %s.", GUID, FMI_GUID);
 		return NULL;
 	}
+    if (!functions.allocateMemory || !functions.freeMemory){
+        functions.logger(NULL, instanceName, fmiError, "error",
+                "Missing memory callback function.");
+        return NULL;
+    }
 
-	/* only one static instance for now */
-	return (fmiComponent) xxComponent;
+	%VARPREFIX%model_instance = (XXModelInstance *)functions.allocateMemory(1, sizeof(XXModelInstance));
+
+	if(!%VARPREFIX%model_instance)
+	{
+		functions.logger(NULL, instanceName, fmiError, "error",
+			"Out of memory while allocating model instance");
+		return NULL;
+	}
+	
+	%VARPREFIX%model_instance->instanceName = (%FMI_PREFIX%String) functions.allocateMemory(1 + strlen(instanceName), sizeof(char));
+	
+	if (!%VARPREFIX%model_instance->instanceName)
+	{
+		functions.logger(NULL, instanceName, fmiError, "error",
+			"Out of memory while allocating instance name");
+		return NULL;
+	}
+	strcpy((char *)%VARPREFIX%model_instance->instanceName, (char *)instanceName);
+
+	/* Register the callback */
+	g_fmiCallbackFunctions = functions;
+
+	/* Remember the resource folder location */
+	if (g_fmuResourceLocation != NULL)
+	{
+		if ((g_fmiCallbackFunctions) &&( g_fmiCallbackFunctions->freeMemory != NULL))
+		{
+			g_fmiCallbackFunctions->freeMemory((void*)g_fmuResourceLocation);
+		}
+		else
+		{
+			free((void*)g_fmuResourceLocation);
+		}
+	}
+	g_fmuResourceLocation = URIToNativePath(fmuLocation);	
+
+	return (fmiComponent) %VARPREFIX%model_instance;
 }
 %ENDIF%
 
@@ -296,8 +358,9 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 								fmi2Boolean visible,
 								fmi2Boolean loggingOn)
 {
+	XXModelInstance* %VARPREFIX%model_instance;
+	
 	/* we should remember the functions pointer in order to make callback functions */
-
 	if (!functions)
 	{
 		return NULL; // we cannot even log this problem
@@ -313,23 +376,88 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 				"Missing instance name.");
 		return NULL;
 	}
-	else
-	{
-		/* Register the callback */
-		g_fmiCallbackFunctions = functions;
-		/* Remember the resource folder location */
-		if (g_fmuResourceLocation != NULL)
-			free((void*)g_fmuResourceLocation);
-		g_fmuResourceLocation = URIToNativePath(fmuResourceLocation);
-	}
-	
-	/* Check whether the given GUID equals our GUID */
-	if( strncmp(fmuGUID, FMI_GUID, strlen(fmuGUID)) != 0 )
-	{
-		g_fmiCallbackFunctions->logger(NULL, instanceName, fmi2Error, "error",
-			"Wrong GUID %s. Expected %s.", fmuGUID, FMI_GUID);
+	if (!functions->allocateMemory || !functions->freeMemory) {
+		functions->logger(functions->componentEnvironment, instanceName, fmi2Error, "error",
+				"fmi2Instantiate: Missing memory callback function.");
 		return NULL;
 	}
+	/* Check whether the given GUID equals our GUID */
+	if (!fmuGUID || strlen(fmuGUID) == 0) {
+		functions->logger(functions->componentEnvironment, instanceName, fmi2Error, "error",
+				"fmi2Instantiate: Missing GUID.");
+		return NULL;
+	}
+	if( strncmp(fmuGUID, FMI_GUID, strlen(fmuGUID)) != 0 )
+	{
+		functions->logger(NULL, instanceName, fmi2Error, "error",
+			"fmi2Instantiate: Wrong GUID %s. Expected %s.", fmuGUID, FMI_GUID);
+		return NULL;
+	}
+	
+	%VARPREFIX%model_instance = (XXModelInstance *)functions->allocateMemory(1, sizeof(XXModelInstance));
+	memset(%VARPREFIX%model_instance, 0, sizeof(XXModelInstance));
+
+	if(!%VARPREFIX%model_instance)
+	{
+		functions->logger(functions->componentEnvironment, instanceName, fmi2Error, "error",
+			"fmi2Instantiate: Out of memory while allocating model instance");
+		return NULL;
+	}
+	
+	%VARPREFIX%model_instance->instanceName = (%FMI_PREFIX%String) functions->allocateMemory(1 + strlen(instanceName), sizeof(char));
+	
+	if (!%VARPREFIX%model_instance->instanceName)
+	{
+		functions->logger(functions->componentEnvironment, instanceName, fmi2Error, "error",
+			"fmi2Instantiate: Out of memory while allocating instance name");
+		return NULL;
+	}
+	strcpy((char *)%VARPREFIX%model_instance->instanceName, (char *)instanceName);
+	
+	/* Prepare the model instance struct */
+	%VARPREFIX%model_instance->start_time = %START_TIME%;
+	%VARPREFIX%model_instance->finish_time = %FINISH_TIME%;
+	%VARPREFIX%model_instance->step_size = %TIME_STEP_SIZE%;
+	%VARPREFIX%model_instance->time = 0.0;
+	%VARPREFIX%model_instance->steps = 0;
+	%VARPREFIX%model_instance->%XX_INITIALIZE% = XXTRUE;
+	%VARPREFIX%model_instance->major = XXTRUE;
+	%VARPREFIX%model_instance->stop_simulation = XXFALSE;
+
+	/* Set the offsets within the %VARPREFIX%model_instance->MEMORY array */
+%IF%%NUMBER_CONSTANTS%
+	%VARPREFIX%model_instance->%XX_CONSTANT_ARRAY_NAME% = %VARPREFIX%model_instance->MEMORY; /* constants offset */
+%ENDIF%
+%IF%%NUMBER_PARAMETERS%
+	%VARPREFIX%model_instance->%XX_PARAMETER_ARRAY_NAME% = &%VARPREFIX%model_instance->MEMORY[%VARPREFIX%constants_count];	/* parameters offset */
+%ENDIF%
+%IF%%NUMBER_INITIAL_VALUES%
+	%VARPREFIX%model_instance->%XX_INITIAL_VALUE_ARRAY_NAME% = &%VARPREFIX%model_instance->MEMORY[%VARPREFIX%constants_count + %VARPREFIX%parameter_count];		/* initial values offset */
+%ENDIF%
+%IF%%NUMBER_VARIABLES%
+	%VARPREFIX%model_instance->%XX_VARIABLE_ARRAY_NAME% = &%VARPREFIX%model_instance->MEMORY[%VARPREFIX%constants_count + %VARPREFIX%parameter_count + %VARPREFIX%initialvalue_count];		/* variables offset */
+%ENDIF%
+%IF%%NUMBER_STATES%
+	%VARPREFIX%model_instance->%XX_STATE_ARRAY_NAME% = &%VARPREFIX%model_instance->MEMORY[%VARPREFIX%constants_count + %VARPREFIX%parameter_count + %VARPREFIX%initialvalue_count + %VARPREFIX%variable_count];		/* states offset */
+	%VARPREFIX%model_instance->%XX_RATE_ARRAY_NAME% = &%VARPREFIX%model_instance->MEMORY[%VARPREFIX%constants_count + %VARPREFIX%parameter_count + %VARPREFIX%initialvalue_count + %VARPREFIX%variable_count + %VARPREFIX%state_count];		/* rates offset */
+%ENDIF%
+	
+	/* Register the callback */
+	g_fmiCallbackFunctions = functions;
+	/* Remember the resource folder location */
+	if (g_fmuResourceLocation != NULL)
+	{
+		if ((g_fmiCallbackFunctions) &&( g_fmiCallbackFunctions->freeMemory != NULL))
+		{
+			g_fmiCallbackFunctions->freeMemory((void*)g_fmuResourceLocation);
+		}
+		else
+		{
+			free((void*)g_fmuResourceLocation);
+		}
+	}
+	g_fmuResourceLocation = URIToNativePath(fmuResourceLocation);
+	
 	/* check if we are setup for co-simulation, that's the only possible option for now */
 	if( fmuType != fmi2CoSimulation )
 	{
@@ -338,8 +466,7 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 		return NULL;
 	}
 
-	/* only one static instance for now */
-	return (fmi2Component) xxComponent;
+	return (fmi2Component) %VARPREFIX%model_instance;
 }
 %ENDIF%
 %IF%%FMI1%
@@ -348,15 +475,17 @@ fmiStatus fmiInitializeSlave(fmiComponent c,
 							 fmiBoolean StopTimeDefined,
 							 fmiReal tStop) 
 {
+	XXModelInstance* %VARPREFIX%model_instance = (XXModelInstance*) c;
+
 	/* copy the arguments */
-	%VARPREFIX%start_time = tStart;
+	%VARPREFIX%model_instance->start_time = tStart;
 	if (StopTimeDefined == fmiTrue)
 	{
-		%VARPREFIX%finish_time = tStop;
+		%VARPREFIX%model_instance->finish_time = tStop;
 	}
 
 	/* initialize the submodel itself */
-	%FUNCTIONPREFIX%InitializeSubmodel (tStart);
+	%FUNCTIONPREFIX%InitializeSubmodel (%VARPREFIX%model_instance, tStart);
 
 	/* all done */
 	return fmiOK;
@@ -370,15 +499,17 @@ fmi2Status fmi2SetupExperiment(fmi2Component c,
 							fmi2Boolean stopTimeDefined,
 							fmi2Real stopTime)
 {
+	XXModelInstance* %VARPREFIX%model_instance = (XXModelInstance*) c;
+
 	/* copy the arguments */
-	%VARPREFIX%start_time = startTime;
+	%VARPREFIX%model_instance->start_time = startTime;
 	if (stopTimeDefined == fmi2True)
 	{
-		%VARPREFIX%finish_time = stopTime;
+		%VARPREFIX%model_instance->finish_time = stopTime;
 	}
 
 	/* initialize the submodel itself */
-	%FUNCTIONPREFIX%InitializeSubmodel (startTime);
+	%FUNCTIONPREFIX%InitializeSubmodel (%VARPREFIX%model_instance, startTime);
 
 	/* all done */
 	return fmi2OK;
@@ -401,10 +532,19 @@ fmiStatus fmiTerminateSlave(fmiComponent c)
 fmi2Status fmi2Terminate(fmi2Component c) 
 %ENDIF%
 {
-	/* Perform the final calculations */
-	%FUNCTIONPREFIX%TerminateSubmodel (%VARPREFIX%%XX_TIME%);
+	XXModelInstance* %VARPREFIX%model_instance = (XXModelInstance*) c;
 
-	free((void*)g_fmuResourceLocation);
+	/* Perform the final calculations */
+	%FUNCTIONPREFIX%TerminateSubmodel (%VARPREFIX%model_instance, %VARPREFIX%model_instance->time);
+
+	if ((g_fmiCallbackFunctions) &&( g_fmiCallbackFunctions->freeMemory != NULL))
+	{
+		g_fmiCallbackFunctions->freeMemory((void*)g_fmuResourceLocation);
+	}
+	else
+	{
+		free((void*)g_fmuResourceLocation);
+	}
 
 	/* all done */
 	return %FMI_PREFIX%OK;
@@ -416,8 +556,10 @@ fmiStatus fmiResetSlave(fmiComponent c)
 fmi2Status fmi2Reset(fmi2Component c) 
 %ENDIF%
 {
+	XXModelInstance* %VARPREFIX%model_instance = (XXModelInstance*) c;
+
 	/* initialize the submodel itself */
-	%FUNCTIONPREFIX%InitializeSubmodel (%VARPREFIX%start_time);
+	%FUNCTIONPREFIX%InitializeSubmodel (%VARPREFIX%model_instance, %VARPREFIX%model_instance->start_time);
 
 	/* all done */
 	return %FMI_PREFIX%OK;
@@ -425,13 +567,33 @@ fmi2Status fmi2Reset(fmi2Component c)
 
 %IF%%FMI1%
 void fmiFreeSlaveInstance(fmiComponent c) 
+{
+	XXModelInstance* %VARPREFIX%model_instance = (XXModelInstance*) c;
+
+	if ((g_fmiCallbackFunctions) &&( g_fmiCallbackFunctions->freeMemory != NULL))
+	{
+		if(%VARPREFIX%model_instance->instanceName)
+		{
+			g_fmiCallbackFunctions->freeMemory((void *)%VARPREFIX%model_instance->instanceName);
+			%VARPREFIX%model_instance->instanceName = NULL;
+		}
+		g_fmiCallbackFunctions->freeMemory((void *) %VARPREFIX%model_instance);
+		%VARPREFIX%model_instance = NULL;
+	}
+}
 %ENDIF%
 %IF%%FMI2%
 void fmi2FreeInstance(fmi2Component c) 
-%ENDIF%
 {
-    /* only one static instance (done automatically) */
+	XXModelInstance* %VARPREFIX%model_instance = (XXModelInstance*) c;
+
+	if(%VARPREFIX%model_instance->instanceName)
+	{
+		g_fmiCallbackFunctions->freeMemory((void *)%VARPREFIX%model_instance->instanceName);
+	}
+	g_fmiCallbackFunctions->freeMemory((void *) %VARPREFIX%model_instance);
 }
+%ENDIF%
 
 %FMI_PREFIX%Status %FMI_PREFIX%SetRealInputDerivatives(%FMI_PREFIX%Component c,
 									const %FMI_PREFIX%ValueReference vr[], size_t nvr,
@@ -476,6 +638,8 @@ fmi2Status fmi2DoStep(fmi2Component c,
 					fmi2Boolean noSetFMUStatePriorToCurrentPoint)
 %ENDIF%
 {
+	XXModelInstance* %VARPREFIX%model_instance = (XXModelInstance*) c;
+
 	/* Treat also case of zero step, i.e. during an event iteration */
 	if (communicationStepSize == 0)
 	{
@@ -483,16 +647,16 @@ fmi2Status fmi2DoStep(fmi2Component c,
 	}
 
 	/* as long as we are not passed our communication point */
-	while (%VARPREFIX%%XX_TIME% < (currentCommunicationPoint + communicationStepSize))
+	while (%VARPREFIX%model_instance->time < (currentCommunicationPoint + communicationStepSize))
 	{
 		/* check for termination first */
-		if ( (%VARPREFIX%finish_time > 0.0) && (%VARPREFIX%%XX_TIME% > %VARPREFIX%finish_time) )
+		if ( (%VARPREFIX%model_instance->finish_time > 0.0) && (%VARPREFIX%model_instance->time > %VARPREFIX%model_instance->finish_time) )
 		{
 %IF%%FMI2%
 			if(g_fmiCallbackFunctions != NULL && g_fmiCallbackFunctions->logger != NULL)
 			{
 				g_fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
-					"Exceeded model finish time: %g > %g\n", %VARPREFIX%%XX_TIME%, %VARPREFIX%finish_time);
+					"Exceeded model finish time: %g > %g\n", %VARPREFIX%model_instance->time, %VARPREFIX%model_instance->finish_time);
 			}
 %ENDIF%
 			
@@ -501,7 +665,7 @@ fmi2Status fmi2DoStep(fmi2Component c,
 		}
 
 		/* Call the submodel to calculate the output, and increase the time as well */
-		%FUNCTIONPREFIX%CalculateSubmodel (%VARPREFIX%%XX_TIME%);
+		%FUNCTIONPREFIX%CalculateSubmodel (%VARPREFIX%model_instance, %VARPREFIX%model_instance->time);
 	}
 
 	/* for now */
@@ -543,6 +707,7 @@ fmi2Status fmi2GetContinuousStates(fmi2Component c, fmi2Real x[], size_t nx)
 {
 %IF%%NUMBER_STATES%
 	size_t i;
+	XXModelInstance* %VARPREFIX%model_instance = (XXModelInstance*) c;
 
 %ENDIF%
 	if( %NUMBER_STATES% != nx )
@@ -553,7 +718,7 @@ fmi2Status fmi2GetContinuousStates(fmi2Component c, fmi2Real x[], size_t nx)
 
 	for( i = 0; i < %NUMBER_STATES%; ++i)
 	{
-		x[i] = %VARPREFIX%%XX_STATE_ARRAY_NAME%[i];
+		x[i] = %VARPREFIX%model_instance->%XX_STATE_ARRAY_NAME%[i];
 	}
 %ELSE%
 	/* the exported submodel has no states */

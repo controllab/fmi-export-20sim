@@ -55,115 +55,11 @@
 #include "xxTable2D.h"
 %ENDIF%
 
-/* the global variables */
-XXDouble %VARPREFIX%start_time = %START_TIME%;
-XXDouble %VARPREFIX%finish_time = %FINISH_TIME%;
-XXDouble %VARPREFIX%step_size = %TIME_STEP_SIZE%;
-XXDouble %VARPREFIX%%XX_TIME% = 0.0;
-XXInteger %VARPREFIX%steps = 0;
-XXBoolean %VARPREFIX%%XX_INITIALIZE% = XXTRUE;
-XXBoolean %VARPREFIX%major = XXTRUE;
-XXBoolean %VARPREFIX%stop_simulation = XXFALSE;
-
-/* the variable arrays */
-XXDouble %VARPREFIX%MEMORY[%NUMBER_CONSTANTS% + %NUMBER_PARAMETERS% + %NUMBER_INITIAL_VALUES% + %NUMBER_VARIABLES% + %NUMBER_STATES% + %NUMBER_STATES% + 1];
-XXDouble* %VARPREFIX%%XX_CONSTANT_ARRAY_NAME% = %VARPREFIX%MEMORY;		/* constants */
-XXDouble* %VARPREFIX%%XX_PARAMETER_ARRAY_NAME% = %VARPREFIX%MEMORY + %NUMBER_CONSTANTS%;			/* parameters */
-XXDouble* %VARPREFIX%%XX_INITIAL_VALUE_ARRAY_NAME% = %VARPREFIX%MEMORY + %NUMBER_CONSTANTS% + %NUMBER_PARAMETERS%;		/* initial values */
-XXDouble* %VARPREFIX%%XX_VARIABLE_ARRAY_NAME% = %VARPREFIX%MEMORY + %NUMBER_CONSTANTS% + %NUMBER_PARAMETERS% + %NUMBER_INITIAL_VALUES%;		/* variables */
-XXDouble* %VARPREFIX%%XX_STATE_ARRAY_NAME% = %VARPREFIX%MEMORY + %NUMBER_CONSTANTS% + %NUMBER_PARAMETERS% + %NUMBER_INITIAL_VALUES% + %NUMBER_VARIABLES%;		/* states */
-XXDouble *%VARPREFIX%%XX_RATE_ARRAY_NAME% = %VARPREFIX%MEMORY + %NUMBER_CONSTANTS% + %NUMBER_PARAMETERS% + %NUMBER_INITIAL_VALUES% + %NUMBER_VARIABLES% + %NUMBER_STATES%;		/* rates (or new states) */
-%IF%%NUMBER_MATRICES%
-XXMatrix %VARPREFIX%%XX_MATRIX_ARRAY_NAME%[%NUMBER_MATRICES%];		/* matrices */
-%ENDIF%
-%IF%%NUMBER_UNNAMED%
-XXDouble %VARPREFIX%%XX_UNNAMED_ARRAY_NAME%[%NUMBER_UNNAMED%];		/* unnamed */
-%ENDIF%
-%IF%%WORK_ARRAY_SIZE%
-XXDouble %VARPREFIX%workarray[%WORK_ARRAY_SIZE%];
-%ENDIF%
-%IF%%NUMBER_FAVORITE_PARAMETERS%
-XXDouble %VARPREFIX%%XX_FAVORITE_PARS_ARRAY_NAME%[%NUMBER_FAVORITE_PARAMETERS%];	/* favorite parameters */
-%ENDIF%
-%IF%%NUMBER_FAVORITE_VARIABLES%
-XXDouble %VARPREFIX%%XX_FAVORITE_VARS_ARRAY_NAME%[%NUMBER_FAVORITE_VARIABLES%];		/* favorite variables */
-%ENDIF%
-%IF%%NUMBER_IMPORTS%
-XXDouble %VARPREFIX%%XX_EXT_IN_ARRAY_NAME%[%NUMBER_IMPORTS%]; /* import variables */
-%ENDIF%
-%IF%%NUMBER_EXPORTS%
-XXDouble %VARPREFIX%%XX_EXT_OUT_ARRAY_NAME%[%NUMBER_EXPORTS%]; /* export variables */
-%ENDIF%
-%IF%%NUMBEROF_INITIALFUNCTION%
-XXDouble %VARPREFIX%initial_value_array[%NUMBEROF_INITIALFUNCTION%];	/* initial*/
-%ENDIF%
-%IF%%NUMBEROF_DELAYFUNCTION%
-XXDouble %VARPREFIX%delay_update_array[%NUMBEROF_DELAYFUNCTION%];
-XXDouble %VARPREFIX%delay_last_values[%NUMBEROF_DELAYFUNCTION%];
-%ENDIF%
-
-/* the names of the variables as used in the arrays above
-   uncomment this part if these names are needed
-%IF%%NUMBER_CONSTANTS%
-XXCharacter *%VARPREFIX%constant_names[] = {
-%CONSTANT_NAMES%,	NULL
-};
-%ENDIF%
-%IF%%NUMBER_PARAMETERS%
-XXCharacter *%VARPREFIX%parameter_names[] = {
-%PARAMETER_NAMES%,	NULL
-};
-%ENDIF%
-%IF%%NUMBER_INITIAL_VALUES%
-XXCharacter *%VARPREFIX%initial_value_names[] = {
-%INITIAL_VALUE_NAMES%,	NULL
-};
-%ENDIF%
-%IF%%NUMBER_VARIABLES%
-XXCharacter *%VARPREFIX%variable_names[] = {
-%VARIABLE_NAMES%,	NULL
-};
-%ENDIF%
-%IF%%NUMBER_STATES%
-XXCharacter *%VARPREFIX%state_names[] = {
-%STATE_NAMES%,	NULL
-};
-XXCharacter *%VARPREFIX%rate_names[] = {
-%RATE_NAMES%,	NULL
-};
-%ENDIF%
-%IF%%NUMBER_MATRICES%
-XXCharacter *%VARPREFIX%matrix_names[] = {
-%MATRIX_NAMES%,	NULL
-};
-%ENDIF%
-%IF%%NUMBER_FAVORITE_PARAMETERS%
-XXString %VARPREFIX%favorite_par_names[] = {
-%FAVORITE_PARAMETER_NAMES%, NULL
-};
-%ENDIF%
-%IF%%NUMBER_FAVORITE_VARIABLES%
-XXString %VARPREFIX%favorite_var_names[] = {
-%FAVORITE_VARIABLE_NAMES%, NULL
-};
-%ENDIF%
-%IF%%NUMBER_IMPORTS%
-XXString %VARPREFIX%import_names[] = {
-%IMPORT_NAMES%, NULL
-};
-%ENDIF%
-%IF%%NUMBER_EXPORTS%
-XXString %VARPREFIX%export_names[] = {
-%EXPORT_NAMES%, NULL
-};
-%ENDIF%
-*/
-
 #if (%NUMBER_PARAMETERS% > 8192) && defined _MSC_VER
 #pragma optimize("", off)
 #endif
 /* this method is called before calculation is possible */
-void %FUNCTIONPREFIX%ModelInitialize (void)
+void %FUNCTIONPREFIX%ModelInitialize (XXModelInstance* %VARPREFIX%model_instance)
 {
 %IF%%NUMBER_CONSTANTS%
 	/* set the constants */
@@ -203,7 +99,7 @@ void %FUNCTIONPREFIX%ModelInitialize (void)
 /* This function calculates the initial equations of the model.
  * These equations are calculated before anything else
  */
-void %FUNCTIONPREFIX%CalculateInitial (void)
+void %FUNCTIONPREFIX%CalculateInitial (XXModelInstance* %VARPREFIX%model_instance)
 {
 %IF%%NUMBER_FAVORITE_PARAMETERS%
 	/* the favorite parameters equations */
@@ -216,7 +112,7 @@ void %FUNCTIONPREFIX%CalculateInitial (void)
 /* This function calculates the static equations of the model.
  * These equations are only dependent from parameters and constants
  */
-void %FUNCTIONPREFIX%CalculateStatic (void)
+void %FUNCTIONPREFIX%CalculateStatic (XXModelInstance* %VARPREFIX%model_instance)
 {
 %STATIC_EQUATIONS%
 }
@@ -225,7 +121,7 @@ void %FUNCTIONPREFIX%CalculateStatic (void)
  * These equations are dynamic equations that must not change
  * in calls from the integration method (like random and delay).
  */
-void %FUNCTIONPREFIX%CalculateInput (void)
+void %FUNCTIONPREFIX%CalculateInput (XXModelInstance* %VARPREFIX%model_instance)
 {
 %IF%%NUMBER_FAVORITE_PARAMETERS%
 	/* the favorite parameters equations */
@@ -239,12 +135,12 @@ void %FUNCTIONPREFIX%CalculateInput (void)
  * These equations are called from the integration method
  * to calculate the new model rates (that are then integrated).
  */
-void %FUNCTIONPREFIX%CalculateDynamic (void)
+void %FUNCTIONPREFIX%CalculateDynamic (XXModelInstance* %VARPREFIX%model_instance)
 {
 %DYNAMIC_EQUATIONS%
 
 	/* increment the step counter */
-	%VARPREFIX%steps++;
+	%VARPREFIX%model_instance->steps++;
 }
 
 /* This function calculates the output equations of the model.
@@ -253,12 +149,12 @@ void %FUNCTIONPREFIX%CalculateDynamic (void)
  * These dynamic equations are called often more than one time for each
  * integration step that is taken. This makes model computation much faster.
  */
-void %FUNCTIONPREFIX%CalculateOutput (void)
+void %FUNCTIONPREFIX%CalculateOutput (XXModelInstance* %VARPREFIX%model_instance)
 {
 %OUTPUT_EQUATIONS%
 %IF%%NUMBEROF_DELAYFUNCTION%
 	/* delay update */
-	%FUNCTIONPREFIX%DelayUpdate();
+	%FUNCTIONPREFIX%DelayUpdate(%VARPREFIX%model_instance);
 
 %ENDIF%
 %IF%%NUMBER_FAVORITE_VARIABLES%
@@ -271,20 +167,60 @@ void %FUNCTIONPREFIX%CalculateOutput (void)
  * These equations are calculated after all the calculations
  * are performed
  */
-void %FUNCTIONPREFIX%CalculateFinal (void)
+void %FUNCTIONPREFIX%CalculateFinal (XXModelInstance* %VARPREFIX%model_instance)
 {
 %FINAL_EQUATIONS%
 }
 
 /* this method is called after all calculations are performed */
-void %FUNCTIONPREFIX%ModelTerminate(void)
+void %FUNCTIONPREFIX%ModelTerminate(XXModelInstance* %VARPREFIX%model_instance)
 {
 }
 
 %IF%%NUMBEROF_DELAYFUNCTION%
-void %FUNCTIONPREFIX%DelayUpdate()
+void %FUNCTIONPREFIX%DelayUpdate(XXModelInstance* %VARPREFIX%model_instance)
 {
-	memcpy(%VARPREFIX%delay_update_array, %VARPREFIX%delay_last_values, %NUMBEROF_DELAYFUNCTION% * sizeof(XXDouble));
+	memcpy(%VARPREFIX%model_instance->delay_update_array, %VARPREFIX%model_instance->delay_last_values, %VARPREFIX%delay_count * sizeof(XXDouble));
+}
+
+XXDouble %FUNCTIONPREFIX%ModelDelay (XXModelInstance* %VARPREFIX%model_instance, XXDouble argument1, XXDouble argument2, XXInteger id)
+{
+	XXDouble value;
+
+	if (%VARPREFIX%model_instance->%XX_INITIALIZE%)
+	{
+		value = argument2;
+	}
+	else
+	{
+		value = %VARPREFIX%model_instance->delay_update_array[id];
+	}
+
+	if (%VARPREFIX%model_instance->major)
+	{
+		%VARPREFIX%model_instance->delay_last_values[id] = argument1;
+	}
+
+	return value;
+}
+
+%ENDIF%
+%IF%%NUMBEROF_INITIALFUNCTION%
+XXDouble XXModelInitialValue (XXDouble argument, XXInteger identifier)
+{
+	/* The storage array '%VARPREFIX%initial_value_array' is declared in xxmodel.c because its size is model dependent */
+	XXDouble value;
+
+	if (%VARPREFIX%model_instance->%XX_INITIALIZE%)
+	{
+		value = argument;
+		%VARPREFIX%model_instance->initial_value_array[identifier] = value;
+	}
+	else
+	{
+		value = %VARPREFIX%model_instance->initial_value_array[identifier];
+	}
+	return value;
 }
 
 %ENDIF%

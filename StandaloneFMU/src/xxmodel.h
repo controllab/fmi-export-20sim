@@ -27,98 +27,167 @@
 #include "xxmatrix.h"
 %ENDIF%
 
-/* Simulation variables */
-extern XXDouble %VARPREFIX%start_time;
-extern XXDouble %VARPREFIX%finish_time;
-extern XXDouble %VARPREFIX%step_size;
-extern XXDouble %VARPREFIX%%XX_TIME%;
-extern XXInteger %VARPREFIX%steps;
-extern XXBoolean %VARPREFIX%%XX_INITIALIZE%;
-extern XXBoolean %VARPREFIX%major;
-extern XXBoolean %VARPREFIX%stop_simulation;
+/* the chosen integration method */
+#define %INTEGRATION_METHOD_NAME%_METHOD
 
-/* Variable arrays */
-extern XXDouble %VARPREFIX%MEMORY[];
-extern XXDouble* %INPUT_ARRAY_NAME%;
-extern XXDouble* %OUTPUT_ARRAY_NAME%;
+/* Model size constants */
+#define %VARPREFIX%constants_count %NUMBER_CONSTANTS%
+#define %VARPREFIX%parameter_count %NUMBER_PARAMETERS%
+#define %VARPREFIX%initialvalue_count %NUMBER_INITIAL_VALUES%
+#define %VARPREFIX%variable_count %NUMBER_VARIABLES%
+#define %VARPREFIX%state_count %NUMBER_STATES%
+%IF%%NUMBEROF_DELAYFUNCTION%
+#define %VARPREFIX%delay_count %NUMBEROF_DELAYFUNCTION%
+%ENDIF%
+
+typedef struct XXModelInstance
+{
+	/* FMU */
+	%FMI_PREFIX%String instanceName;
+
+	/* Simulation variables */
+	XXDouble start_time;
+	XXDouble finish_time;
+	XXDouble step_size;
+	XXDouble time;
+	XXInteger steps;
+	XXBoolean %XX_INITIALIZE%;
+	XXBoolean major;
+	XXBoolean stop_simulation;
+
+	/* Model state */
+	XXDouble MEMORY[
 %IF%%NUMBER_CONSTANTS%
-extern XXDouble* %VARPREFIX%%XX_CONSTANT_ARRAY_NAME%;
+		%VARPREFIX%constants_count +
 %ENDIF%
 %IF%%NUMBER_PARAMETERS%
-extern XXDouble* %VARPREFIX%%XX_PARAMETER_ARRAY_NAME%;
+		%VARPREFIX%parameter_count + 
 %ENDIF%
 %IF%%NUMBER_INITIAL_VALUES%
-extern XXDouble* %VARPREFIX%%XX_INITIAL_VALUE_ARRAY_NAME%;
+		%VARPREFIX%initialvalue_count + 
 %ENDIF%
 %IF%%NUMBER_VARIABLES%
-extern XXDouble* %VARPREFIX%%XX_VARIABLE_ARRAY_NAME%;
+		%VARPREFIX%variable_count + 
 %ENDIF%
 %IF%%NUMBER_STATES%
-extern XXDouble* %VARPREFIX%%XX_STATE_ARRAY_NAME%;
-extern XXDouble* %VARPREFIX%%XX_RATE_ARRAY_NAME%;
+		%VARPREFIX%state_count /* states */ +
+		%VARPREFIX%state_count /* rates */ +
 %ENDIF%
+		1
+	];
 %IF%%NUMBER_MATRICES%
-extern XXMatrix %VARPREFIX%%XX_MATRIX_ARRAY_NAME%[];
+	XXMatrix %XX_MATRIX_ARRAY_NAME%[%NUMBER_MATRICES%];		/* matrices */
 %ENDIF%
-extern XXDouble %VARPREFIX%%XX_UNNAMED_ARRAY_NAME%[];
+%IF%%NUMBER_UNNAMED%
+	XXDouble %XX_UNNAMED_ARRAY_NAME%[%NUMBER_UNNAMED%];		/* unnamed */
+%ENDIF%
+%IF%%WORK_ARRAY_SIZE%
+	XXDouble workarray[%WORK_ARRAY_SIZE%];
+%ENDIF%
+%IF%%NUMBER_FAVORITE_PARAMETERS%
+	XXDouble %XX_FAVORITE_PARS_ARRAY_NAME%[%NUMBER_FAVORITE_PARAMETERS%];	/* favorite parameters */
+%ENDIF%
+%IF%%NUMBER_FAVORITE_VARIABLES%
+	XXDouble %XX_FAVORITE_VARS_ARRAY_NAME%[%NUMBER_FAVORITE_VARIABLES%];		/* favorite variables */
+%ENDIF%
 %IF%%NUMBER_IMPORTS%
-extern XXDouble %VARPREFIX%%XX_EXT_IN_ARRAY_NAME%[];
+	XXDouble %XX_EXT_IN_ARRAY_NAME%[%NUMBER_IMPORTS%]; /* import variables */
 %ENDIF%
 %IF%%NUMBER_EXPORTS%
-extern XXDouble %VARPREFIX%%XX_EXT_OUT_ARRAY_NAME%[];
+	XXDouble %XX_EXT_OUT_ARRAY_NAME%[%NUMBER_EXPORTS%]; /* export variables */
 %ENDIF%
 %IF%%NUMBEROF_INITIALFUNCTION%
-extern XXDouble %VARPREFIX%initial_value_array[];
+	XXDouble initial_value_array[%NUMBEROF_INITIALFUNCTION%];	/* initial*/
 %ENDIF%
 %IF%%NUMBEROF_DELAYFUNCTION%
-extern XXDouble %VARPREFIX%delay_update_array[];
-extern XXDouble %VARPREFIX%delay_last_values[];
-%ENDIF%
-
-/* The names of the variables as used in the arrays above
-   uncomment this if you need the names (see source file too)
-%IF%%NUMBER_CONSTANTS%
-extern XXString %VARPREFIX%constant_names[];
-%ENDIF%
-%IF%%NUMBER_PARAMETERS%
-extern XXString %VARPREFIX%parameter_names[];
-%ENDIF%
-%IF%%NUMBER_INITIAL_VALUES%
-extern XXString %VARPREFIX%initial_value_names[];
-%ENDIF%
-%IF%%NUMBER_VARIABLES%
-extern XXString %VARPREFIX%variable_names[];
+	XXDouble delay_update_array[%NUMBEROF_DELAYFUNCTION%];
+	XXDouble delay_last_values[%NUMBEROF_DELAYFUNCTION%];
 %ENDIF%
 %IF%%NUMBER_STATES%
-extern XXString %VARPREFIX%state_names[];
-extern XXString %VARPREFIX%rate_names[];
+	/* Integration method intermediate variables */
+#ifdef RungeKutta2_METHOD
+	XXDouble q0[%VARPREFIX%state_count];
+#endif
+#ifdef RungeKutta4_METHOD
+	XXDouble q0[%VARPREFIX%state_count];
+	XXDouble q1[%VARPREFIX%state_count];
+	XXDouble q2[%VARPREFIX%state_count];
+	XXDouble q3[%VARPREFIX%state_count];
+	XXDouble q4[%VARPREFIX%state_count];
+#endif
+%ENDIF%
+	/* Memory offset pointers */
+%IF%%NUMBER_CONSTANTS%
+	XXDouble* %XX_CONSTANT_ARRAY_NAME%;	/* constants */
+%ENDIF%
+%IF%%NUMBER_PARAMETERS%
+	XXDouble* %XX_PARAMETER_ARRAY_NAME%;	/* parameters */
+%ENDIF%
+%IF%%NUMBER_INITIAL_VALUES%
+	XXDouble* %XX_INITIAL_VALUE_ARRAY_NAME%;		/* initial values */
+%ENDIF%
+%IF%%NUMBER_VARIABLES%
+	XXDouble* %XX_VARIABLE_ARRAY_NAME%;		/* variables */
+%ENDIF%
+%IF%%NUMBER_STATES%
+	XXDouble* %XX_STATE_ARRAY_NAME%;		/* states */
+	XXDouble* %XX_RATE_ARRAY_NAME%;		/* rates (or new states) */
+%ENDIF%
+} XXModelInstance;
+
+
+/* Variable arrays */
+%IF%%NUMBER_CONSTANTS%
+#define %VARPREFIX%%XX_CONSTANT_ARRAY_NAME% %VARPREFIX%model_instance->%XX_CONSTANT_ARRAY_NAME%
+%ENDIF%
+%IF%%NUMBER_PARAMETERS%
+#define %VARPREFIX%%XX_PARAMETER_ARRAY_NAME% %VARPREFIX%model_instance->%XX_PARAMETER_ARRAY_NAME%
+%ENDIF%
+%IF%%NUMBER_INITIAL_VALUES%
+#define %VARPREFIX%%XX_INITIAL_VALUE_ARRAY_NAME% %VARPREFIX%model_instance->%XX_INITIAL_VALUE_ARRAY_NAME%
+%ENDIF%
+%IF%%NUMBER_VARIABLES%
+#define %VARPREFIX%%XX_VARIABLE_ARRAY_NAME% %VARPREFIX%model_instance->%XX_VARIABLE_ARRAY_NAME%
+%ENDIF%
+%IF%%NUMBER_STATES%
+#define %VARPREFIX%%XX_STATE_ARRAY_NAME% xx_model_instance->%XX_STATE_ARRAY_NAME%
+#define %VARPREFIX%%XX_RATE_ARRAY_NAME% xx_model_instance->%XX_RATE_ARRAY_NAME%
 %ENDIF%
 %IF%%NUMBER_MATRICES%
-extern XXString %VARPREFIX%matrix_names[];
+#define %VARPREFIX%%XX_MATRIX_ARRAY_NAME% xx_model_instance->%XX_MATRIX_ARRAY_NAME%
 %ENDIF%
+#define %VARPREFIX%%XX_UNNAMED_ARRAY_NAME% xx_model_instance->%XX_UNNAMED_ARRAY_NAME%
 %IF%%NUMBER_IMPORTS%
-extern XXString %VARPREFIX%import_names[];
+#define %VARPREFIX%%XX_EXT_IN_ARRAY_NAME% xx_model_instance->%XX_EXT_IN_ARRAY_NAME%
 %ENDIF%
 %IF%%NUMBER_EXPORTS%
-extern XXString %VARPREFIX%export_names[];
+#define %VARPREFIX%%XX_EXT_OUT_ARRAY_NAME% xx_model_instance->%XX_EXT_OUT_ARRAY_NAME%
 %ENDIF%
-*/
+#define %VARPREFIX%step_size %VARPREFIX%model_instance->step_size
+#define %VARPREFIX%%XX_INITIALIZE% %VARPREFIX%model_instance->%XX_INITIALIZE%
+#define %VARPREFIX%major %VARPREFIX%model_instance->major
 
 /* Initialization methods */
-void %FUNCTIONPREFIX%ModelInitialize (void);
-void %FUNCTIONPREFIX%ModelTerminate (void);
+void %FUNCTIONPREFIX%ModelInitialize (XXModelInstance* %VARPREFIX%model_instance);
+void %FUNCTIONPREFIX%ModelTerminate (XXModelInstance* %VARPREFIX%model_instance);
 
 /* Computation methods */
-void %FUNCTIONPREFIX%CalculateInitial (void);
-void %FUNCTIONPREFIX%CalculateStatic (void);
-void %FUNCTIONPREFIX%CalculateInput (void);
-void %FUNCTIONPREFIX%CalculateDynamic (void);
-void %FUNCTIONPREFIX%CalculateOutput (void);
-void %FUNCTIONPREFIX%CalculateFinal (void);
+void %FUNCTIONPREFIX%CalculateInitial (XXModelInstance* %VARPREFIX%model_instance);
+void %FUNCTIONPREFIX%CalculateStatic (XXModelInstance* %VARPREFIX%model_instance);
+void %FUNCTIONPREFIX%CalculateInput (XXModelInstance* %VARPREFIX%model_instance);
+void %FUNCTIONPREFIX%CalculateDynamic (XXModelInstance* %VARPREFIX%model_instance);
+void %FUNCTIONPREFIX%CalculateOutput (XXModelInstance* %VARPREFIX%model_instance);
+void %FUNCTIONPREFIX%CalculateFinal (XXModelInstance* %VARPREFIX%model_instance);
 
 %IF%%NUMBEROF_DELAYFUNCTION%
 /* delay methods */
-void %FUNCTIONPREFIX%DelayUpdate (void);
+void %FUNCTIONPREFIX%DelayUpdate (XXModelInstance* %VARPREFIX%model_instance);
+XXDouble %FUNCTIONPREFIX%ModelDelay (XXModelInstance* %VARPREFIX%model_instance, XXDouble argument1, XXDouble argument2, XXInteger id);
+#define XXDelay(arg1, arg2, id) %FUNCTIONPREFIX%ModelDelay(%VARPREFIX%model_instance, arg1, arg2, id)
+%ENDIF%
+%IF%%NUMBEROF_INITIALFUNCTION%
+XXDouble %FUNCTIONPREFIX%ModelInitialValue (XXDouble argument, XXInteger identifier);
+#define XXInitialValue(arg, id) %FUNCTIONPREFIX%ModelInitialValue(%VARPREFIX%model_instance, arg, id)
 %ENDIF%
 
 #endif
