@@ -672,7 +672,7 @@ XXInteger EulerAngles_EulYXYsFromRotationMatrix (XXDouble *inarr, XXInteger inpu
 }
 XXInteger EulerAngles_EulYXZsFromRotationMatrix (XXDouble *inarr, XXInteger inputs, XXDouble *outarr, XXInteger outputs, XXInteger major)
 {
-	return GeneralEulFromRotationMatrix(EulOrdYXZr, inarr, outarr);
+	return GeneralEulFromRotationMatrix(EulOrdYXZs, inarr, outarr);
 }
 XXInteger EulerAngles_EulYZXsFromRotationMatrix (XXDouble *inarr, XXInteger inputs, XXDouble *outarr, XXInteger outputs, XXInteger major)
 {
