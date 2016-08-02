@@ -206,7 +206,7 @@ XXDouble %FUNCTIONPREFIX%ModelDelay (XXModelInstance* %VARPREFIX%model_instance,
 
 %ENDIF%
 %IF%%NUMBEROF_INITIALFUNCTION%
-XXDouble XXModelInitialValue (XXDouble argument, XXInteger identifier)
+XXDouble XXModelInitialValue (XXModelInstance* %VARPREFIX%model_instance, XXDouble argument, XXInteger identifier)
 {
 	/* The storage array '%VARPREFIX%initial_value_array' is declared in xxmodel.c because its size is model dependent */
 	XXDouble value;

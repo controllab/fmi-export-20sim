@@ -186,7 +186,7 @@ XXDouble %FUNCTIONPREFIX%ModelDelay (XXModelInstance* %VARPREFIX%model_instance,
 #define XXDelay(arg1, arg2, id) %FUNCTIONPREFIX%ModelDelay(%VARPREFIX%model_instance, arg1, arg2, id)
 %ENDIF%
 %IF%%NUMBEROF_INITIALFUNCTION%
-XXDouble %FUNCTIONPREFIX%ModelInitialValue (XXDouble argument, XXInteger identifier);
+XXDouble %FUNCTIONPREFIX%ModelInitialValue (XXModelInstance* %VARPREFIX%model_instance, XXDouble argument, XXInteger identifier);
 #define XXInitialValue(arg, id) %FUNCTIONPREFIX%ModelInitialValue(%VARPREFIX%model_instance, arg, id)
 %ENDIF%
 
