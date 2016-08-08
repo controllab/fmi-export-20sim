@@ -71,7 +71,7 @@ XXString Table2D_LastErrorMessage()
     return g_lastError;
 }
 
-%IF%%FMI2%
+%IF%%OR(FMI1,FMI2)%
 extern const char* g_fmuResourceLocation;
 %ENDIF%
 
@@ -79,7 +79,7 @@ extern const char* g_fmuResourceLocation;
 
 XXInteger Table2D_Table2DInit(XXDouble* inarr, XXInteger inputs, XXDouble* outarr, XXInteger outputs, XXInteger major)
 {
-%IF%%FMI2%
+%IF%%OR(FMI1,FMI2)%
 	char fileName[MAX_FILENAME_LEN];
 	fileName[MAX_FILENAME_LEN - 1] = '\0';
 %ENDIF%
@@ -94,7 +94,7 @@ XXInteger Table2D_Table2DInit(XXDouble* inarr, XXInteger inputs, XXDouble* outar
 	const char* filePath = XXDouble2String(inarr[0]);
 
 	/* Try to open data file */
-%IF%%FMI2%
+%IF%%OR(FMI1,FMI2)%
 	/* Use the FMU resources folder as base path */
 	if (strlen(g_fmuResourceLocation) > 0)
 	{
