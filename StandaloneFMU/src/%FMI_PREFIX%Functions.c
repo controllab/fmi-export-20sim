@@ -41,11 +41,6 @@ fmiCallbackFunctions g_fmiCallbackFunctions;
 const fmi2CallbackFunctions* g_fmiCallbackFunctions = NULL;
 %ENDIF%
 
-/* Store the path to the extracted resource folder location provided by the
- * co-simulation engine
- */
-const char* g_fmuResourceLocation = NULL;
-
 #if defined WIN32 || defined WIN64
 static const char native_path_separator = '\\';
 static const char foreign_path_separator = '/';
@@ -98,10 +93,18 @@ const char* URIToNativePath(const char* uri)
 		return NULL;
 
 	/* Allocate memory for the return value including terminating \0 and extra path separator */
+%IF%%FMI1%
+	if (g_fmiCallbackFunctions.allocateMemory != NULL)
+	{
+		retval = (char*) g_fmiCallbackFunctions.allocateMemory(path_len + 2, sizeof(char));
+	}
+%ENDIF%
+%IF%%FMI2%
 	if ((g_fmiCallbackFunctions) &&( g_fmiCallbackFunctions->allocateMemory != NULL))
 	{
 		retval = (char*) g_fmiCallbackFunctions->allocateMemory(path_len + 2, sizeof(char));
 	}
+%ENDIF%
 	else
 	{
 		retval = (char*) malloc(path_len + 2);
@@ -317,6 +320,8 @@ fmiComponent fmiInstantiateSlave(fmiString instanceName,
 			"Out of memory while allocating model instance");
 		return NULL;
 	}
+
+	memset(%VARPREFIX%model_instance, 0, sizeof(XXModelInstance));
 	
 	%VARPREFIX%model_instance->instanceName = (%FMI_PREFIX%String) functions.allocateMemory(1 + strlen(instanceName), sizeof(char));
 	
@@ -332,18 +337,7 @@ fmiComponent fmiInstantiateSlave(fmiString instanceName,
 	g_fmiCallbackFunctions = functions;
 
 	/* Remember the resource folder location */
-	if (g_fmuResourceLocation != NULL)
-	{
-		if ((g_fmiCallbackFunctions) &&( g_fmiCallbackFunctions->freeMemory != NULL))
-		{
-			g_fmiCallbackFunctions->freeMemory((void*)g_fmuResourceLocation);
-		}
-		else
-		{
-			free((void*)g_fmuResourceLocation);
-		}
-	}
-	g_fmuResourceLocation = URIToNativePath(fmuLocation);	
+	%VARPREFIX%model_instance->resourceLocation = URIToNativePath(fmuLocation);
 
 	return (fmiComponent) %VARPREFIX%model_instance;
 }
@@ -358,7 +352,7 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 								fmi2Boolean visible,
 								fmi2Boolean loggingOn)
 {
-	XXModelInstance* %VARPREFIX%model_instance;
+	XXModelInstance* %VARPREFIX%model_instance = NULL;
 	
 	/* we should remember the functions pointer in order to make callback functions */
 	if (!functions)
@@ -395,7 +389,6 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 	}
 	
 	%VARPREFIX%model_instance = (XXModelInstance *)functions->allocateMemory(1, sizeof(XXModelInstance));
-	memset(%VARPREFIX%model_instance, 0, sizeof(XXModelInstance));
 
 	if(!%VARPREFIX%model_instance)
 	{
@@ -403,9 +396,11 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 			"fmi2Instantiate: Out of memory while allocating model instance");
 		return NULL;
 	}
+
+	memset(%VARPREFIX%model_instance, 0, sizeof(XXModelInstance));
 	
 	%VARPREFIX%model_instance->instanceName = (%FMI_PREFIX%String) functions->allocateMemory(1 + strlen(instanceName), sizeof(char));
-	
+
 	if (!%VARPREFIX%model_instance->instanceName)
 	{
 		functions->logger(functions->componentEnvironment, instanceName, fmi2Error, "error",
@@ -445,18 +440,7 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 	/* Register the callback */
 	g_fmiCallbackFunctions = functions;
 	/* Remember the resource folder location */
-	if (g_fmuResourceLocation != NULL)
-	{
-		if ((g_fmiCallbackFunctions) &&( g_fmiCallbackFunctions->freeMemory != NULL))
-		{
-			g_fmiCallbackFunctions->freeMemory((void*)g_fmuResourceLocation);
-		}
-		else
-		{
-			free((void*)g_fmuResourceLocation);
-		}
-	}
-	g_fmuResourceLocation = URIToNativePath(fmuResourceLocation);
+	%VARPREFIX%model_instance->resourceLocation = URIToNativePath(fmuResourceLocation);
 	
 	/* check if we are setup for co-simulation, that's the only possible option for now */
 	if( fmuType != fmi2CoSimulation )
@@ -537,15 +521,6 @@ fmi2Status fmi2Terminate(fmi2Component c)
 	/* Perform the final calculations */
 	%FUNCTIONPREFIX%TerminateSubmodel (%VARPREFIX%model_instance, %VARPREFIX%model_instance->time);
 
-	if ((g_fmiCallbackFunctions) &&( g_fmiCallbackFunctions->freeMemory != NULL))
-	{
-		g_fmiCallbackFunctions->freeMemory((void*)g_fmuResourceLocation);
-	}
-	else
-	{
-		free((void*)g_fmuResourceLocation);
-	}
-
 	/* all done */
 	return %FMI_PREFIX%OK;
 }
@@ -570,16 +545,19 @@ void fmiFreeSlaveInstance(fmiComponent c)
 {
 	XXModelInstance* %VARPREFIX%model_instance = (XXModelInstance*) c;
 
-	if ((g_fmiCallbackFunctions) &&( g_fmiCallbackFunctions->freeMemory != NULL))
+	if (%VARPREFIX%model_instance->resourceLocation != NULL)
 	{
-		if(%VARPREFIX%model_instance->instanceName)
-		{
-			g_fmiCallbackFunctions->freeMemory((void *)%VARPREFIX%model_instance->instanceName);
-			%VARPREFIX%model_instance->instanceName = NULL;
-		}
-		g_fmiCallbackFunctions->freeMemory((void *) %VARPREFIX%model_instance);
-		%VARPREFIX%model_instance = NULL;
+		g_fmiCallbackFunctions.freeMemory((void*)%VARPREFIX%model_instance->resourceLocation);
+		%VARPREFIX%model_instance->resourceLocation = NULL;
 	}
+
+	if(%VARPREFIX%model_instance->instanceName != NULL)
+	{
+		g_fmiCallbackFunctions.freeMemory((void *)%VARPREFIX%model_instance->instanceName);
+		%VARPREFIX%model_instance->instanceName = NULL;
+	}
+	g_fmiCallbackFunctions.freeMemory((void *) %VARPREFIX%model_instance);
+	%VARPREFIX%model_instance =  NULL;
 }
 %ENDIF%
 %IF%%FMI2%
@@ -587,11 +565,19 @@ void fmi2FreeInstance(fmi2Component c)
 {
 	XXModelInstance* %VARPREFIX%model_instance = (XXModelInstance*) c;
 
-	if(%VARPREFIX%model_instance->instanceName)
+	if (%VARPREFIX%model_instance->resourceLocation != NULL)
+	{
+		g_fmiCallbackFunctions->freeMemory((void*)%VARPREFIX%model_instance->resourceLocation);
+		%VARPREFIX%model_instance->resourceLocation = NULL;
+	}
+
+	if(%VARPREFIX%model_instance->instanceName != NULL)
 	{
 		g_fmiCallbackFunctions->freeMemory((void *)%VARPREFIX%model_instance->instanceName);
+		%VARPREFIX%model_instance->instanceName = NULL;
 	}
 	g_fmiCallbackFunctions->freeMemory((void *) %VARPREFIX%model_instance);
+	%VARPREFIX%model_instance =  NULL;
 }
 %ENDIF%
 

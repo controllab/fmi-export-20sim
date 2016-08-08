@@ -45,6 +45,11 @@ typedef struct XXModelInstance
 	/* FMU */
 	%FMI_PREFIX%String instanceName;
 
+	/* Store the path to the extracted resource folder location provided by the
+	 * co-simulation engine for this model instance
+	 */
+	const char* resourceLocation;
+
 	/* Simulation variables */
 	XXDouble start_time;
 	XXDouble finish_time;

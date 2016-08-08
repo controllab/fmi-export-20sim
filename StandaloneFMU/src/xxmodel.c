@@ -55,6 +55,13 @@
 #include "xxTable2D.h"
 %ENDIF%
 
+%IF%%NUMBEROF_DLL_Table2D%
+/* The path to the extracted resource folder location provided by the
+ * co-simulation engine for the currently active FMU instance
+ */
+const char* g_fmuResourceLocation = NULL;
+%ENDIF%
+
 #if (%NUMBER_PARAMETERS% > 8192) && defined _MSC_VER
 #pragma optimize("", off)
 #endif
@@ -101,11 +108,18 @@ void %FUNCTIONPREFIX%ModelInitialize (XXModelInstance* %VARPREFIX%model_instance
  */
 void %FUNCTIONPREFIX%CalculateInitial (XXModelInstance* %VARPREFIX%model_instance)
 {
+%IF%%NUMBEROF_DLL_Table2D%
+	/* Make sure that the Table2D initialization function can find the resource
+	 * location for this FMU instance
+	 */
+	g_fmuResourceLocation = %VARPREFIX%model_instance->resourceLocation;
+
+%ENDIF%
 %IF%%NUMBER_FAVORITE_PARAMETERS%
 	/* the favorite parameters equations */
 %FAVORITE_PARS_EQUATIONS%
-%ENDIF%
 
+%ENDIF%
 %INITIAL_EQUATIONS%
 }
 
@@ -114,6 +128,13 @@ void %FUNCTIONPREFIX%CalculateInitial (XXModelInstance* %VARPREFIX%model_instanc
  */
 void %FUNCTIONPREFIX%CalculateStatic (XXModelInstance* %VARPREFIX%model_instance)
 {
+%IF%%NUMBEROF_DLL_Table2D%
+	/* Make sure that the Table2D initialization function can find the resource
+	 * location for this FMU instance
+	 */
+	g_fmuResourceLocation = %VARPREFIX%model_instance->resourceLocation;
+
+%ENDIF%
 %STATIC_EQUATIONS%
 }
 
@@ -123,6 +144,13 @@ void %FUNCTIONPREFIX%CalculateStatic (XXModelInstance* %VARPREFIX%model_instance
  */
 void %FUNCTIONPREFIX%CalculateInput (XXModelInstance* %VARPREFIX%model_instance)
 {
+%IF%%NUMBEROF_DLL_Table2D%
+	/* Make sure that the Table2D initialization function can find the resource
+	 * location for this FMU instance
+	 */
+	g_fmuResourceLocation = %VARPREFIX%model_instance->resourceLocation;
+
+%ENDIF%
 %IF%%NUMBER_FAVORITE_PARAMETERS%
 	/* the favorite parameters equations */
 %FAVORITE_PARS_EQUATIONS%
@@ -137,6 +165,13 @@ void %FUNCTIONPREFIX%CalculateInput (XXModelInstance* %VARPREFIX%model_instance)
  */
 void %FUNCTIONPREFIX%CalculateDynamic (XXModelInstance* %VARPREFIX%model_instance)
 {
+%IF%%NUMBEROF_DLL_Table2D%
+	/* Make sure that the Table2D initialization function can find the resource
+	 * location for this FMU instance
+	 */
+	g_fmuResourceLocation = %VARPREFIX%model_instance->resourceLocation;
+
+%ENDIF%
 %DYNAMIC_EQUATIONS%
 
 	/* increment the step counter */
@@ -151,6 +186,13 @@ void %FUNCTIONPREFIX%CalculateDynamic (XXModelInstance* %VARPREFIX%model_instanc
  */
 void %FUNCTIONPREFIX%CalculateOutput (XXModelInstance* %VARPREFIX%model_instance)
 {
+%IF%%NUMBEROF_DLL_Table2D%
+	/* Make sure that the Table2D initialization function can find the resource
+	 * location for this FMU instance
+	 */
+	g_fmuResourceLocation = %VARPREFIX%model_instance->resourceLocation;
+
+%ENDIF%
 %OUTPUT_EQUATIONS%
 %IF%%NUMBEROF_DELAYFUNCTION%
 	/* delay update */
@@ -169,6 +211,13 @@ void %FUNCTIONPREFIX%CalculateOutput (XXModelInstance* %VARPREFIX%model_instance
  */
 void %FUNCTIONPREFIX%CalculateFinal (XXModelInstance* %VARPREFIX%model_instance)
 {
+%IF%%NUMBEROF_DLL_Table2D%
+	/* Make sure that the Table2D initialization function can find the resource
+	 * location for this FMU instance
+	 */
+	g_fmuResourceLocation = %VARPREFIX%model_instance->resourceLocation;
+
+%ENDIF%
 %FINAL_EQUATIONS%
 }
 
