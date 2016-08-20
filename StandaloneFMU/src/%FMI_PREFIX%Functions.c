@@ -74,8 +74,26 @@ const char* URIToNativePath(const char* uri)
 	/* Check if we got a file:/// uri */
 	if (strncmp(uri, "file:///", 8) == 0)
 	{
-		path_start = &uri[8];
+		if (uri[9] == ':')
+		{
+			/* Windows drive letter in the URI (e.g. file:///c:/ uri
+			/* Remove the file:/// */
+			path_start = &uri[8];
+		}
+		else
+		{
+			/* Remove the file:// but keep the third / */
+			path_start = &uri[7];
+		}
 	}
+#if defined WIN32 || defined WIN64
+	/* Check if we got a file://hostname/path uri */
+	else if (strncmp(uri, "file://", 7) == 0)
+	{
+		/* Convert to a network share path: //hostname/path */
+		path_start = &uri[5];
+	}
+#endif
 	/* Check if we got a file:/ uri */
 	else if (strncmp(uri, "file:/", 6) == 0)
 	{
