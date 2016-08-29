@@ -97,6 +97,17 @@ const char* URIToNativePath(const char* uri)
 	/* Check if we got a file:/ uri */
 	else if (strncmp(uri, "file:/", 6) == 0)
 	{
+		if (uri[7] == ':')
+		{
+			/* Windows drive letter in the URI (e.g. file:/c:/ uri
+			/* Remove the file:/ */
+			path_start = &uri[6];
+		}
+		else
+		{
+			/* Remove the file: but keep the / */
+			path_start = &uri[5];
+		}
 		path_start = &uri[6];
 	}
 	/* Assume that it is a native path */
