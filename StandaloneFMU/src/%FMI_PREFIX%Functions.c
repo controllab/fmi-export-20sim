@@ -24,6 +24,7 @@
 
 /* The system include files */
 #include <string.h>
+#include <ctype.h>
 
 /* make a FMI_Dll_Export that is for both FMI1 and FMI2 */
 %IF%%FMI1%
@@ -58,18 +59,26 @@ static const char foreign_path_separator = '\\';
  */
 const char* URIToNativePath(const char* uri)
 {
-	const char* path_start = NULL;
-	char* retval = NULL;
-	int path_len = 0;
+	unsigned int path_start = 0;
+	char* path = NULL;
+	unsigned int path_len = 0;
+	unsigned int uri_len = 0;
 	char* pch = NULL;
+	unsigned int i = 0;
+	unsigned int j = 0;
+	char buf[3] = "00";
 
 	if (!uri)
+	{
 		return NULL;
+	}
 
-	path_len = (int) strlen(uri);
+	uri_len = (unsigned int) strlen(uri);
 
-	if (path_len == 0)
+	if (uri_len == 0)
+	{
 		return NULL;
+	}
 
 	/* Check if we got a file:/// uri */
 	if (strncmp(uri, "file:///", 8) == 0)
@@ -78,12 +87,12 @@ const char* URIToNativePath(const char* uri)
 		{
 			/* Windows drive letter in the URI (e.g. file:///c:/ uri
 			/* Remove the file:/// */
-			path_start = &uri[8];
+			path_start = 8;
 		}
 		else
 		{
 			/* Remove the file:// but keep the third / */
-			path_start = &uri[7];
+			path_start = 7;
 		}
 	}
 #if defined WIN32 || defined WIN64
@@ -91,7 +100,7 @@ const char* URIToNativePath(const char* uri)
 	else if (strncmp(uri, "file://", 7) == 0)
 	{
 		/* Convert to a network share path: //hostname/path */
-		path_start = &uri[5];
+		path_start = 5;
 	}
 #endif
 	/* Check if we got a file:/ uri */
@@ -101,67 +110,101 @@ const char* URIToNativePath(const char* uri)
 		{
 			/* Windows drive letter in the URI (e.g. file:/c:/ uri
 			/* Remove the file:/ */
-			path_start = &uri[6];
+			path_start = 6;
 		}
 		else
 		{
 			/* Remove the file: but keep the / */
-			path_start = &uri[5];
+			path_start = 5;
 		}
-		path_start = &uri[6];
 	}
 	/* Assume that it is a native path */
 	else
 	{
-		path_start = uri;
+		path_start = 0;
 	}
 
 	/* Check the length of the remaining string */
-	path_len = (int) strlen(path_start);
+	path_len = (int)strlen(&uri[path_start]);
 	if (path_len == 0)
+	{
 		return NULL;
+	}
 
 	/* Allocate memory for the return value including terminating \0 and extra path separator */
 %IF%%FMI1%
 	if (g_fmiCallbackFunctions.allocateMemory != NULL)
 	{
-		retval = (char*) g_fmiCallbackFunctions.allocateMemory(path_len + 2, sizeof(char));
+		path = (char*) g_fmiCallbackFunctions.allocateMemory(path_len + 2, sizeof(char));
 	}
 %ENDIF%
 %IF%%FMI2%
 	if ((g_fmiCallbackFunctions) &&( g_fmiCallbackFunctions->allocateMemory != NULL))
 	{
-		retval = (char*) g_fmiCallbackFunctions->allocateMemory(path_len + 2, sizeof(char));
+		path = (char*) g_fmiCallbackFunctions->allocateMemory(path_len + 2, sizeof(char));
 	}
 %ENDIF%
 	else
 	{
-		retval = (char*) malloc(path_len + 2);
+		path = (char*) malloc(path_len + 2);
 	}
-	/* Copy the remainder of the uri */
-	strncpy(retval, path_start, path_len);
 
-	/* Translate slashes to backslashes on Windows and backslashes to slashes on other OSses */
-	pch = strchr(retval, foreign_path_separator);
-	while(pch != NULL)
+	/* Copy the remainder of the uri and replace all percent encoded character
+	* by their ASCII character and translate slashes to backslashes on Windows
+	* and backslashes to slashes on other OSses
+	*/
+	for (i = path_start, j = 0; i < uri_len; i++, j++)
 	{
-		*pch = native_path_separator;
-		pch = strchr(retval, foreign_path_separator);
+		if (uri[i] == '%')
+		{
+			/* Replace the precent-encoded hexadecimal digits by its US-ASCII
+			* representation */
+			if (i < uri_len - 2)
+			{
+				if ((isxdigit(uri[i + 1])) && (isxdigit(uri[i + 2])))
+				{
+					strncpy(buf, uri + i + 1, 2);
+					path[j] = (unsigned char)strtol(buf, NULL, 16);
+					i += 2;
+					path_len -= 2;
+				}
+				else
+				{
+					/* Not percent encoded, keep the % */
+					path[j] = uri[i];
+				}
+			}
+			else
+			{
+				/* Not percent encoded, keep the % */
+				path[j] = uri[i];
+			}
+		}
+		else if (uri[i] == foreign_path_separator)
+		{
+			/* Translate slashes to backslashes on Windows and backslashes to slashes on other OSses */
+			path[j] = native_path_separator;
+		}
+		else
+		{
+			/* Just copy the character */
+			path[j] = uri[i];
+		}
 	}
 
 	/* Check if we need to add a path separator at the end */
-	if (retval[path_len - 1] == native_path_separator)
+	if (path[path_len - 1] == native_path_separator)
 	{
-		retval[path_len] = '\0';
+		path[path_len] = '\0';
 	}
 	else
 	{
-		retval[path_len] = native_path_separator;
+		path[path_len] = native_path_separator;
 	}
 	/* Make sure that the string is always NULL terminated */
-	retval[path_len + 1] = '\0';
+	path[path_len + 1] = '\0';
 
-	return retval;
+	return path;
 }
 
 /* Inquire version numbers of header files */
