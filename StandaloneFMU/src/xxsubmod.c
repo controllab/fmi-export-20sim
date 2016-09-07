@@ -25,16 +25,12 @@
 
 
 /* The initialization function for submodel */
-void %FUNCTIONPREFIX%InitializeSubmodel (XXModelInstance* %VARPREFIX%model_instance, XXDouble t)
+void %FUNCTIONPREFIX%InitializeSubmodel (XXModelInstance* %VARPREFIX%model_instance)
 {
 	/* Initialization phase (allocating memory) */
 	%VARPREFIX%model_instance->%XX_INITIALIZE% = XXTRUE;
 	%VARPREFIX%model_instance->steps = 0;
-	%FUNCTIONPREFIX%ModelInitialize (%VARPREFIX%model_instance);
 	%FUNCTIONPREFIX%%INTEGRATION_METHOD_NAME%Initialize (%VARPREFIX%model_instance);
-
-	/* Copy the time */
-	%VARPREFIX%model_instance->time = t;
 
 	/* Calculate the model for the first time */
 	%FUNCTIONPREFIX%CalculateInitial (%VARPREFIX%model_instance);
