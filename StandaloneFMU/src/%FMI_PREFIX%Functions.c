@@ -20,6 +20,7 @@
 #include "fmiGUID.h"
 
 /* Our own include files */
+#include "xxmodel.h"
 #include "xxsubmod.h"
 
 /* The system include files */
@@ -541,7 +542,7 @@ fmiStatus fmiInitializeSlave(fmiComponent c,
 	}
 
 	/* initialize the submodel itself */
-	%FUNCTIONPREFIX%InitializeSubmodel (%VARPREFIX%model_instance, tStart);
+	%FUNCTIONPREFIX%InitializeSubmodel (%VARPREFIX%model_instance);
 
 	/* all done */
 	return fmiOK;
@@ -564,8 +565,8 @@ fmi2Status fmi2SetupExperiment(fmi2Component c,
 		%VARPREFIX%model_instance->finish_time = stopTime;
 	}
 
-	/* initialize the submodel itself */
-	%FUNCTIONPREFIX%InitializeSubmodel (%VARPREFIX%model_instance, startTime);
+	/* Initialize our data arrays */
+	%FUNCTIONPREFIX%ModelInitialize(%VARPREFIX%model_instance);
 
 	/* all done */
 	return fmi2OK;
@@ -577,7 +578,11 @@ fmi2Status fmi2EnterInitializationMode(fmi2Component c)
 }
 fmi2Status fmi2ExitInitializationMode(fmi2Component c)
 {
-	/* nothing to do for now */
+	XXModelInstance* %VARPREFIX%model_instance = (XXModelInstance*) c;
+
+	/* Initialize the submodel itself */
+	%FUNCTIONPREFIX%InitializeSubmodel (%VARPREFIX%model_instance);
+
 	return fmi2OK;
 }
 %ENDIF%
@@ -606,7 +611,7 @@ fmi2Status fmi2Reset(fmi2Component c)
 	XXModelInstance* %VARPREFIX%model_instance = (XXModelInstance*) c;
 
 	/* initialize the submodel itself */
-	%FUNCTIONPREFIX%InitializeSubmodel (%VARPREFIX%model_instance, %VARPREFIX%model_instance->start_time);
+	%FUNCTIONPREFIX%InitializeSubmodel (%VARPREFIX%model_instance);
 
 	/* all done */
 	return %FMI_PREFIX%OK;
