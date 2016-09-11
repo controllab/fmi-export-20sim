@@ -484,7 +484,8 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 	
 	/* Prepare the model instance struct */
 	%VARPREFIX%model_instance->start_time = %START_TIME%;
-	%VARPREFIX%model_instance->finish_time = %FINISH_TIME%;
+	%VARPREFIX%model_instance->finish_time = 0.0;
+	%VARPREFIX%model_instance->m_use_finish_time = XXFALSE;
 	%VARPREFIX%model_instance->step_size = %TIME_STEP_SIZE%;
 	%VARPREFIX%model_instance->time = 0.0;
 	%VARPREFIX%model_instance->steps = 0;
@@ -539,6 +540,7 @@ fmiStatus fmiInitializeSlave(fmiComponent c,
 	if (StopTimeDefined == fmiTrue)
 	{
 		%VARPREFIX%model_instance->finish_time = tStop;
+		%VARPREFIX%model_instance->m_use_finish_time = XXTRUE;
 	}
 
 	/* initialize the submodel itself */
@@ -563,6 +565,7 @@ fmi2Status fmi2SetupExperiment(fmi2Component c,
 	if (stopTimeDefined == fmi2True)
 	{
 		%VARPREFIX%model_instance->finish_time = stopTime;
+		%VARPREFIX%model_instance->m_use_finish_time = XXTRUE;
 	}
 
 	/* Initialize our data arrays */
@@ -713,7 +716,7 @@ fmi2Status fmi2DoStep(fmi2Component c,
 	while (%VARPREFIX%model_instance->time < (currentCommunicationPoint + communicationStepSize))
 	{
 		/* check for termination first */
-		if ( (%VARPREFIX%model_instance->finish_time > 0.0) && (%VARPREFIX%model_instance->time > %VARPREFIX%model_instance->finish_time) )
+		if ( %VARPREFIX%model_instance->m_use_finish_time && (%VARPREFIX%model_instance->time > %VARPREFIX%model_instance->finish_time) )
 		{
 %IF%%FMI2%
 			if(g_fmiCallbackFunctions != NULL && g_fmiCallbackFunctions->logger != NULL)

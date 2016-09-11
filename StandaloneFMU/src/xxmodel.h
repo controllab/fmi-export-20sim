@@ -53,6 +53,7 @@ typedef struct XXModelInstance
 	/* Simulation variables */
 	XXDouble start_time;
 	XXDouble finish_time;
+	XXBoolean m_use_finish_time;
 	XXDouble step_size;
 	XXDouble time;
 	XXInteger steps;
