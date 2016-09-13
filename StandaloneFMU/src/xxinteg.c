@@ -629,7 +629,7 @@ XXBoolean %FUNCTIONPREFIX%VodeAdamsInitialize (%VARPREFIX%ModelInstance* model_i
 	mi->m_dense_performed = XXFALSE;
 	
 	/* and call the "generic" reinitialize function */
-	if (%FUNCTIONPREFIX%VodeAdamsReInitialize(mi) )
+	if (%FUNCTIONPREFIX%VodeAdamsReInitialize(mi) == XXFALSE )
 	{
 		if (g_fmiCallbackFunctions != NULL && g_fmiCallbackFunctions->logger != NULL)
 		{
