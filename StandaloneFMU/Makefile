@@ -18,10 +18,11 @@ XXSIM_SOURCES = EulerAngles.c \
 	xxmatrix.c \
 	xxmodel.c \
 	xxsubmod.c \
-	Table2D.c
+	xxTable2D.c
 
 FMU_SOURCES = %FMI_PREFIX%Functions.c $(XXSIM_SOURCES)
 
+INCLUDES=
 OBJS = $(addprefix $(BUILD)/, $(addsuffix .o, $(basename $(FMU_SOURCES))))
 DEPS = $(addprefix $(BUILD)/, $(addsuffix .d, $(basename $(FMU_SOURCES))))
 
@@ -64,23 +65,26 @@ ifeq ($(WINDOWS),1)
 	FMU_BIN64_DIR = $(FMU_DIR)/binaries/win64
 	TEMPLATE_DIR=$(subst :,,$(subst \,/,/%TEMPLATE_DIR%))
 	ZIP_COMMAND=$(TEMPLATE_DIR)/bin/7z.exe a -tzip -xr!.svn "$(FMU)" *
+	POS_INDEP_CODE=
 endif
 ifeq ($(LINUX),1)
 	FMU_BIN32_DIR = $(FMU_DIR)/binaries/linux32
 	FMU_BIN64_DIR = $(FMU_DIR)/binaries/linux64
 	ZIP_COMMAND=zip -r $(FMU) *
+	POS_INDEP_CODE=-fPIC
 endif
 ifeq ($(MACOSX),1)
 	FMU_BIN32_DIR = $(FMU_DIR)/binaries/darwin32
 	FMU_BIN64_DIR = $(FMU_DIR)/binaries/darwin64
 	ZIP_COMMAND=zip -r $(FMU) *
+	POS_INDEP_CODE=-fPIC
 endif
 
 ifeq ($(MAKECMDGOALS),debug)
-  CFLAGS=-g -DDEBUG $(DEFINES) -fPIC
+  CFLAGS=-g -DDEBUG $(INCLUDES) $(DEFINES) $(POS_INDEP_CODE)
   DEBUG=1
 else
-  CFLAGS=-O2 -Wall  $(DEFINES) -fPIC
+  CFLAGS=-O2 -Wall $(INCLUDES) $(DEFINES) $(POS_INDEP_CODE)
   DEBUG=0
 endif
 
@@ -95,7 +99,7 @@ clean:
 	@rm -f $(FMU)
 	@rm -rf $(FMU_BIN32_DIR)
 	@rm -rf $(FMU_BIN64_DIR)
-	@rm -f $(FMU_SRC_DIR)/*
+	@rm -rf $(FMU_SRC_DIR)
 	@rm -f $(FMU_DOC_DIR)/*
 
 welcome:
