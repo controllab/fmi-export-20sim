@@ -64,7 +64,6 @@ const char* URIToNativePath(const char* uri)
 	char* path = NULL;
 	unsigned int path_len = 0;
 	unsigned int uri_len = 0;
-	char* pch = NULL;
 	unsigned int i = 0;
 	unsigned int j = 0;
 	char buf[3] = "00";
@@ -86,7 +85,7 @@ const char* URIToNativePath(const char* uri)
 	{
 		if (uri[9] == ':')
 		{
-			/* Windows drive letter in the URI (e.g. file:///c:/ uri
+			/* Windows drive letter in the URI (e.g. file:///c:/ uri */
 			/* Remove the file:/// */
 			path_start = 8;
 		}
@@ -109,7 +108,7 @@ const char* URIToNativePath(const char* uri)
 	{
 		if (uri[7] == ':')
 		{
-			/* Windows drive letter in the URI (e.g. file:/c:/ uri
+			/* Windows drive letter in the URI (e.g. file:/c:/ uri */
 			/* Remove the file:/ */
 			path_start = 6;
 		}
