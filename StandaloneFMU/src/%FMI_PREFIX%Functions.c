@@ -35,14 +35,6 @@
 #define FMI_Dll_Export FMI2_Export
 %ENDIF%
 
-/* Global pointer to co-simulator callback functions */
-%IF%%FMI1%
-fmiCallbackFunctions g_fmiCallbackFunctions;
-%ENDIF%
-%IF%%FMI2%
-const fmi2CallbackFunctions* g_fmiCallbackFunctions = NULL;
-%ENDIF%
-
 #if defined WIN32 || defined WIN64
 static const char native_path_separator = '\\';
 static const char foreign_path_separator = '/';
@@ -58,7 +50,7 @@ static const char foreign_path_separator = '\\';
  * Note that the caller is responsible for free-ing the allocated string buffer
  * memory
  */
-const char* URIToNativePath(const char* uri)
+const char* URIToNativePath(XXModelInstance* %VARPREFIX%model_instance, const char* uri)
 {
 	unsigned int path_start = 0;
 	char* path = NULL;
@@ -68,7 +60,7 @@ const char* URIToNativePath(const char* uri)
 	unsigned int j = 0;
 	char buf[3] = "00";
 
-	if (!uri)
+	if (!uri || %VARPREFIX%model_instance == NULL)
 	{
 		return NULL;
 	}
@@ -133,15 +125,15 @@ const char* URIToNativePath(const char* uri)
 
 	/* Allocate memory for the return value including terminating \0 and extra path separator */
 %IF%%FMI1%
-	if (g_fmiCallbackFunctions.allocateMemory != NULL)
+	if (%VARPREFIX%model_instance->fmiCallbackFunctions.allocateMemory != NULL)
 	{
-		path = (char*) g_fmiCallbackFunctions.allocateMemory(path_len + 2, sizeof(char));
+		path = (char*) %VARPREFIX%model_instance->fmiCallbackFunctions.allocateMemory(path_len + 2, sizeof(char));
 	}
 %ENDIF%
 %IF%%FMI2%
-	if ((g_fmiCallbackFunctions) &&( g_fmiCallbackFunctions->allocateMemory != NULL))
+	if ((%VARPREFIX%model_instance->fmiCallbackFunctions) &&( %VARPREFIX%model_instance->fmiCallbackFunctions->allocateMemory != NULL))
 	{
-		path = (char*) g_fmiCallbackFunctions->allocateMemory(path_len + 2, sizeof(char));
+		path = (char*) %VARPREFIX%model_instance->fmiCallbackFunctions->allocateMemory(path_len + 2, sizeof(char));
 	}
 %ENDIF%
 	else
@@ -406,10 +398,10 @@ fmiComponent fmiInstantiateSlave(fmiString instanceName,
 	strcpy((char *)%VARPREFIX%model_instance->instanceName, (char *)instanceName);
 
 	/* Register the callback */
-	g_fmiCallbackFunctions = functions;
+	%VARPREFIX%model_instance->fmiCallbackFunctions = functions;
 
 	/* Remember the resource folder location */
-	%VARPREFIX%model_instance->resourceLocation = URIToNativePath(fmuLocation);
+	%VARPREFIX%model_instance->resourceLocation = URIToNativePath(%VARPREFIX%model_instance, fmuLocation);
 
 	return (fmiComponent) %VARPREFIX%model_instance;
 }
@@ -511,14 +503,14 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 %ENDIF%
 	
 	/* Register the callback */
-	g_fmiCallbackFunctions = functions;
+	%VARPREFIX%model_instance->fmiCallbackFunctions = functions;
 	/* Remember the resource folder location */
-	%VARPREFIX%model_instance->resourceLocation = URIToNativePath(fmuResourceLocation);
+	%VARPREFIX%model_instance->resourceLocation = URIToNativePath(%VARPREFIX%model_instance, fmuResourceLocation);
 	
 	/* check if we are setup for co-simulation, that's the only possible option for now */
 	if( fmuType != fmi2CoSimulation )
 	{
-		g_fmiCallbackFunctions->logger(NULL, instanceName, fmi2Error, "error",
+		%VARPREFIX%model_instance->fmiCallbackFunctions->logger(NULL, instanceName, fmi2Error, "error",
 			"FMU can only be used for Co-Simulation, not for Model Exchange");
 		return NULL;
 	}
@@ -626,16 +618,19 @@ void fmiFreeSlaveInstance(fmiComponent c)
 
 	if (%VARPREFIX%model_instance->resourceLocation != NULL)
 	{
-		g_fmiCallbackFunctions.freeMemory((void*)%VARPREFIX%model_instance->resourceLocation);
+		%VARPREFIX%model_instance->fmiCallbackFunctions.freeMemory((void*)%VARPREFIX%model_instance->resourceLocation);
 		%VARPREFIX%model_instance->resourceLocation = NULL;
 	}
 
 	if(%VARPREFIX%model_instance->instanceName != NULL)
 	{
-		g_fmiCallbackFunctions.freeMemory((void *)%VARPREFIX%model_instance->instanceName);
+		%VARPREFIX%model_instance->fmiCallbackFunctions.freeMemory((void *)%VARPREFIX%model_instance->instanceName);
 		%VARPREFIX%model_instance->instanceName = NULL;
 	}
-	g_fmiCallbackFunctions.freeMemory((void *) %VARPREFIX%model_instance);
+
+	/* Copy the callback functions before freeing the %VARPREFIX%model_instance */
+	fmiCallbackFunctions fmiCallbackFunctions = %VARPREFIX%model_instance->fmiCallbackFunctions;
+	fmiCallbackFunctions.freeMemory((void *) %VARPREFIX%model_instance);
 	%VARPREFIX%model_instance =  NULL;
 }
 %ENDIF%
@@ -646,16 +641,19 @@ void fmi2FreeInstance(fmi2Component c)
 
 	if (%VARPREFIX%model_instance->resourceLocation != NULL)
 	{
-		g_fmiCallbackFunctions->freeMemory((void*)%VARPREFIX%model_instance->resourceLocation);
+		%VARPREFIX%model_instance->fmiCallbackFunctions->freeMemory((void*)%VARPREFIX%model_instance->resourceLocation);
 		%VARPREFIX%model_instance->resourceLocation = NULL;
 	}
 
 	if(%VARPREFIX%model_instance->instanceName != NULL)
 	{
-		g_fmiCallbackFunctions->freeMemory((void *)%VARPREFIX%model_instance->instanceName);
+		%VARPREFIX%model_instance->fmiCallbackFunctions->freeMemory((void *)%VARPREFIX%model_instance->instanceName);
 		%VARPREFIX%model_instance->instanceName = NULL;
 	}
-	g_fmiCallbackFunctions->freeMemory((void *) %VARPREFIX%model_instance);
+
+	/* Copy the callback functions before freeing the %VARPREFIX%model_instance */
+	const fmi2CallbackFunctions* fmiCallbackFunctions = %VARPREFIX%model_instance->fmiCallbackFunctions;
+	fmiCallbackFunctions->freeMemory((void *) %VARPREFIX%model_instance);
 	%VARPREFIX%model_instance =  NULL;
 }
 %ENDIF%
@@ -718,9 +716,9 @@ fmi2Status fmi2DoStep(fmi2Component c,
 		if ( %VARPREFIX%model_instance->m_use_finish_time && (%VARPREFIX%model_instance->time > %VARPREFIX%model_instance->finish_time) )
 		{
 %IF%%FMI2%
-			if(g_fmiCallbackFunctions != NULL && g_fmiCallbackFunctions->logger != NULL)
+			if(%VARPREFIX%model_instance->fmiCallbackFunctions != NULL && %VARPREFIX%model_instance->fmiCallbackFunctions->logger != NULL)
 			{
-				g_fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
+				%VARPREFIX%model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
 					"Exceeded model finish time: %g > %g\n", %VARPREFIX%model_instance->time, %VARPREFIX%model_instance->finish_time);
 			}
 %ENDIF%

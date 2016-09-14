@@ -26,6 +26,7 @@
 %IF%%NUMBER_MATRICES%
 #include "xxmatrix.h"
 %ENDIF%
+#include "%FMI_PREFIX%Functions.h"
 
 /* the chosen integration method */
 #define %INTEGRATION_METHOD_NAME%_METHOD
@@ -42,6 +43,14 @@
 
 typedef struct XXModelInstance
 {
+/* Global pointer to co-simulator callback functions */
+%IF%%FMI1%
+	fmiCallbackFunctions fmiCallbackFunctions;
+%ENDIF%
+%IF%%FMI2%
+	const fmi2CallbackFunctions* fmiCallbackFunctions;
+%ENDIF%
+
 	/* FMU */
 	%FMI_PREFIX%String instanceName;
 
