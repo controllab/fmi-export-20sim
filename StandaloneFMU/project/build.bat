@@ -49,26 +49,11 @@ if not exist "%SRC_DIR%" mkdir "%SRC_DIR%"
 if not exist "%DOC_DIR%" mkdir "%DOC_DIR%"
 if not exist "%RES_DIR%" mkdir "%RES_DIR%"
 
-REM Generate a new GUID
+REM Generate a new GUID in XML and C format
 REM -------------------
 ECHO |SET /p=Generating a GUID: 
-"%GUIDTOOL%" > "%ROOTPATH%\src\guid.txt"
-type "%ROOTPATH%\src\guid.txt"
+"%GUIDTOOL%" -c "%ROOTPATH%\src\fmiGUID.h" -x "%ROOTPATH%\src\GUID.xml"
 ECHO.
-
-rem generate GUID header
-FOR /f "tokens=*" %%g IN (%ROOTPATH%\src\guid.txt) DO (
-	rem generate a header with a define for the GUID
-	echo #define FMI_GUID "{%%g}" > "%ROOTPATH%\src\fmiGUID.h"
-
-	REM Generate a xml file (token format) with the generated GUID
-	(
-		echo ^<?xml version="1.0" encoding="UTF-8"?^>
-		echo ^<tokens^>
-		echo ^<token name="GUID"^>^<![CDATA[%%g]]^>^</token^>
-		echo ^</tokens^>
-	) > "%ROOTPATH%\src\GUID.xml"
-)
 
 ECHO Generating the modelDescription.xml
 "%XSLTTOOL%"  "%ROOTPATH%\src\ModelConfiguration.xml" "%ROOTPATH%\template\mcf2modelDescription.xsl" -o "%FMU_DIR%\modelDescription.xml" SOURCEDIRECTORY="%ROOTPATH%\src"
