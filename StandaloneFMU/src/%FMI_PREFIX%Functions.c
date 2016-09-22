@@ -612,9 +612,10 @@ fmi2Status fmi2Reset(fmi2Component c)
 }
 
 %IF%%FMI1%
-void fmiFreeSlaveInstance(fmiComponent c) 
+void fmiFreeSlaveInstance(fmiComponent c)
 {
 	XXModelInstance* %VARPREFIX%model_instance = (XXModelInstance*) c;
+	fmiCallbackFunctions fmiCallbackFunctions = %VARPREFIX%model_instance->fmiCallbackFunctions;
 
 	if (%VARPREFIX%model_instance->resourceLocation != NULL)
 	{
@@ -629,15 +630,15 @@ void fmiFreeSlaveInstance(fmiComponent c)
 	}
 
 	/* Copy the callback functions before freeing the %VARPREFIX%model_instance */
-	fmiCallbackFunctions fmiCallbackFunctions = %VARPREFIX%model_instance->fmiCallbackFunctions;
 	fmiCallbackFunctions.freeMemory((void *) %VARPREFIX%model_instance);
 	%VARPREFIX%model_instance =  NULL;
 }
 %ENDIF%
 %IF%%FMI2%
-void fmi2FreeInstance(fmi2Component c) 
+void fmi2FreeInstance(fmi2Component c)
 {
 	XXModelInstance* %VARPREFIX%model_instance = (XXModelInstance*) c;
+	const fmi2CallbackFunctions* fmiCallbackFunctions = %VARPREFIX%model_instance->fmiCallbackFunctions;
 
 	if (%VARPREFIX%model_instance->resourceLocation != NULL)
 	{
@@ -652,7 +653,6 @@ void fmi2FreeInstance(fmi2Component c)
 	}
 
 	/* Copy the callback functions before freeing the %VARPREFIX%model_instance */
-	const fmi2CallbackFunctions* fmiCallbackFunctions = %VARPREFIX%model_instance->fmiCallbackFunctions;
 	fmiCallbackFunctions->freeMemory((void *) %VARPREFIX%model_instance);
 	%VARPREFIX%model_instance =  NULL;
 }
