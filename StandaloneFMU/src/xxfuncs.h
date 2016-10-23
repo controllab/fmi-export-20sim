@@ -142,12 +142,6 @@ XXBoolean XXTimeEvent (XXDouble argument, XXInteger id);
 %IF%%NUMBEROF_TDELAYFUNCTION%
 XXDouble XXTimeDelay (XXDouble argument, XXDouble time, XXInteger id);
 %ENDIF%
-%IF%%NUMBEROF_WARNSTATEMENT%
-XXBoolean XXWarning (XXString message, XXInteger id);
-%ENDIF%
-%IF%%NUMBEROF_STOPSTATEMENT%
-XXBoolean XXStopSimulation (XXString message, XXInteger id);
-%ENDIF%
 %IF%%NUMBEROF_REALTIME%
 XXDouble XXRealTime(void);
 %ENDIF%

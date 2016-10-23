@@ -215,5 +215,13 @@ XXDouble %FUNCTIONPREFIX%ModelDelay (XXModelInstance* %VARPREFIX%model_instance,
 XXDouble %FUNCTIONPREFIX%ModelInitialValue (XXModelInstance* %VARPREFIX%model_instance, XXDouble argument, XXInteger identifier);
 #define XXInitialValue(arg, id) %FUNCTIONPREFIX%ModelInitialValue(%VARPREFIX%model_instance, arg, id)
 %ENDIF%
+%IF%%NUMBEROF_WARNSTATEMENT%
+XXBoolean %FUNCTIONPREFIX%ModelWarning (XXModelInstance* %VARPREFIX%model_instance, XXString message, XXInteger id);
+#define XXWarning(message, id) %FUNCTIONPREFIX%ModelWarning(%VARPREFIX%model_instance, message, id)
+%ENDIF%
+%IF%%NUMBEROF_STOPSTATEMENT%
+XXBoolean %FUNCTIONPREFIX%ModelStopSimulation (XXModelInstance* %VARPREFIX%model_instance, XXString message, XXInteger id);
+#define XXStopSimulation(message, id) %FUNCTIONPREFIX%ModelStopSimulation(%VARPREFIX%model_instance, message, id)
+%ENDIF%
 
 #endif
