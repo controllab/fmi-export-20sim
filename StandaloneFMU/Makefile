@@ -11,7 +11,7 @@ BUILD = project/gcc
 SRC   = src
 
 XXSIM_SOURCES = EulerAngles.c \
-	motionprofiles.c \
+	MotionProfiles.c \
 	xxfuncs.c \
 	xxinteg.c \
 	xxinverse.c \
