@@ -192,6 +192,8 @@ typedef struct XXModelInstance
 #define %VARPREFIX%step_size %VARPREFIX%model_instance->step_size
 #define %VARPREFIX%%XX_INITIALIZE% %VARPREFIX%model_instance->%XX_INITIALIZE%
 #define %VARPREFIX%major %VARPREFIX%model_instance->major
+#define %VARPREFIX%start_time %VARPREFIX%model_instance->start_time
+#define %VARPREFIX%finish_time %VARPREFIX%model_instance->finish_time
 
 /* Initialization methods */
 void %FUNCTIONPREFIX%ModelInitialize (XXModelInstance* %VARPREFIX%model_instance);
