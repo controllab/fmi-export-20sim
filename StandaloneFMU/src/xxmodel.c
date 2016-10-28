@@ -54,6 +54,13 @@
 %IF%%NUMBEROF_DLL_Table2D%
 #include "xxTable2D.h"
 %ENDIF%
+%IF%%NUMBER_ALGLOOPS%
+#if defined _MSC_VER
+#pragma message("Warning: This model contains algebraic loops. Algebraic loop solving is not implemented in this code generation template.")
+#elif defined __GNUC__
+#warning This model contains algebraic loops. Algebraic loop solving is not implemented in this code generation template.
+#endif
+%ENDIF%
 
 %IF%%NUMBEROF_DLL_Table2D%
 /* The path to the extracted resource folder location provided by the

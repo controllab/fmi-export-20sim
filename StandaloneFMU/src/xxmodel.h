@@ -40,6 +40,12 @@
 %IF%%NUMBEROF_DELAYFUNCTION%
 #define %VARPREFIX%delay_count %NUMBEROF_DELAYFUNCTION%
 %ENDIF%
+%IF%%NUMBEROF_ALGLOOPIN%
+#define %VARPREFIX%alg_in_count %NUMBEROF_ALGLOOPIN%
+%ENDIF%
+%IF%%NUMBEROF_ALGLOOPOUT%
+#define %VARPREFIX%alg_out_count %NUMBEROF_ALGLOOPOUT%
+%ENDIF%
 
 typedef struct XXModelInstance
 {
@@ -87,6 +93,12 @@ typedef struct XXModelInstance
 %IF%%NUMBER_STATES%
 		%VARPREFIX%state_count /* states */ +
 		%VARPREFIX%state_count /* rates */ +
+%ENDIF%
+%IF%%NUMBEROF_ALGLOOPIN%
+		%VARPREFIX%alg_in_count +
+%ENDIF%
+%IF%%NUMBEROF_ALGLOOPOUT%
+		%VARPREFIX%alg_out_count +
 %ENDIF%
 		1
 	];
@@ -148,6 +160,12 @@ typedef struct XXModelInstance
 	XXDouble* %XX_STATE_ARRAY_NAME%;		/* states */
 	XXDouble* %XX_RATE_ARRAY_NAME%;		/* rates (or new states) */
 %ENDIF%
+%IF%%NUMBEROF_ALGLOOPIN%
+	XXDouble* %XX_ALG_IN_ARRAY_NAME%;	/* algebraic loop in */
+%ENDIF%
+%IF%%NUMBEROF_ALGLOOPOUT%
+	XXDouble* %XX_ALG_OUT_ARRAY_NAME%;	/* algebraic loop out */
+%ENDIF%
 } XXModelInstance;
 
 
@@ -188,6 +206,12 @@ typedef struct XXModelInstance
 %ENDIF%
 %IF%%NUMBER_FAVORITE_VARIABLES%
 #define %VARPREFIX%%XX_FAVORITE_VARS_ARRAY_NAME% %VARPREFIX%model_instance->%XX_FAVORITE_VARS_ARRAY_NAME%
+%ENDIF%
+%IF%%NUMBEROF_ALGLOOPIN%
+#define %VARPREFIX%%XX_ALG_IN_ARRAY_NAME% %VARPREFIX%model_instance->%XX_ALG_IN_ARRAY_NAME%
+%ENDIF%
+%IF%%NUMBEROF_ALGLOOPOUT%
+#define %VARPREFIX%%XX_ALG_OUT_ARRAY_NAME% %VARPREFIX%model_instance->%XX_ALG_OUT_ARRAY_NAME%
 %ENDIF%
 #define %VARPREFIX%step_size %VARPREFIX%model_instance->step_size
 #define %VARPREFIX%%XX_INITIALIZE% %VARPREFIX%model_instance->%XX_INITIALIZE%
