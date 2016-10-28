@@ -453,26 +453,6 @@ XXDouble XXTimeDelay (XXDouble argument, XXDouble time, XXInteger id)
 }
 
 %ENDIF%
-%IF%%NUMBEROF_WARNSTATEMENT%
-XXBoolean XXWarning (XXString message, XXInteger id)
-{
-#if defined _MSC_VER
-#pragma message("warning: The 20-sim 'warning' function is not yet implemented in this code generation template")
-#elif defined __GNUC__
-#warning The 20-sim 'warning' function is not yet implemented in this code generation template
-#endif
-	return 0;
-}
-
-%ENDIF%
-%IF%%NUMBEROF_STOPSTATEMENT%
-XXBoolean XXStopSimulation (XXString message, XXInteger id)
-{
-	%VARPREFIX%stop_simulation = XXTRUE;
-	return 0;
-}
-
-%ENDIF%
 %IF%%NUMBEROF_REALTIME%
 static time_t xx_start_run_time = 0;
 

@@ -726,6 +726,11 @@ fmi2Status fmi2DoStep(fmi2Component c,
 			/* we're done */
 			return %FMI_PREFIX%Error;
 		}
+		/* Check for stop simulation */
+		if (%VARPREFIX%model_instance->stop_simulation == XXTRUE)
+		{
+			return %FMI_PREFIX%Error;
+		}
 
 		/* Call the submodel to calculate the output, and increase the time as well */
 		%FUNCTIONPREFIX%CalculateSubmodel (%VARPREFIX%model_instance, %VARPREFIX%model_instance->time);

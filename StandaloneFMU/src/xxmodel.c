@@ -255,7 +255,7 @@ XXDouble %FUNCTIONPREFIX%ModelDelay (XXModelInstance* %VARPREFIX%model_instance,
 
 %ENDIF%
 %IF%%NUMBEROF_INITIALFUNCTION%
-XXDouble XXModelInitialValue (XXModelInstance* %VARPREFIX%model_instance, XXDouble argument, XXInteger identifier)
+XXDouble %FUNCTIONPREFIX%ModelInitialValue (XXModelInstance* %VARPREFIX%model_instance, XXDouble argument, XXInteger identifier)
 {
 	/* The storage array '%VARPREFIX%initial_value_array' is declared in xxmodel.c because its size is model dependent */
 	XXDouble value;
@@ -270,6 +270,30 @@ XXDouble XXModelInitialValue (XXModelInstance* %VARPREFIX%model_instance, XXDoub
 		value = %VARPREFIX%model_instance->initial_value_array[identifier];
 	}
 	return value;
+}
+
+%ENDIF%
+%IF%%NUMBEROF_WARNSTATEMENT%
+XXBoolean %FUNCTIONPREFIX%ModelWarning (XXModelInstance* %VARPREFIX%model_instance, XXString message, XXInteger id)
+{
+	if(%VARPREFIX%model_instance->fmiCallbackFunctions != NULL && %VARPREFIX%model_instance->fmiCallbackFunctions->logger != NULL)
+	{
+		%VARPREFIX%model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Warning, "warning", message);
+	}
+	return 0;
+}
+
+%ENDIF%
+%IF%%NUMBEROF_STOPSTATEMENT%
+XXBoolean %FUNCTIONPREFIX%ModelStopSimulation (XXModelInstance* %VARPREFIX%model_instance, XXString message, XXInteger id)
+{
+	%VARPREFIX%model_instance->stop_simulation = XXTRUE;
+
+	if(%VARPREFIX%model_instance->fmiCallbackFunctions != NULL && %VARPREFIX%model_instance->fmiCallbackFunctions->logger != NULL)
+	{
+		%VARPREFIX%model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error", message);
+	}
+	return 0;
 }
 
 %ENDIF%
