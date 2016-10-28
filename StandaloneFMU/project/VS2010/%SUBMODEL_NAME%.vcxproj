@@ -226,7 +226,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\EulerAngles.h" />
-    <ClInclude Include="..\..\src\motionprofiles.h" />
+    <ClInclude Include="..\..\src\MotionProfiles.h" />
     <ClInclude Include="..\..\src\xxfuncs.h" />
     <ClInclude Include="..\..\src\xxinteg.h" />
     <ClInclude Include="..\..\src\xxmatrix.h" />
@@ -246,7 +246,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\EulerAngles.c" />
-    <ClCompile Include="..\..\src\motionprofiles.c" />
+    <ClCompile Include="..\..\src\MotionProfiles.c" />
     <ClCompile Include="..\..\src\xxfuncs.c" />
     <ClCompile Include="..\..\src\xxinteg.c" />
     <ClCompile Include="..\..\src\xxinverse.c" />

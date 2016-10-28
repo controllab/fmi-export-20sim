@@ -14,7 +14,7 @@
     <ClInclude Include="..\..\src\EulerAngles.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\motionprofiles.h">
+    <ClInclude Include="..\..\src\MotionProfiles.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\xxfuncs.h">
@@ -62,7 +62,7 @@
     <ClCompile Include="..\..\src\EulerAngles.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\motionprofiles.c">
+    <ClCompile Include="..\..\src\MotionProfiles.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\xxfuncs.c">
