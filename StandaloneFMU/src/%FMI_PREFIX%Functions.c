@@ -417,7 +417,8 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 								fmi2Boolean loggingOn)
 {
 	XXModelInstance* %VARPREFIX%model_instance = NULL;
-	
+	int offset = 0;
+
 	/* we should remember the functions pointer in order to make callback functions */
 	if (!functions)
 	{
@@ -486,20 +487,26 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 
 	/* Set the offsets within the %VARPREFIX%model_instance->MEMORY array */
 %IF%%NUMBER_CONSTANTS%
-	%VARPREFIX%model_instance->%XX_CONSTANT_ARRAY_NAME% = %VARPREFIX%model_instance->MEMORY; /* constants offset */
+	%VARPREFIX%model_instance->%XX_CONSTANT_ARRAY_NAME% = &%VARPREFIX%model_instance->MEMORY[offset]; /* constants offset */
+	offset = offset + %VARPREFIX%constants_count;
 %ENDIF%
 %IF%%NUMBER_PARAMETERS%
-	%VARPREFIX%model_instance->%XX_PARAMETER_ARRAY_NAME% = &%VARPREFIX%model_instance->MEMORY[%VARPREFIX%constants_count];	/* parameters offset */
+	%VARPREFIX%model_instance->%XX_PARAMETER_ARRAY_NAME% = &%VARPREFIX%model_instance->MEMORY[offset];	/* parameters offset */
+	offset = offset + %VARPREFIX%parameter_count;
 %ENDIF%
 %IF%%NUMBER_INITIAL_VALUES%
-	%VARPREFIX%model_instance->%XX_INITIAL_VALUE_ARRAY_NAME% = &%VARPREFIX%model_instance->MEMORY[%VARPREFIX%constants_count + %VARPREFIX%parameter_count];		/* initial values offset */
+	%VARPREFIX%model_instance->%XX_INITIAL_VALUE_ARRAY_NAME% = &%VARPREFIX%model_instance->MEMORY[offset];		/* initial values offset */
+	offset = offset + %VARPREFIX%initialvalue_count;
 %ENDIF%
 %IF%%NUMBER_VARIABLES%
-	%VARPREFIX%model_instance->%XX_VARIABLE_ARRAY_NAME% = &%VARPREFIX%model_instance->MEMORY[%VARPREFIX%constants_count + %VARPREFIX%parameter_count + %VARPREFIX%initialvalue_count];		/* variables offset */
+	%VARPREFIX%model_instance->%XX_VARIABLE_ARRAY_NAME% = &%VARPREFIX%model_instance->MEMORY[offset];		/* variables offset */
+	offset = offset + %VARPREFIX%variable_count;
 %ENDIF%
 %IF%%NUMBER_STATES%
-	%VARPREFIX%model_instance->%XX_STATE_ARRAY_NAME% = &%VARPREFIX%model_instance->MEMORY[%VARPREFIX%constants_count + %VARPREFIX%parameter_count + %VARPREFIX%initialvalue_count + %VARPREFIX%variable_count];		/* states offset */
-	%VARPREFIX%model_instance->%XX_RATE_ARRAY_NAME% = &%VARPREFIX%model_instance->MEMORY[%VARPREFIX%constants_count + %VARPREFIX%parameter_count + %VARPREFIX%initialvalue_count + %VARPREFIX%variable_count + %VARPREFIX%state_count];		/* rates offset */
+	%VARPREFIX%model_instance->%XX_STATE_ARRAY_NAME% = &%VARPREFIX%model_instance->MEMORY[offset];		/* states offset */
+	offset = offset + %VARPREFIX%state_count;
+	%VARPREFIX%model_instance->%XX_RATE_ARRAY_NAME% = &%VARPREFIX%model_instance->MEMORY[offset];		/* rates offset */
+	offset = offset + %VARPREFIX%state_count;
 %ENDIF%
 	
 	/* Register the callback */
