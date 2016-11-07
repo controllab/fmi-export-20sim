@@ -661,7 +661,7 @@ XXBoolean %FUNCTIONPREFIX%VodeAdamsStep (%VARPREFIX%ModelInstance* model_instanc
 
 	XXDouble time = model_instance->time;
 
-	XXDouble *indep_states = %VARPREFIX%model_instance->%XX_STATE_ARRAY_NAME%;
+	XXDouble *indep_states = model_instance->%XX_STATE_ARRAY_NAME%;
 
 	/* set the last step size on the current simulation time, so that we
 	 * can calculate the difference later
