@@ -250,7 +250,7 @@ FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%GetInteger(%FMI_PREFIX%Component c
 
 	/* 20-sim generated C-code uses doubles for the model equation calculations.
 	   The variable type (i.e. integer or boolean) are not supported as data type,
-	   but are transfered to doubles. In the FMI interface however, the double 
+	   but are transfered to doubles. In the FMI interface however, the double
 	   can be converted to its implicit type  */
 	size_t i;
 	for (i = 0; i < nvr; i++)
@@ -330,7 +330,7 @@ FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%SetBoolean(%FMI_PREFIX%Component c
 	{
 		model_instance->MEMORY[vr[i]] = value[i] ? 1.0 : 0.0;
 	}
-	return %FMI_PREFIX%OK;    
+	return %FMI_PREFIX%OK;
 }
 FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%SetString(%FMI_PREFIX%Component c,
 								const %FMI_PREFIX%ValueReference vr[],
@@ -349,12 +349,12 @@ fmiComponent fmiInstantiateSlave(fmiString instanceName,
 								fmiBoolean visible,
 								fmiBoolean interactive,
 								fmiCallbackFunctions functions,
-								fmiBoolean loggingOn) 
+								fmiBoolean loggingOn)
 {
 	%VARPREFIX%ModelInstance* model_instance;
-	
+
  	/* we should remember the functions pointer in order to make callback functions */
-	if (!functions.logger) 
+	if (!functions.logger)
 		return NULL; // we cannot even log this problem
 	if (!instanceName || strlen(instanceName)==0)
 	{
@@ -386,9 +386,9 @@ fmiComponent fmiInstantiateSlave(fmiString instanceName,
 	}
 
 	memset(model_instance, 0, sizeof(%VARPREFIX%ModelInstance));
-	
+
 	model_instance->instanceName = (%FMI_PREFIX%String) functions.allocateMemory(1 + strlen(instanceName), sizeof(char));
-	
+
 	if (!model_instance->instanceName)
 	{
 		functions.logger(NULL, instanceName, fmiError, "error",
@@ -424,7 +424,7 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 	{
 		return NULL; // we cannot even log this problem
 	}
-	
+
 	if (!functions->logger)
 	{
 		return NULL; // we cannot even log this problem
@@ -452,7 +452,7 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 			"fmi2Instantiate: Wrong GUID %s. Expected %s.", fmuGUID, FMI_GUID);
 		return NULL;
 	}
-	
+
 	model_instance = (%VARPREFIX%ModelInstance *)functions->allocateMemory(1, sizeof(%VARPREFIX%ModelInstance));
 
 	if(!model_instance)
@@ -463,7 +463,7 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 	}
 
 	memset(model_instance, 0, sizeof(%VARPREFIX%ModelInstance));
-	
+
 	model_instance->instanceName = (%FMI_PREFIX%String) functions->allocateMemory(1 + strlen(instanceName), sizeof(char));
 
 	if (!model_instance->instanceName)
@@ -473,7 +473,7 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 		return NULL;
 	}
 	strcpy((char *)model_instance->instanceName, (char *)instanceName);
-	
+
 	/* Prepare the model instance struct */
 	model_instance->start_time = %START_TIME%;
 	model_instance->finish_time = 0.0;
@@ -508,12 +508,12 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 	model_instance->%XX_RATE_ARRAY_NAME% = &model_instance->MEMORY[offset];		/* rates offset */
 	offset = offset + %VARPREFIX%state_count;
 %ENDIF%
-	
+
 	/* Register the callback */
 	model_instance->fmiCallbackFunctions = functions;
 	/* Remember the resource folder location */
 	model_instance->resourceLocation = URIToNativePath(model_instance, fmuResourceLocation);
-	
+
 	/* check if we are setup for co-simulation, that's the only possible option for now */
 	if( fmuType != fmi2CoSimulation )
 	{
@@ -529,7 +529,7 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 fmiStatus fmiInitializeSlave(fmiComponent c,
 							 fmiReal tStart,
 							 fmiBoolean StopTimeDefined,
-							 fmiReal tStop) 
+							 fmiReal tStop)
 {
 	%VARPREFIX%ModelInstance* model_instance = (%VARPREFIX%ModelInstance*) c;
 
@@ -590,10 +590,10 @@ fmi2Status fmi2ExitInitializationMode(fmi2Component c)
 }
 %ENDIF%
 %IF%%FMI1%
-fmiStatus fmiTerminateSlave(fmiComponent c) 
+fmiStatus fmiTerminateSlave(fmiComponent c)
 %ENDIF%
 %IF%%FMI2%
-fmi2Status fmi2Terminate(fmi2Component c) 
+fmi2Status fmi2Terminate(fmi2Component c)
 %ENDIF%
 {
 	%VARPREFIX%ModelInstance* model_instance = (%VARPREFIX%ModelInstance*) c;
@@ -608,10 +608,10 @@ fmi2Status fmi2Terminate(fmi2Component c)
 	return %FMI_PREFIX%OK;
 }
 %IF%%FMI1%
-fmiStatus fmiResetSlave(fmiComponent c) 
+fmiStatus fmiResetSlave(fmiComponent c)
 %ENDIF%
 %IF%%FMI2%
-fmi2Status fmi2Reset(fmi2Component c) 
+fmi2Status fmi2Reset(fmi2Component c)
 %ENDIF%
 {
 	%VARPREFIX%ModelInstance* model_instance = (%VARPREFIX%ModelInstance*) c;
@@ -675,7 +675,7 @@ void fmi2FreeInstance(fmi2Component c)
 %FMI_PREFIX%Status %FMI_PREFIX%SetRealInputDerivatives(%FMI_PREFIX%Component c,
 									const %FMI_PREFIX%ValueReference vr[], size_t nvr,
 									const %FMI_PREFIX%Integer order[],
-									const %FMI_PREFIX%Real value[]) 
+									const %FMI_PREFIX%Real value[])
 {
     /* not yet */
     return %FMI_PREFIX%Error;
@@ -685,17 +685,17 @@ void fmi2FreeInstance(fmi2Component c)
 									const %FMI_PREFIX%ValueReference vr[],
 									size_t nvr,
 									const %FMI_PREFIX%Integer order[],
-									%FMI_PREFIX%Real value[]) 
+									%FMI_PREFIX%Real value[])
 {
 	/* not yet */
 	return %FMI_PREFIX%Error;
 }
 
 %IF%%FMI1%
-fmiStatus fmiCancelStep(fmiComponent c) 
+fmiStatus fmiCancelStep(fmiComponent c)
 %ENDIF%
 %IF%%FMI2%
-fmi2Status fmi2CancelStep(fmi2Component c) 
+fmi2Status fmi2CancelStep(fmi2Component c)
 %ENDIF%
 {
 	/* not yet */
@@ -706,7 +706,7 @@ fmi2Status fmi2CancelStep(fmi2Component c)
 fmiStatus fmiDoStep(fmiComponent c,
 					fmiReal currentCommunicationPoint,
 					fmiReal communicationStepSize,
-					fmiBoolean newStep) 
+					fmiBoolean newStep)
 %ENDIF%
 %IF%%FMI2%
 fmi2Status fmi2DoStep(fmi2Component c,
@@ -736,7 +736,7 @@ fmi2Status fmi2DoStep(fmi2Component c,
 					"Exceeded model finish time: %g > %g\n", model_instance->time, model_instance->finish_time);
 			}
 %ENDIF%
-			
+
 			/* we're done */
 			return %FMI_PREFIX%Error;
 		}
@@ -757,7 +757,7 @@ fmi2Status fmi2DoStep(fmi2Component c,
 	return %FMI_PREFIX%OK;
 }
 
-%FMI_PREFIX%Status %FMI_PREFIX%GetStatus(%FMI_PREFIX%Component c, const %FMI_PREFIX%StatusKind s, %FMI_PREFIX%Status* value) 
+%FMI_PREFIX%Status %FMI_PREFIX%GetStatus(%FMI_PREFIX%Component c, const %FMI_PREFIX%StatusKind s, %FMI_PREFIX%Status* value)
 {
 	/* all fine? */
 	return %FMI_PREFIX%OK;

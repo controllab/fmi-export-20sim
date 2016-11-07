@@ -37,6 +37,23 @@
 #define %VARPREFIX%STATE_SIZE %NUMBER_STATES%
 
 %ENDIF%
+%IF%%FMI1%
+#define FMI_LOG_ERROR(mi,message)	if ( mi->fmiCallbackFunctions.logger != NULL)\
+	{\
+		mi->fmiCallbackFunctions.logger(NULL, "%SUBMODEL_NAME%", fmiError, "error",\
+			message);\
+	}
+
+%ENDIF%
+%IF%%FMI2%
+#define FMI_LOG_ERROR(mi,message)	if (mi->fmiCallbackFunctions != NULL && mi->fmiCallbackFunctions->logger != NULL)\
+	{\
+		mi->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",\
+			message);\
+	}
+
+
+%ENDIF%
 %IF%%EQ(INTEGRATION_METHOD_NAME,Discrete)%
 /*********************************************************************
  * Discrete integration method
@@ -89,7 +106,7 @@ XXBoolean %FUNCTIONPREFIX%DiscreteStep (%VARPREFIX%ModelInstance* model_instance
 	/* no states in the model */
 %ENDIF%
 	/* increment the simulation discrete time */
-	model_instance->m_discrete_time += model_instance->step_size
+	model_instance->m_discrete_time += model_instance->step_size;
 
 	/* and set the continious time to the discrete time */
 	model_instance->time = model_instance->m_discrete_time;
@@ -404,6 +421,7 @@ int Vodefunction1(realtype time, N_Vector y, N_Vector ydot, void *user_data)
 /* the more generic re-initialize, necessary if we want to step back in time */
 XXBoolean %FUNCTIONPREFIX%VodeAdamsReInitialize (%VARPREFIX%ModelInstance* mi)
 {
+	double maxStepSize = 0;
 
 	/* only check our remembered states for
 	 * to be deleted when necessary
@@ -430,21 +448,13 @@ XXBoolean %FUNCTIONPREFIX%VodeAdamsReInitialize (%VARPREFIX%ModelInstance* mi)
 	mi->m_cvode_y = N_VNew_Serial(%VARPREFIX%STATE_SIZE);
 	if (mi->m_cvode_y == NULL)
 	{
-		if (g_fmiCallbackFunctions != NULL && g_fmiCallbackFunctions->logger != NULL)
-		{
-			g_fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
-				"Error allocating internal State Vector");
-		}
+		FMI_LOG_ERROR(mi,"Error allocating internal State Vector");
 		return XXFALSE;
 	}
 	mi->m_cvode_y0 = N_VNew_Serial(%VARPREFIX%STATE_SIZE);
 	if (mi->m_cvode_y0 == NULL)
 	{
-		if (g_fmiCallbackFunctions != NULL && g_fmiCallbackFunctions->logger != NULL)
-		{
-			g_fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
-				"Error allocating internal Initial State Vector");
-		}
+		FMI_LOG_ERROR(mi,"Error allocating internal State Vector");
 		return XXFALSE;
 	}
 	/* recommended for non-stiff: CV_ADAMS, CV_FUNCTIONAL
@@ -453,11 +463,7 @@ XXBoolean %FUNCTIONPREFIX%VodeAdamsReInitialize (%VARPREFIX%ModelInstance* mi)
 	mi->m_cvode_mem = CVodeCreate(mi->m_use_bdf ? CV_BDF : CV_ADAMS, mi->m_use_newton ? CV_NEWTON : CV_FUNCTIONAL);
 	if (mi->m_cvode_mem == NULL)
 	{
-		if (g_fmiCallbackFunctions != NULL && g_fmiCallbackFunctions->logger != NULL)
-		{
-			g_fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
-				"Error creating CVode memory object");
-		}
+		FMI_LOG_ERROR(mi,"Error creating CVode memory object");
 		return XXFALSE;
 	}
 
@@ -468,22 +474,14 @@ XXBoolean %FUNCTIONPREFIX%VodeAdamsReInitialize (%VARPREFIX%ModelInstance* mi)
 	if (mi->m_flag != CV_SUCCESS)
 	{
 		/* print error dependent on flag */
-		if (g_fmiCallbackFunctions != NULL && g_fmiCallbackFunctions->logger != NULL)
-		{
-			g_fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
-				"Error calling CVodeInit");
-		}
+		FMI_LOG_ERROR(mi,"Error calling CVodeInit");
 		return XXFALSE;
 	}
 	mi->m_flag = CVodeSStolerances(mi->m_cvode_mem, mi->m_relative_tolerance, mi->m_absolute_tolerance);
 	if (mi->m_flag != CV_SUCCESS)
 	{
 		/* print error dependent on flag */
-		if (g_fmiCallbackFunctions != NULL && g_fmiCallbackFunctions->logger != NULL)
-		{
-			g_fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
-				"Error calling CVodeSStolerances");
-		}
+		FMI_LOG_ERROR(mi,"Error calling CVodeSStolerances");
 		return XXFALSE;
 	}
 
@@ -492,14 +490,9 @@ XXBoolean %FUNCTIONPREFIX%VodeAdamsReInitialize (%VARPREFIX%ModelInstance* mi)
 	if (mi->m_flag != CV_SUCCESS)
 	{
 		/* print error dependent on flag */
-		if (g_fmiCallbackFunctions != NULL && g_fmiCallbackFunctions->logger != NULL)
-		{
-			g_fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
-				"Error calling CVodeSetInitStep");
-		}
+		FMI_LOG_ERROR(mi,"Error calling CVodeSetInitStep");
 		return XXFALSE;
 	}
-	double maxStepSize = 0;
 	/* set base-class attributes */
 	if (mi->m_use_maximum_step)
 	{
@@ -526,22 +519,14 @@ XXBoolean %FUNCTIONPREFIX%VodeAdamsReInitialize (%VARPREFIX%ModelInstance* mi)
 	if (mi->m_flag != CV_SUCCESS)
 	{
 		/* print error dependent on flag */
-		if (g_fmiCallbackFunctions != NULL && g_fmiCallbackFunctions->logger != NULL)
-		{
-			g_fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
-				"Error calling CVodeSetMaxStep");
-		}
+		FMI_LOG_ERROR(mi,"Error calling CVodeSetMaxStep");
 		return XXFALSE;
 	}
 	mi->m_flag = CVodeSetMaxNumSteps(mi->m_cvode_mem, 100000); /* default is 500 */
 	if (mi->m_flag != CV_SUCCESS)
 	{
 		/* print error dependent on flag */
-		if (g_fmiCallbackFunctions != NULL && g_fmiCallbackFunctions->logger != NULL)
-		{
-			g_fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
-				"Error calling CVodeSetMaxStep");
-		}
+		FMI_LOG_ERROR(mi,"Error calling CVodeSetMaxStep");
 		return XXFALSE;
 	}
 
@@ -562,35 +547,23 @@ XXBoolean %FUNCTIONPREFIX%VodeAdamsReInitialize (%VARPREFIX%ModelInstance* mi)
 			switch (mi->m_flag)
 			{
 			case CVDLS_MEM_NULL:
-					if (g_fmiCallbackFunctions != NULL && g_fmiCallbackFunctions->logger != NULL)
-					{
-						g_fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
-							"No memory passed to initialization of linear solver");
-					}
+
+					FMI_LOG_ERROR(mi,"No memory passed to initialization of linear solver");
 					return XXFALSE;
 
 			case CVDLS_MEM_FAIL:
-					if (g_fmiCallbackFunctions != NULL && g_fmiCallbackFunctions->logger != NULL)
-					{
-						g_fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
-							"Memory allocation failure during initialization of linear solver");
-					}
+
+					FMI_LOG_ERROR(mi,"Memory allocation failure during initialization of linear solver");
 					return XXFALSE;
 
 			case CVDLS_ILL_INPUT:
-					if (g_fmiCallbackFunctions != NULL && g_fmiCallbackFunctions->logger != NULL)
-					{
-						g_fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
-							"Ill input initializing linear solver");
-					}
+
+					FMI_LOG_ERROR(mi,"Ill input initializing linear solver");
 					return XXFALSE;
 
 				default:
-					if (g_fmiCallbackFunctions != NULL && g_fmiCallbackFunctions->logger != NULL)
-					{
-						g_fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
-							"Unknown error initializing linear solver");
-					}
+
+					FMI_LOG_ERROR(mi,"Unknown error initializing linear solver");
 					return XXFALSE;
 
 			}
@@ -607,7 +580,7 @@ XXBoolean %FUNCTIONPREFIX%VodeAdamsInitialize (%VARPREFIX%ModelInstance* model_i
 {
 %IF%%NUMBER_STATES%
 	%VARPREFIX%ModelInstance* mi = model_instance;
-	
+
 	/* general explicit variable step integration method settings */
 	// default step size
 	mi->m_initial_step_size = %INTEGRATION_METHOD_INITIAL_STEPSIZE%;
@@ -626,21 +599,17 @@ XXBoolean %FUNCTIONPREFIX%VodeAdamsInitialize (%VARPREFIX%ModelInstance* model_i
 	mi->m_use_bdf = XXTRUE;
 	mi->m_use_newton = XXTRUE;
 
-	/* 
+	/*
 	mi->m_prev_memory = NULL;
 	mi->m_prev_cvdense_mem = NULL;
 	*/
 
 	mi->m_dense_performed = XXFALSE;
-	
+
 	/* and call the "generic" reinitialize function */
 	if (%FUNCTIONPREFIX%VodeAdamsReInitialize(mi) == XXFALSE )
 	{
-		if (g_fmiCallbackFunctions != NULL && g_fmiCallbackFunctions->logger != NULL)
-		{
-			g_fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
-				"Error in call to VodeAdamsReInitialize");
-		}
+		FMI_LOG_ERROR(mi,"Error in call to VodeAdamsReInitialize");
 		return XXFALSE;
 	}
 %ENDIF%
@@ -692,12 +661,13 @@ XXBoolean %FUNCTIONPREFIX%VodeAdamsStep (%VARPREFIX%ModelInstance* model_instanc
 
 	XXDouble time = model_instance->time;
 
+	XXDouble *indep_states = %VARPREFIX%model_instance->%XX_STATE_ARRAY_NAME%;
+
 	/* set the last step size on the current simulation time, so that we
 	 * can calculate the difference later
 	 */
 	mi->m_last_step_size = time;
 
-	XXDouble *indep_states = model_instance->%XX_STATE_ARRAY_NAME%;
 
 	/* copy the states from the simulator */
 	memcpy(NV_DATA_S(mi->m_cvode_y), indep_states, %VARPREFIX%STATE_SIZE * sizeof(XXDouble));
@@ -707,7 +677,7 @@ XXBoolean %FUNCTIONPREFIX%VodeAdamsStep (%VARPREFIX%ModelInstance* model_instanc
 
 	/* the real call to CVODE
 	 * integrate to the finish time exactly, and set the time
-	 * to this value 
+	 * to this value
 	 */
 	CVodeSetUserData(mi->m_cvode_mem, mi);
 	CVodeSetStopTime(mi->m_cvode_mem, vode_output_time);
@@ -742,83 +712,51 @@ XXBoolean %FUNCTIONPREFIX%VodeAdamsStep (%VARPREFIX%ModelInstance* model_instanc
 
 		case CV_LINIT_FAIL:
 
-			if (g_fmiCallbackFunctions != NULL && g_fmiCallbackFunctions->logger != NULL)
-			{
-				g_fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
-					"Initialization of Vode Adams Method failed.");
-			}
 
+			FMI_LOG_ERROR(mi,"Initialization of Vode Adams Method failed.");
 			return XXFALSE;
 
 
 		case CV_NO_MALLOC:
 		case CV_MEM_NULL:
-			
-			if( model_instance->fmiCallbackFunctions != NULL && model_instance->fmiCallbackFunctions->logger != NULL )
-			{
-				model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
-					"No memory allocated or passed to Vode Adams.");
-			}
 
+			FMI_LOG_ERROR(mi,"No memory allocated or passed to Vode Adams.");
 			return XXFALSE;
 
 		/* step not taken, next call impossible */
 		case CV_TOO_MUCH_WORK:
-			if( model_instance->fmiCallbackFunctions != NULL && model_instance->fmiCallbackFunctions->logger != NULL )
-			{
-				model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
-					"Too many steps taken in the Vode Adams method.");
-			}
 
+			FMI_LOG_ERROR(mi,"Too many steps taken in the Vode Adams method.");
 			return XXFALSE;
 
 		case CV_TOO_MUCH_ACC:
-			if (g_fmiCallbackFunctions != NULL && g_fmiCallbackFunctions->logger != NULL)
-			{
-				g_fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
-					"The Vode Adams method could not satisfy the accuracy demanded.");
-			}
+
+			FMI_LOG_ERROR(mi,"The Vode Adams method could not satisfy the accuracy demanded.");
 			break;
 
 		case CV_ERR_FAILURE:
-			if( model_instance->fmiCallbackFunctions != NULL && model_instance->fmiCallbackFunctions->logger != NULL )
-			{
-				model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
-					"Error test failures occurred too many times in Vode Adams method.");
-			}
+
+			FMI_LOG_ERROR(mi,"Error test failures occurred too many times in Vode Adams method.");
 			return XXFALSE;
 
 		case CV_CONV_FAILURE:
-			if( model_instance->fmiCallbackFunctions != NULL && model_instance->fmiCallbackFunctions->logger != NULL )
-			{
-				model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
-					"Failed to converge in the Vode Adams method.");
-			}
+
+			FMI_LOG_ERROR(mi,"Failed to converge in the Vode Adams method.");
 			return XXFALSE;
 
 		case CV_LSETUP_FAIL:
 		case CV_LSOLVE_FAIL:
-			if( model_instance->fmiCallbackFunctions != NULL && model_instance->fmiCallbackFunctions->logger != NULL )
-			{
-				model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
-					"The linear solver's setup routine failed in the Vode Adams method.");
-			}
+
+			FMI_LOG_ERROR(mi,"The linear solver's setup routine failed in the Vode Adams method.");
 			return XXFALSE;
 
 		case CV_ILL_INPUT:
-			if( model_instance->fmiCallbackFunctions != NULL && model_instance->fmiCallbackFunctions->logger != NULL )
-			{
-				model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
-					"One of the inputs to Vode Adams method is illegal.");
-			}
+
+			FMI_LOG_ERROR(mi,"One of the inputs to Vode Adams method is illegal.");
 			return XXFALSE;
 		default:
 			/* should not happen */
-			if( model_instance->fmiCallbackFunctions != NULL && model_instance->fmiCallbackFunctions->logger != NULL )
-			{
-				model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
-					"Unknown error in the Vode Adams method..");
-			}
+			FMI_LOG_ERROR(mi,"Unknown error in the Vode Adams method.");
 			return XXFALSE;
 	}
 
