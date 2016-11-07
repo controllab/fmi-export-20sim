@@ -28,27 +28,27 @@ that are supplied for computation.
 
 /* the integration methods */
 #ifdef Discrete_METHOD
-void %FUNCTIONPREFIX%DiscreteInitialize (XXModelInstance* %VARPREFIX%model_instance);
-void %FUNCTIONPREFIX%DiscreteTerminate (XXModelInstance* %VARPREFIX%model_instance);
-void %FUNCTIONPREFIX%DiscreteStep (XXModelInstance* %VARPREFIX%model_instance);
+void %FUNCTIONPREFIX%DiscreteInitialize (%VARPREFIX%ModelInstance* model_instance);
+void %FUNCTIONPREFIX%DiscreteTerminate (%VARPREFIX%ModelInstance* model_instance);
+void %FUNCTIONPREFIX%DiscreteStep (%VARPREFIX%ModelInstance* model_instance);
 #endif 
 
 #ifdef Euler_METHOD
-void %FUNCTIONPREFIX%EulerInitialize (XXModelInstance* %VARPREFIX%model_instance);
-void %FUNCTIONPREFIX%EulerTerminate (XXModelInstance* %VARPREFIX%model_instance);
-void %FUNCTIONPREFIX%EulerStep (XXModelInstance* %VARPREFIX%model_instance);
+void %FUNCTIONPREFIX%EulerInitialize (%VARPREFIX%ModelInstance* model_instance);
+void %FUNCTIONPREFIX%EulerTerminate (%VARPREFIX%ModelInstance* model_instance);
+void %FUNCTIONPREFIX%EulerStep (%VARPREFIX%ModelInstance* model_instance);
 #endif 
 
 #ifdef RungeKutta2_METHOD
-void %FUNCTIONPREFIX%RungeKutta2Initialize (XXModelInstance* %VARPREFIX%model_instance);
-void %FUNCTIONPREFIX%RungeKutta2Terminate (XXModelInstance* %VARPREFIX%model_instance);
-void %FUNCTIONPREFIX%RungeKutta2Step (XXModelInstance* %VARPREFIX%model_instance);
+void %FUNCTIONPREFIX%RungeKutta2Initialize (%VARPREFIX%ModelInstance* model_instance);
+void %FUNCTIONPREFIX%RungeKutta2Terminate (%VARPREFIX%ModelInstance* model_instance);
+void %FUNCTIONPREFIX%RungeKutta2Step (%VARPREFIX%ModelInstance* model_instance);
 #endif
 
 #ifdef RungeKutta4_METHOD
-void %FUNCTIONPREFIX%RungeKutta4Initialize (XXModelInstance* %VARPREFIX%model_instance);
-void %FUNCTIONPREFIX%RungeKutta4Terminate (XXModelInstance* %VARPREFIX%model_instance);
-void %FUNCTIONPREFIX%RungeKutta4Step (XXModelInstance* %VARPREFIX%model_instance);
+void %FUNCTIONPREFIX%RungeKutta4Initialize (%VARPREFIX%ModelInstance* model_instance);
+void %FUNCTIONPREFIX%RungeKutta4Terminate (%VARPREFIX%ModelInstance* model_instance);
+void %FUNCTIONPREFIX%RungeKutta4Step (%VARPREFIX%ModelInstance* model_instance);
 #endif
 
 #endif
