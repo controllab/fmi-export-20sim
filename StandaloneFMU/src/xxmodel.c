@@ -73,7 +73,7 @@ const char* g_fmuResourceLocation = NULL;
 #pragma optimize("", off)
 #endif
 /* this method is called before calculation is possible */
-void %FUNCTIONPREFIX%ModelInitialize (XXModelInstance* %VARPREFIX%model_instance)
+void %FUNCTIONPREFIX%ModelInitialize (%VARPREFIX%ModelInstance* model_instance)
 {
 %IF%%NUMBER_CONSTANTS%
 	/* set the constants */
@@ -113,13 +113,13 @@ void %FUNCTIONPREFIX%ModelInitialize (XXModelInstance* %VARPREFIX%model_instance
 /* This function calculates the initial equations of the model.
  * These equations are calculated before anything else
  */
-void %FUNCTIONPREFIX%CalculateInitial (XXModelInstance* %VARPREFIX%model_instance)
+void %FUNCTIONPREFIX%CalculateInitial (%VARPREFIX%ModelInstance* model_instance)
 {
 %IF%%NUMBEROF_DLL_Table2D%
 	/* Make sure that the Table2D initialization function can find the resource
 	 * location for this FMU instance
 	 */
-	g_fmuResourceLocation = %VARPREFIX%model_instance->resourceLocation;
+	g_fmuResourceLocation = model_instance->resourceLocation;
 
 %ENDIF%
 %IF%%NUMBER_FAVORITE_PARAMETERS%
@@ -133,13 +133,13 @@ void %FUNCTIONPREFIX%CalculateInitial (XXModelInstance* %VARPREFIX%model_instanc
 /* This function calculates the static equations of the model.
  * These equations are only dependent from parameters and constants
  */
-void %FUNCTIONPREFIX%CalculateStatic (XXModelInstance* %VARPREFIX%model_instance)
+void %FUNCTIONPREFIX%CalculateStatic (%VARPREFIX%ModelInstance* model_instance)
 {
 %IF%%NUMBEROF_DLL_Table2D%
 	/* Make sure that the Table2D initialization function can find the resource
 	 * location for this FMU instance
 	 */
-	g_fmuResourceLocation = %VARPREFIX%model_instance->resourceLocation;
+	g_fmuResourceLocation = model_instance->resourceLocation;
 
 %ENDIF%
 %STATIC_EQUATIONS%
@@ -149,13 +149,13 @@ void %FUNCTIONPREFIX%CalculateStatic (XXModelInstance* %VARPREFIX%model_instance
  * These equations are dynamic equations that must not change
  * in calls from the integration method (like random and delay).
  */
-void %FUNCTIONPREFIX%CalculateInput (XXModelInstance* %VARPREFIX%model_instance)
+void %FUNCTIONPREFIX%CalculateInput (%VARPREFIX%ModelInstance* model_instance)
 {
 %IF%%NUMBEROF_DLL_Table2D%
 	/* Make sure that the Table2D initialization function can find the resource
 	 * location for this FMU instance
 	 */
-	g_fmuResourceLocation = %VARPREFIX%model_instance->resourceLocation;
+	g_fmuResourceLocation = model_instance->resourceLocation;
 
 %ENDIF%
 %IF%%NUMBER_FAVORITE_PARAMETERS%
@@ -170,19 +170,19 @@ void %FUNCTIONPREFIX%CalculateInput (XXModelInstance* %VARPREFIX%model_instance)
  * These equations are called from the integration method
  * to calculate the new model rates (that are then integrated).
  */
-void %FUNCTIONPREFIX%CalculateDynamic (XXModelInstance* %VARPREFIX%model_instance)
+void %FUNCTIONPREFIX%CalculateDynamic (%VARPREFIX%ModelInstance* model_instance)
 {
 %IF%%NUMBEROF_DLL_Table2D%
 	/* Make sure that the Table2D initialization function can find the resource
 	 * location for this FMU instance
 	 */
-	g_fmuResourceLocation = %VARPREFIX%model_instance->resourceLocation;
+	g_fmuResourceLocation = model_instance->resourceLocation;
 
 %ENDIF%
 %DYNAMIC_EQUATIONS%
 
 	/* increment the step counter */
-	%VARPREFIX%model_instance->steps++;
+	model_instance->steps++;
 }
 
 /* This function calculates the output equations of the model.
@@ -191,19 +191,19 @@ void %FUNCTIONPREFIX%CalculateDynamic (XXModelInstance* %VARPREFIX%model_instanc
  * These dynamic equations are called often more than one time for each
  * integration step that is taken. This makes model computation much faster.
  */
-void %FUNCTIONPREFIX%CalculateOutput (XXModelInstance* %VARPREFIX%model_instance)
+void %FUNCTIONPREFIX%CalculateOutput (%VARPREFIX%ModelInstance* model_instance)
 {
 %IF%%NUMBEROF_DLL_Table2D%
 	/* Make sure that the Table2D initialization function can find the resource
 	 * location for this FMU instance
 	 */
-	g_fmuResourceLocation = %VARPREFIX%model_instance->resourceLocation;
+	g_fmuResourceLocation = model_instance->resourceLocation;
 
 %ENDIF%
 %OUTPUT_EQUATIONS%
 %IF%%NUMBEROF_DELAYFUNCTION%
 	/* delay update */
-	%FUNCTIONPREFIX%DelayUpdate(%VARPREFIX%model_instance);
+	%FUNCTIONPREFIX%DelayUpdate(model_instance);
 
 %ENDIF%
 %IF%%NUMBER_FAVORITE_VARIABLES%
@@ -216,45 +216,45 @@ void %FUNCTIONPREFIX%CalculateOutput (XXModelInstance* %VARPREFIX%model_instance
  * These equations are calculated after all the calculations
  * are performed
  */
-void %FUNCTIONPREFIX%CalculateFinal (XXModelInstance* %VARPREFIX%model_instance)
+void %FUNCTIONPREFIX%CalculateFinal (%VARPREFIX%ModelInstance* model_instance)
 {
 %IF%%NUMBEROF_DLL_Table2D%
 	/* Make sure that the Table2D initialization function can find the resource
 	 * location for this FMU instance
 	 */
-	g_fmuResourceLocation = %VARPREFIX%model_instance->resourceLocation;
+	g_fmuResourceLocation = model_instance->resourceLocation;
 
 %ENDIF%
 %FINAL_EQUATIONS%
 }
 
 /* this method is called after all calculations are performed */
-void %FUNCTIONPREFIX%ModelTerminate(XXModelInstance* %VARPREFIX%model_instance)
+void %FUNCTIONPREFIX%ModelTerminate(%VARPREFIX%ModelInstance* model_instance)
 {
 }
 
 %IF%%NUMBEROF_DELAYFUNCTION%
-void %FUNCTIONPREFIX%DelayUpdate(XXModelInstance* %VARPREFIX%model_instance)
+void %FUNCTIONPREFIX%DelayUpdate(%VARPREFIX%ModelInstance* model_instance)
 {
-	memcpy(%VARPREFIX%model_instance->delay_update_array, %VARPREFIX%model_instance->delay_last_values, %VARPREFIX%delay_count * sizeof(XXDouble));
+	memcpy(model_instance->delay_update_array, model_instance->delay_last_values, %VARPREFIX%delay_count * sizeof(XXDouble));
 }
 
-XXDouble %FUNCTIONPREFIX%ModelDelay (XXModelInstance* %VARPREFIX%model_instance, XXDouble argument1, XXDouble argument2, XXInteger id)
+XXDouble %FUNCTIONPREFIX%ModelDelay (%VARPREFIX%ModelInstance* model_instance, XXDouble argument1, XXDouble argument2, XXInteger id)
 {
 	XXDouble value;
 
-	if (%VARPREFIX%model_instance->%XX_INITIALIZE%)
+	if (model_instance->%XX_INITIALIZE%)
 	{
 		value = argument2;
 	}
 	else
 	{
-		value = %VARPREFIX%model_instance->delay_update_array[id];
+		value = model_instance->delay_update_array[id];
 	}
 
-	if (%VARPREFIX%model_instance->major)
+	if (model_instance->major)
 	{
-		%VARPREFIX%model_instance->delay_last_values[id] = argument1;
+		model_instance->delay_last_values[id] = argument1;
 	}
 
 	return value;
@@ -262,43 +262,43 @@ XXDouble %FUNCTIONPREFIX%ModelDelay (XXModelInstance* %VARPREFIX%model_instance,
 
 %ENDIF%
 %IF%%NUMBEROF_INITIALFUNCTION%
-XXDouble %FUNCTIONPREFIX%ModelInitialValue (XXModelInstance* %VARPREFIX%model_instance, XXDouble argument, XXInteger identifier)
+XXDouble %FUNCTIONPREFIX%ModelInitialValue (%VARPREFIX%ModelInstance* model_instance, XXDouble argument, XXInteger identifier)
 {
 	/* The storage array '%VARPREFIX%initial_value_array' is declared in xxmodel.c because its size is model dependent */
 	XXDouble value;
 
-	if (%VARPREFIX%model_instance->%XX_INITIALIZE%)
+	if (model_instance->%XX_INITIALIZE%)
 	{
 		value = argument;
-		%VARPREFIX%model_instance->initial_value_array[identifier] = value;
+		model_instance->initial_value_array[identifier] = value;
 	}
 	else
 	{
-		value = %VARPREFIX%model_instance->initial_value_array[identifier];
+		value = model_instance->initial_value_array[identifier];
 	}
 	return value;
 }
 
 %ENDIF%
 %IF%%NUMBEROF_WARNSTATEMENT%
-XXBoolean %FUNCTIONPREFIX%ModelWarning (XXModelInstance* %VARPREFIX%model_instance, XXString message, XXInteger id)
+XXBoolean %FUNCTIONPREFIX%ModelWarning (%VARPREFIX%ModelInstance* model_instance, XXString message, XXInteger id)
 {
-	if(%VARPREFIX%model_instance->fmiCallbackFunctions != NULL && %VARPREFIX%model_instance->fmiCallbackFunctions->logger != NULL)
+	if(model_instance->fmiCallbackFunctions != NULL && model_instance->fmiCallbackFunctions->logger != NULL)
 	{
-		%VARPREFIX%model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Warning, "warning", message);
+		model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Warning, "warning", message);
 	}
 	return 0;
 }
 
 %ENDIF%
 %IF%%NUMBEROF_STOPSTATEMENT%
-XXBoolean %FUNCTIONPREFIX%ModelStopSimulation (XXModelInstance* %VARPREFIX%model_instance, XXString message, XXInteger id)
+XXBoolean %FUNCTIONPREFIX%ModelStopSimulation (%VARPREFIX%ModelInstance* model_instance, XXString message, XXInteger id)
 {
-	%VARPREFIX%model_instance->stop_simulation = XXTRUE;
+	model_instance->stop_simulation = XXTRUE;
 
-	if(%VARPREFIX%model_instance->fmiCallbackFunctions != NULL && %VARPREFIX%model_instance->fmiCallbackFunctions->logger != NULL)
+	if(model_instance->fmiCallbackFunctions != NULL && model_instance->fmiCallbackFunctions->logger != NULL)
 	{
-		%VARPREFIX%model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error", message);
+		model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error", message);
 	}
 	return 0;
 }

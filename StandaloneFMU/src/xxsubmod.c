@@ -25,46 +25,46 @@
 
 
 /* The initialization function for submodel */
-void %FUNCTIONPREFIX%InitializeSubmodel (XXModelInstance* %VARPREFIX%model_instance)
+void %FUNCTIONPREFIX%InitializeSubmodel (%VARPREFIX%ModelInstance* model_instance)
 {
 	/* Initialization phase (allocating memory) */
-	%VARPREFIX%model_instance->%XX_INITIALIZE% = XXTRUE;
-	%VARPREFIX%model_instance->steps = 0;
-	%FUNCTIONPREFIX%%INTEGRATION_METHOD_NAME%Initialize (%VARPREFIX%model_instance);
+	model_instance->%XX_INITIALIZE% = XXTRUE;
+	model_instance->steps = 0;
+	%FUNCTIONPREFIX%%INTEGRATION_METHOD_NAME%Initialize (model_instance);
 
 	/* Calculate the model for the first time */
-	%FUNCTIONPREFIX%CalculateInitial (%VARPREFIX%model_instance);
-	%FUNCTIONPREFIX%CalculateStatic (%VARPREFIX%model_instance);
-	%FUNCTIONPREFIX%CalculateInput (%VARPREFIX%model_instance);
-	%FUNCTIONPREFIX%CalculateDynamic (%VARPREFIX%model_instance);
-	%FUNCTIONPREFIX%CalculateOutput (%VARPREFIX%model_instance);
+	%FUNCTIONPREFIX%CalculateInitial (model_instance);
+	%FUNCTIONPREFIX%CalculateStatic (model_instance);
+	%FUNCTIONPREFIX%CalculateInput (model_instance);
+	%FUNCTIONPREFIX%CalculateDynamic (model_instance);
+	%FUNCTIONPREFIX%CalculateOutput (model_instance);
 
 	/* End of initialization phase */
-	%VARPREFIX%model_instance->%XX_INITIALIZE% = XXFALSE;
+	model_instance->%XX_INITIALIZE% = XXFALSE;
 }
 
 /* The function that calculates the submodel */
-void %FUNCTIONPREFIX%CalculateSubmodel (XXModelInstance* %VARPREFIX%model_instance, XXDouble t)
+void %FUNCTIONPREFIX%CalculateSubmodel (%VARPREFIX%ModelInstance* model_instance, XXDouble t)
 {
 	/* Copy the time */
-	%VARPREFIX%model_instance->time = t;
+	model_instance->time = t;
 
 	/* Calculate the model */
-	%FUNCTIONPREFIX%CalculateInput (%VARPREFIX%model_instance);
-	%FUNCTIONPREFIX%%INTEGRATION_METHOD_NAME%Step (%VARPREFIX%model_instance);
-	%FUNCTIONPREFIX%CalculateOutput (%VARPREFIX%model_instance);
+	%FUNCTIONPREFIX%CalculateInput (model_instance);
+	%FUNCTIONPREFIX%%INTEGRATION_METHOD_NAME%Step (model_instance);
+	%FUNCTIONPREFIX%CalculateOutput (model_instance);
 }
 
 /* The termination function for submodel */
-void %FUNCTIONPREFIX%TerminateSubmodel (XXModelInstance* %VARPREFIX%model_instance, XXDouble t)
+void %FUNCTIONPREFIX%TerminateSubmodel (%VARPREFIX%ModelInstance* model_instance, XXDouble t)
 {
 	/* Copy the time */
-	%VARPREFIX%model_instance->time = t;
+	model_instance->time = t;
 
 	/* Calculate the final model equations */
-	%FUNCTIONPREFIX%CalculateFinal (%VARPREFIX%model_instance);
+	%FUNCTIONPREFIX%CalculateFinal (model_instance);
 
 	/* and terminate the model itself (releasing memory) */
-	%FUNCTIONPREFIX%ModelTerminate (%VARPREFIX%model_instance);
-	%FUNCTIONPREFIX%%INTEGRATION_METHOD_NAME%Terminate (%VARPREFIX%model_instance);
+	%FUNCTIONPREFIX%ModelTerminate (model_instance);
+	%FUNCTIONPREFIX%%INTEGRATION_METHOD_NAME%Terminate (model_instance);
 }
