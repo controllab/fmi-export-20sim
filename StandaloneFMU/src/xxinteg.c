@@ -774,3 +774,67 @@ XXBoolean %FUNCTIONPREFIX%VodeAdamsStep (%VARPREFIX%ModelInstance* model_instanc
 	return XXTRUE;
 }
 %ENDIF%
+
+
+%IF%%EQ(INTEGRATION_METHOD_NAME,MeBDFi)%
+/*********************************************************************
+ * MeBDFI integration method
+ *********************************************************************/
+
+/* the initialization of the Euler integration method */
+XXBoolean %FUNCTIONPREFIX%MeBDFiInitialize (XXModelInstance* model_instance)
+{
+	/* initialize the MeBDFi object */
+	%VARPREFIX%model_instance->major = XXTRUE;
+
+	MeBDFiMethod_Constructor(&model_instance->m_mebdfi_method, model_instance);
+
+	return XXTRUE;
+}
+
+/* the termination of the MeBDFi integration method */
+XXBoolean %FUNCTIONPREFIX%MeBDFiTerminate (XXModelInstance* %VARPREFIX%model_instance)
+{
+	return XXTRUE;
+}
+
+/* the MeBDFi integration method itself */
+XXBoolean %FUNCTIONPREFIX%MeBDFiStep (XXModelInstance* %VARPREFIX%model_instance, XXDouble outputTime)
+{
+	XXDouble stepSize = %VARPREFIX%model_instance->step_size;
+	XXModelInstance *mi = %VARPREFIX%model_instance;
+	XXDouble output_time = mi->m_use_finish_time ? (mi->finish_time > outputTime ? outputTime : mi->finish_time) : outputTime;
+
+	if( output_time - %VARPREFIX%model_instance->time < stepSize )
+	{
+		/* limit the step size */
+		stepSize = output_time - %VARPREFIX%model_instance->time;
+	}
+
+%IF%%NUMBER_STATES%
+	XXInteger index;
+
+
+	/* for each of the supplied states */
+	IMPLEMENT THE MeBDFi STEP
+//	for (index = 0; index < %VARPREFIX%STATE_SIZE; index++)
+//	{
+//		/* calculate the new state */
+//		%VARPREFIX%model_instance->%XX_STATE_ARRAY_NAME% [index] = %VARPREFIX%model_instance->%XX_STATE_ARRAY_NAME% [index] + %VARPREFIX%model_instance->%XX_RATE_ARRAY_NAME% [index] * stepSize;
+//	}
+
+
+%ELSE%
+	/* no states in the model */
+%ENDIF%
+	/* increment the simulation time */
+	%VARPREFIX%model_instance->time += stepSize;
+
+	%VARPREFIX%model_instance->major = XXTRUE;
+
+	/* evaluate the dynamic part to calculate the new rates */
+	%FUNCTIONPREFIX%CalculateDynamic (%VARPREFIX%model_instance);
+
+	return XXTRUE;
+}
+%ENDIF%

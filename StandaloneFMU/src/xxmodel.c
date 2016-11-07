@@ -54,12 +54,28 @@
 %IF%%NUMBEROF_DLL_Table2D%
 #include "xxTable2D.h"
 %ENDIF%
+%IF%%NOT(EQ(INTEGRATION_METHOD_NAME,MeBDFi))%
+%IF%%NUMBER_DEPSTATES%
+#if defined _MSC_VER
+#pragma message("Warning: This model contains dependent states. Dependent states solving is not implemented in this code generation template.")
+#elif defined __GNUC__
+#warning This model contains dependent states. Dependent states solving is not implemented in this code generation template..
+#endif
+%ENDIF%
 %IF%%NUMBER_ALGLOOPS%
 #if defined _MSC_VER
 #pragma message("Warning: This model contains algebraic loops. Algebraic loop solving is not implemented in this code generation template.")
 #elif defined __GNUC__
 #warning This model contains algebraic loops. Algebraic loop solving is not implemented in this code generation template.
 #endif
+%ENDIF%
+%IF%%NUMBER_CONSTRAINTS%
+#if defined _MSC_VER
+#pragma message("Warning: This model contains constraint variables. Constraint variable solving is not implemented in this code generation template.")
+#elif defined __GNUC__
+#warning This model contains constraint variables. Constraint variable solving is not implemented in this code generation template.
+#endif
+%ENDIF%
 %ENDIF%
 
 %IF%%NUMBEROF_DLL_Table2D%

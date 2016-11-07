@@ -216,6 +216,10 @@ typedef struct %VARPREFIX%ModelInstance
 
 	XXBoolean m_dense_performed;
 %ENDIF%
+%IF%%EQ(INTEGRATION_METHOD_NAME,MeBDFi)%
+	/* the structure containts all the member variables */
+	MeBDFiMethod m_mebdfi_method;
+%ENDIF%
 %ENDIF%
 	/* Memory offset pointers */
 %IF%%NUMBER_CONSTANTS%

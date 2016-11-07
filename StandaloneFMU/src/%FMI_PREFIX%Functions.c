@@ -508,6 +508,18 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 	model_instance->%XX_RATE_ARRAY_NAME% = &model_instance->MEMORY[offset];		/* rates offset */
 	offset = offset + %VARPREFIX%state_count;
 %ENDIF%
+%IF%%NUMBER_DEPSTATES%
+	%VARPREFIX%model_instance->%XX_DEP_STATE_ARRAY_NAME% = &%VARPREFIX%model_instance->MEMORY[offset];		/* states offset */
+	offset = offset + %VARPREFIX%depstate_count;
+	%VARPREFIX%model_instance->%XX_DEP_RATE_ARRAY_NAME% = &%VARPREFIX%model_instance->MEMORY[offset];		/* rates offset */
+	offset = offset + %VARPREFIX%depstate_count;
+%ENDIF%
+%IF%%OR(NUMBER_ALGLOOPS,NUMBER_CONSTRAINTS)%
+	%VARPREFIX%model_instance->%XX_ALG_IN_ARRAY_NAME% = &%VARPREFIX%model_instance->MEMORY[offset];		/* states offset */
+	offset = offset + %VARPREFIX%algloop_count + %VARPREFIX%constraint_count;
+	%VARPREFIX%model_instance->%XX_ALG_OUT_ARRAY_NAME% = &%VARPREFIX%model_instance->MEMORY[offset];		/* rates offset */
+	offset = offset + %VARPREFIX%algloop_count + %VARPREFIX%constraint_count;
+%ENDIF%
 
 	/* Register the callback */
 	model_instance->fmiCallbackFunctions = functions;
