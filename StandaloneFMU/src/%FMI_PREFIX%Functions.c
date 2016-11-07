@@ -542,7 +542,7 @@ fmiStatus fmiInitializeSlave(fmiComponent c,
 	}
 
 	/* initialize the submodel itself */
-	if( %FUNCTIONPREFIX%InitializeSubmodel (%VARPREFIX%model_instance) == XXFALSE)
+	if( %FUNCTIONPREFIX%InitializeSubmodel (model_instance) == XXFALSE)
 	{
 		return fmiError;
 	}
