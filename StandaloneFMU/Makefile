@@ -18,6 +18,13 @@ XXSIM_SOURCES = EulerAngles.c \
 	xxmatrix.c \
 	xxmodel.c \
 	xxsubmod.c \
+%IF%%EQ(INTEGRATION_METHOD_NAME,VodeAdams)%
+	Vode\cvdense.c \
+	Vode\cvode.c \
+	Vode\dense.c \
+	Vode\llnlmath.c \
+	Vode\vector.c \
+%ENDIF%
 	xxTable2D.c
 
 FMU_SOURCES = %FMI_PREFIX%Functions.c $(XXSIM_SOURCES)

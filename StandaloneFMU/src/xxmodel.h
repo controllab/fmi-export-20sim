@@ -28,8 +28,10 @@
 %ENDIF%
 #include "%FMI_PREFIX%Functions.h"
 
-/* the chosen integration method */
-#define %INTEGRATION_METHOD_NAME%_METHOD
+%IF%%EQ(INTEGRATION_METHOD_NAME,VodeAdams)%
+#include "Vode/cvode.h"		/* main CVODE header file                       */
+#include "Vode/cvdense.h"	/* use CVDENSE linear solver each internal step */
+%ENDIF%
 
 /* Model size constants */
 #define %VARPREFIX%constants_count %NUMBER_CONSTANTS%
@@ -170,16 +172,49 @@ typedef struct %VARPREFIX%ModelInstance
 %ENDIF%
 %IF%%NUMBER_STATES%
 	/* Integration method intermediate variables */
-#ifdef RungeKutta2_METHOD
+%IF%%EQ(INTEGRATION_METHOD_NAME,Discrete)%
+
+	/* discrete time can be behind of continuous time
+	 * dependent on the step size 
+	 */
+	XXDouble m_discrete_time;
+%ENDIF%
+%IF%%EQ(INTEGRATION_METHOD_NAME,RungeKutta2)%
 	XXDouble q0[%VARPREFIX%state_count];
-#endif
-#ifdef RungeKutta4_METHOD
+%ENDIF%
+%IF%%EQ(INTEGRATION_METHOD_NAME,RungeKutta4)%
 	XXDouble q0[%VARPREFIX%state_count];
 	XXDouble q1[%VARPREFIX%state_count];
 	XXDouble q2[%VARPREFIX%state_count];
 	XXDouble q3[%VARPREFIX%state_count];
 	XXDouble q4[%VARPREFIX%state_count];
-#endif
+%ENDIF%
+%IF%%EQ(INTEGRATION_METHOD_NAME,VodeAdams)%
+	double m_initial_step_size;
+	double m_maximum_step_size;
+	double m_absolute_tolerance;
+	double m_relative_tolerance;
+	XXBoolean m_use_initial_step;
+	XXBoolean m_use_maximum_step;
+	double m_last_step_size;
+
+	int m_flag;
+	double m_ropt [OPT_SIZE];
+	long int m_iopt [OPT_SIZE];
+	void *m_memory;
+
+	/* 
+	  now we should know how big it is
+	void *m_prev_memory;
+	void *m_prev_cvdense_mem;
+	*/
+
+	iN_Vector* m_states;
+	XXBoolean m_use_bdf;
+	XXBoolean m_use_newton;
+
+	XXBoolean m_dense_performed;
+%ENDIF%
 %ENDIF%
 	/* Memory offset pointers */
 %IF%%NUMBER_CONSTANTS%
@@ -279,10 +314,12 @@ void %FUNCTIONPREFIX%CalculateFinal (%VARPREFIX%ModelInstance* model_instance);
 void %FUNCTIONPREFIX%DelayUpdate (%VARPREFIX%ModelInstance* model_instance);
 XXDouble %FUNCTIONPREFIX%ModelDelay (%VARPREFIX%ModelInstance* model_instance, XXDouble argument1, XXDouble argument2, XXInteger id);
 #define XXDelay(arg1, arg2, id) %FUNCTIONPREFIX%ModelDelay(model_instance, arg1, arg2, id)
+
 %ENDIF%
 %IF%%NUMBEROF_INITIALFUNCTION%
 XXDouble %FUNCTIONPREFIX%ModelInitialValue (%VARPREFIX%ModelInstance* model_instance, XXDouble argument, XXInteger identifier);
 #define XXInitialValue(arg, id) %FUNCTIONPREFIX%ModelInitialValue(model_instance, arg, id)
+
 %ENDIF%
 %IF%%NUMBEROF_WARNSTATEMENT%
 XXBoolean %FUNCTIONPREFIX%ModelWarning (%VARPREFIX%ModelInstance* model_instance, XXString message, XXInteger id);

@@ -15,7 +15,11 @@
 /* This file describes the integration methods
    that are supplied for computation.
 
-   Currently only Euler, RungeKutta2 and RungeKutta4 are supplied,
+   Currently the following methods are supported:
+   * Euler
+   * RungeKutta2
+   * RungeKutta4
+   * Vode Adams
    but it is easy for the user to add their own
    integration methods with these two as an example.
 */
@@ -31,9 +35,9 @@
 
 %IF%%NUMBER_STATES%
 #define %VARPREFIX%STATE_SIZE %NUMBER_STATES%
-%ENDIF%
 
-#ifdef Discrete_METHOD
+%ENDIF%
+%IF%%EQ(INTEGRATION_METHOD_NAME,Discrete)%
 /*********************************************************************
  * Discrete integration method
  *********************************************************************/
@@ -41,7 +45,10 @@
 /* the initialization of the Discrete integration method */
 void %FUNCTIONPREFIX%DiscreteInitialize (%VARPREFIX%ModelInstance* model_instance)
 {
-	/* nothing to be done */
+	/* The internal time is set to the start time
+	 * so set our discrete time to this value as well
+	 */
+	model_instance->m_discrete_time = model_instance->time;
 	model_instance->major = XXTRUE;
 }
 
@@ -52,10 +59,22 @@ void %FUNCTIONPREFIX%DiscreteTerminate (%VARPREFIX%ModelInstance* model_instance
 }
 
 /* the Discrete integration method itself */
-void %FUNCTIONPREFIX%DiscreteStep (%VARPREFIX%ModelInstance* model_instance)
+void %FUNCTIONPREFIX%DiscreteStep (%VARPREFIX%ModelInstance* model_instance, XXDouble outputTime)
 {
 %IF%%NUMBER_STATES%
 	XXInteger index;
+
+	/* check if the outputTime is beyond our discrete time + step size */
+	if( model_instance->m_discrete_time + model_instance->step_size < outputTime )
+	{
+		/* no need to take a discrete step yet
+		 * we just update the internal time, but leave the discrete time as is
+		 */
+		 model_instance->time = outputTime;
+
+		 /* and just return */
+		 return;
+	}
 
 	/* for each of the supplied states */
 	for (index = 0; index < %VARPREFIX%STATE_SIZE; index++)
@@ -66,18 +85,19 @@ void %FUNCTIONPREFIX%DiscreteStep (%VARPREFIX%ModelInstance* model_instance)
 %ELSE%
 	/* no states in the model */
 %ENDIF%
-	/* increment the simulation time */
-	model_instance->time += model_instance->step_size;
+	/* increment the simulation discrete time */
+	model_instance->m_discrete_time += model_instance->step_size
+
+	/* and set the continious time to the discrete time */
+	model_instance->time = model_instance->m_discrete_time;
 
 	model_instance->major = XXTRUE;
 
 	/* evaluate the dynamic part to calculate the new rates */
 	%FUNCTIONPREFIX%CalculateDynamic (model_instance);
 }
-#endif /* Discrete_METHOD */
-
-
-#ifdef Euler_METHOD
+%ENDIF%
+%IF%%EQ(INTEGRATION_METHOD_NAME,Euler)%
 /*********************************************************************
  * Euler integration method
  *********************************************************************/
@@ -96,8 +116,18 @@ void %FUNCTIONPREFIX%EulerTerminate (%VARPREFIX%ModelInstance* model_instance)
 }
 
 /* the Euler integration method itself */
-void %FUNCTIONPREFIX%EulerStep (%VARPREFIX%ModelInstance* model_instance)
+void %FUNCTIONPREFIX%EulerStep (%VARPREFIX%ModelInstance* model_instance, XXDouble outputTime)
 {
+	XXDouble stepSize = model_instance->step_size;
+	%VARPREFIX%ModelInstance *mi = model_instance;
+	XXDouble output_time = mi->m_use_finish_time ? (mi->finish_time > outputTime ? outputTime : mi->finish_time) : outputTime;
+
+	if( output_time - model_instance->time < stepSize )
+	{
+		/* limit the step size */
+		stepSize = output_time - model_instance->time;
+	}
+
 %IF%%NUMBER_STATES%
 	XXInteger index;
 
@@ -105,23 +135,21 @@ void %FUNCTIONPREFIX%EulerStep (%VARPREFIX%ModelInstance* model_instance)
 	for (index = 0; index < %VARPREFIX%STATE_SIZE; index++)
 	{
 		/* calculate the new state */
-		model_instance->%XX_STATE_ARRAY_NAME% [index] = model_instance->%XX_STATE_ARRAY_NAME% [index] + model_instance->%XX_RATE_ARRAY_NAME% [index] * model_instance->step_size;
+		model_instance->%XX_STATE_ARRAY_NAME% [index] = model_instance->%XX_STATE_ARRAY_NAME% [index] + model_instance->%XX_RATE_ARRAY_NAME% [index] * stepSize;
 	}
 %ELSE%
 	/* no states in the model */
 %ENDIF%
 	/* increment the simulation time */
-	model_instance->time += model_instance->step_size;
+	model_instance->time += stepSize;
 
 	model_instance->major = XXTRUE;
 
 	/* evaluate the dynamic part to calculate the new rates */
 	%FUNCTIONPREFIX%CalculateDynamic (model_instance);
 }
-#endif /* Euler_METHOD */
-
-
-#ifdef RungeKutta2_METHOD
+%ENDIF%
+%IF%%EQ(INTEGRATION_METHOD_NAME,RungeKutta2)%
 /*********************************************************************
  * RungeKutta2 integration method
  *********************************************************************/
@@ -140,10 +168,19 @@ void %FUNCTIONPREFIX%RungeKutta2Terminate (%VARPREFIX%ModelInstance* model_insta
 	/* nothing yet (our arrays are static) */
 }
 
-
 /* the Runge-Kutta-2 integration method itself */
-void %FUNCTIONPREFIX%RungeKutta2Step (%VARPREFIX%ModelInstance* model_instance)
+void %FUNCTIONPREFIX%RungeKutta2Step (%VARPREFIX%ModelInstance* model_instance, XXDouble outputTime)
 {
+	%VARPREFIX%ModelInstance *mi = model_instance;
+	XXDouble output_time = mi->m_use_finish_time ? (mi->finish_time > outputTime ? outputTime : mi->finish_time) : outputTime;
+	/* check if we have to limit our stepsize to get exactly at the outpuTime */
+	XXDouble stepSize = model_instance->step_size;
+	if( output_time - model_instance->time < stepSize )
+	{
+		/* limit the step size */
+		stepSize = output_time - model_instance->time;
+	}
+
 %IF%%NUMBER_STATES%
 	XXInteger index;
 	XXDouble rktime;
@@ -164,10 +201,10 @@ void %FUNCTIONPREFIX%RungeKutta2Step (%VARPREFIX%ModelInstance* model_instance)
 	for (index = 0; index < %VARPREFIX%STATE_SIZE; index++)
 	{
 		/* set the new states to use */
-		model_instance->%XX_STATE_ARRAY_NAME% [index] = model_instance->q0 [index] + model_instance->%XX_RATE_ARRAY_NAME% [index] * 0.5 * model_instance->step_size;
+		model_instance->%XX_STATE_ARRAY_NAME% [index] = model_instance->q0 [index] + model_instance->%XX_RATE_ARRAY_NAME% [index] * 0.5 * stepSize;
 	}
 
-	model_instance->time = rktime + 0.5 * model_instance->step_size;
+	model_instance->time = rktime + 0.5 * stepSize;
 	model_instance->major = XXFALSE;
 	%FUNCTIONPREFIX%CalculateDynamic (model_instance);
 
@@ -179,14 +216,14 @@ void %FUNCTIONPREFIX%RungeKutta2Step (%VARPREFIX%ModelInstance* model_instance)
 		/*********************************************************************************/
 
 		/* calculate the next state = classical Runge-Kutta integration step */
-		model_instance->%XX_STATE_ARRAY_NAME% [index] = model_instance->q0 [index] +	model_instance->%XX_RATE_ARRAY_NAME% [index] * model_instance->step_size;
+		model_instance->%XX_STATE_ARRAY_NAME% [index] = model_instance->q0 [index] + model_instance->%XX_RATE_ARRAY_NAME% [index] * stepSize;
 	}
-	model_instance->time = rktime + model_instance->step_size;
+	model_instance->time = rktime + stepSize;
 
 %ELSE%
 	/* no states in the model */
 	/* increment the simulation time */
-	model_instance->time += model_instance->step_size;
+	model_instance->time += stepSize;
 
 %ENDIF%
 	model_instance->major = XXTRUE;
@@ -194,10 +231,8 @@ void %FUNCTIONPREFIX%RungeKutta2Step (%VARPREFIX%ModelInstance* model_instance)
 	/* evaluate the derivative model to calculate the new rates */
 	%FUNCTIONPREFIX%CalculateDynamic (model_instance);
 }
-#endif /* RungeKutta2_METHOD */
-
-
-#ifdef RungeKutta4_METHOD
+%ENDIF%
+%IF%%EQ(INTEGRATION_METHOD_NAME,RungeKutta4)%
 /*********************************************************************
  * RungeKutta4 integration method
  *********************************************************************/
@@ -225,10 +260,20 @@ void %FUNCTIONPREFIX%RungeKutta4Terminate (%VARPREFIX%ModelInstance* model_insta
 	/* nothing yet (our arrays are static) */
 }
 
-
 /* the Runge-Kutta-4 integration method itself */
-void %FUNCTIONPREFIX%RungeKutta4Step (%VARPREFIX%ModelInstance* model_instance)
+void %FUNCTIONPREFIX%RungeKutta4Step (%VARPREFIX%ModelInstance* model_instance, XXDouble outputTime)
 {
+	%VARPREFIX%ModelInstance *mi = model_instance;
+	XXDouble output_time = mi->m_use_finish_time ? (mi->finish_time > outputTime ? outputTime : mi->finish_time) : outputTime;
+
+	/* check if we have to limit our stepsize to get exactly at the outpuTime */
+	XXDouble stepSize = model_instance->step_size;
+	if( output_time - model_instance->time < stepSize )
+	{
+		/* limit the step size */
+		stepSize = output_time - model_instance->time;
+	}
+
 %IF%%NUMBER_STATES%
 	XXInteger index;
 	XXDouble rktime;
@@ -249,14 +294,14 @@ void %FUNCTIONPREFIX%RungeKutta4Step (%VARPREFIX%ModelInstance* model_instance)
 	for (index = 0; index < %VARPREFIX%STATE_SIZE; index++)
 	{
 		/* set the intermediate q1 */
-		model_instance->q1 [index] = model_instance->%XX_RATE_ARRAY_NAME% [index] * model_instance->step_size;
+		model_instance->q1 [index] = model_instance->%XX_RATE_ARRAY_NAME% [index] * stepSize;
 
 		/* set the new states to use  for q2 */
 		model_instance->%XX_STATE_ARRAY_NAME% [index] = model_instance->q0 [index] + model_instance->q1 [index] / 2;
 	}
 
 	/* calculate q2 = f (states + q1 / 2, t + dt / 2) * dt  */
-	model_instance->time = rktime + model_instance->step_size / 2;
+	model_instance->time = rktime + 0.5 * stepSize;
 
 	model_instance->major = XXFALSE;
 
@@ -267,7 +312,7 @@ void %FUNCTIONPREFIX%RungeKutta4Step (%VARPREFIX%ModelInstance* model_instance)
 	for (index = 0; index < %VARPREFIX%STATE_SIZE; index++)
 	{
 		/* set the ultimate q2 */
-		model_instance->q2 [index] = model_instance->q2 [index] * model_instance->step_size;
+		model_instance->q2 [index] = model_instance->q2 [index] * stepSize;
 
 		/* set the new states to use */
 		model_instance->%XX_STATE_ARRAY_NAME% [index] = model_instance->q0 [index] + model_instance->q2 [index] / 2;
@@ -281,14 +326,14 @@ void %FUNCTIONPREFIX%RungeKutta4Step (%VARPREFIX%ModelInstance* model_instance)
 	for (index = 0; index < %VARPREFIX%STATE_SIZE; index++)
 	{
 		/* set the ultimate q3 */
-		model_instance->q3 [index] = model_instance->q3 [index] * model_instance->step_size;
+		model_instance->q3 [index] = model_instance->q3 [index] * stepSize;
 
 		/* set the new states */
 		model_instance->%XX_STATE_ARRAY_NAME% [index] = model_instance->q0 [index] + model_instance->q3 [index];
 	}
 
 	/* calculate q4 = f (states + q3, t + dt) * dt */
-	model_instance->time = rktime + model_instance->step_size;
+	model_instance->time = rktime + stepSize;
 	%FUNCTIONPREFIX%CalculateDynamic (model_instance);
 	memcpy (model_instance->q4, model_instance->%XX_RATE_ARRAY_NAME%, %VARPREFIX%STATE_SIZE * sizeof (XXDouble));
 
@@ -296,7 +341,7 @@ void %FUNCTIONPREFIX%RungeKutta4Step (%VARPREFIX%ModelInstance* model_instance)
 	for (index = 0; index < %VARPREFIX%STATE_SIZE; index++)
 	{
 		/* set the ultimate q4 */
-		model_instance->q4 [index] = model_instance->q4 [index] * model_instance->step_size;
+		model_instance->q4 [index] = model_instance->q4 [index] * stepSize;
 
 		/*********************************************************************************/
 		/*          calculate the next state from the intermediate results               */
@@ -308,7 +353,7 @@ void %FUNCTIONPREFIX%RungeKutta4Step (%VARPREFIX%ModelInstance* model_instance)
 %ELSE%
 	/* no states in the model */
 	/* increment the simulation time */
-	model_instance->time += model_instance->step_size;
+	model_instance->time += stepSize;
 %ENDIF%
 
 	model_instance->major = XXTRUE;
@@ -316,4 +361,336 @@ void %FUNCTIONPREFIX%RungeKutta4Step (%VARPREFIX%ModelInstance* model_instance)
 	/* evaluate the derivative model to calculate the new rates */
 	%FUNCTIONPREFIX%CalculateDynamic (model_instance);
 }
-#endif /* RungeKutta4_METHOD */
+%ENDIF%
+%IF%%EQ(INTEGRATION_METHOD_NAME,VodeAdams)%
+/* Functions Called by the CVODE Solver */
+void Vodefunction1
+(
+	int number_of_states,
+	double time,
+	iN_Vector* states,
+	iN_Vector* rates,
+	void *function_data
+)
+{
+	/* we have to get to our simulation data */
+	%VARPREFIX%ModelInstance* mi = (%VARPREFIX%ModelInstance*)function_data;
+
+	/* calculate the model once */
+	XXDouble *indep_states, *indep_rates;
+	indep_states = mi->%XX_STATE_ARRAY_NAME%;
+	indep_rates = mi->%XX_RATE_ARRAY_NAME%;
+	memcpy(	indep_states, states->data, %VARPREFIX%STATE_SIZE * sizeof(XXDouble));
+	mi->time = time;
+	%FUNCTIONPREFIX%CalculateDynamic (mi);
+	memcpy (rates->data, indep_rates, %VARPREFIX%STATE_SIZE * sizeof(XXDouble));
+}
+
+/*********************************************************************
+ * Vode-Adams integration method
+ *********************************************************************/
+/* the more generic re-initialize, necessary if we want to step back in time */
+void %FUNCTIONPREFIX%VodeAdamsReInitialize (%VARPREFIX%ModelInstance* mi)
+{
+	/* first set 0 to our argument arrays */
+	memset(mi->m_iopt, 0, OPT_SIZE * sizeof(long int));
+	memset(mi->m_ropt, 0, OPT_SIZE * sizeof(double));
+
+	/* check for previous attributes */
+	if (mi->m_states)
+	{
+		N_VFree (mi->m_states);
+		mi->m_states = NULL;
+	}
+	if (mi->m_memory)
+	{
+		CVodeFree (mi->m_memory);
+
+		mi->m_memory = NULL;
+		mi->m_dense_performed = XXFALSE;
+	}
+
+	/* only check our remembered states for
+	 * to be deleted when necessary
+	 * since this is also called at the end
+	 * of every TakeDesiredStep function
+	 */
+	/*
+	if( m_simulator->m_initState )
+	{
+		if( m_prev_memory )
+		{
+			CVodeFree (m_prev_memory);
+			m_prev_memory = NULL;
+		}
+
+		if( m_prev_cvdense_mem )
+		{
+			MyFreeDenseMemory(m_prev_cvdense_mem);
+			m_prev_cvdense_mem = NULL;
+		}
+	}
+	*/
+
+	/* set the attributes */
+	mi->m_states = N_VNew (%VARPREFIX%STATE_SIZE, NULL);
+	if( %VARPREFIX%STATE_SIZE > 0 )
+	{
+		/* copy the states from the simulator */
+		memcpy (mi->m_states->data, mi->%XX_STATE_ARRAY_NAME%, %VARPREFIX%STATE_SIZE * sizeof(XXDouble));
+	}
+
+	/* set base-class attributes */
+	mi->m_ropt[H0] = mi->m_initial_step_size;
+	if (mi->m_use_maximum_step)
+	{
+		mi->m_ropt[HMAX] = mi->m_maximum_step_size;
+	}
+	else
+	{
+		if( mi->m_use_finish_time )
+		{
+			mi->m_ropt[HMAX] = (mi->finish_time - mi->start_time) / 1000.0;
+		}
+		else
+		{
+			/* use the original settings in 20-sim */
+			mi->m_ropt[HMAX] = (%FINISH_TIME% - %START_TIME%) / 1000.0;
+		}
+	}
+
+	mi->m_ropt[HMIN] = 0.0;
+
+	if( mi->m_use_bdf )
+		mi->m_iopt[MAXORD] = 5;
+	else
+		mi->m_iopt[MAXORD] = 12;
+
+	mi->m_iopt[MXSTEP] = 100000; /* default is 500 */
+	mi->m_iopt[MXHNIL] = 10;
+
+	/* CVodeMalloc allocates and initializes memory */
+	mi->m_memory = CVodeMalloc
+	(
+		%VARPREFIX%STATE_SIZE,
+		Vodefunction1,
+		mi->start_time,
+		mi->m_states,
+		mi->m_use_bdf ? BDF : ADAMS,
+		mi->m_use_newton ? NEWTON : FUNCTIONAL,
+		SS,
+		&mi->m_relative_tolerance,
+		&mi->m_absolute_tolerance,
+		mi,
+		stdout,
+		mi->m_use_maximum_step || mi->m_use_initial_step, /* only use the options when necessary. */
+		mi->m_iopt,
+		mi->m_ropt,
+		NULL
+	);
+
+	if( mi->m_memory == NULL )
+	{
+		if( %VARPREFIX%STATE_SIZE > 0 )
+		{
+			/* returnVal = XXFALSE; */
+			return;
+		}
+	}
+
+	/* this used to be just before the Integration method is called itself to take a step
+	 * but it went wrong with the rememberstate function
+	 */
+	if( mi->m_dense_performed == FALSE )
+	{
+		/* this allocates cv_mem in the memory structure
+		 * the size is specific for the CVODE Dense
+		 * so make sure that in RememberState()/SetBackRememberedState()
+		 * those are also stored properly!
+		 */
+		CVDense(mi->m_memory, NULL, NULL);
+		mi->m_dense_performed = XXTRUE;
+	}
+}
+/* the initialization of the Euler integration method */
+void %FUNCTIONPREFIX%VodeAdamsInitialize (%VARPREFIX%ModelInstance* model_instance)
+{
+%IF%%NUMBER_STATES%
+	%VARPREFIX%ModelInstance* mi = model_instance;
+	
+	/* general explicit variable step integration method settings */
+	// default step size
+	mi->m_initial_step_size = %INTEGRATION_METHOD_INITIAL_STEPSIZE%;
+	mi->m_maximum_step_size = %INTEGRATION_METHOD_MAX_STEPSIZE%;
+	mi->m_absolute_tolerance = %INTEGRATION_METHOD_ABS_TOLERANCE%;
+	mi->m_relative_tolerance = %INTEGRATION_METHOD_REL_TOLERANCE%;
+	mi->m_use_initial_step = %INTEGRATION_METHOD_INITIAL_STEPSIZE% > 0.0 ? XXTRUE : XXFALSE;
+	mi->m_use_maximum_step = %INTEGRATION_METHOD_MAX_STEPSIZE% > 0.0 ? XXTRUE : XXFALSE;
+
+	mi->m_last_step_size = 0.0;
+
+	mi->m_flag = 0;
+	mi->m_states = NULL;
+	mi->m_memory = NULL;
+	mi->m_use_bdf = XXTRUE;
+	mi->m_use_newton = XXTRUE;
+
+	/* 
+	mi->m_prev_memory = NULL;
+	mi->m_prev_cvdense_mem = NULL;
+	*/
+
+	mi->m_dense_performed = XXFALSE;
+	
+	/* and call the "generic" reinitialize function */
+	%FUNCTIONPREFIX%VodeAdamsReInitialize(mi);
+
+%ENDIF%
+}
+
+/* the termination of the Euler integration method */
+void %FUNCTIONPREFIX%VodeAdamsTerminate (%VARPREFIX%ModelInstance* model_instance)
+{
+	%VARPREFIX%ModelInstance* mi = model_instance;
+   // release the attributes
+	if( mi->m_states )
+        N_VFree (mi->m_states);
+	if (mi->m_memory)
+		CVodeFree (mi->m_memory);
+
+/*
+	if( m_prev_memory )
+	{
+		CVodeFree (m_prev_memory);
+	}
+	if( m_prev_cvdense_mem )
+		MyFreeDenseMemory(m_prev_cvdense_mem);
+*/
+}
+
+/* the Vode Adams integration method itself */
+void %FUNCTIONPREFIX%VodeAdamsStep (%VARPREFIX%ModelInstance* model_instance, XXDouble outputTime)
+{
+	%VARPREFIX%ModelInstance* mi = model_instance;
+    XXDouble vode_output_time = mi->m_use_finish_time ? (mi->finish_time > outputTime ? outputTime : mi->finish_time) : outputTime;
+
+%IF%%NUMBER_STATES%
+
+	XXDouble time = model_instance->time;
+
+	/* set the last step size on the current simulation time, so that we
+	 * can calculate the difference later
+	 */
+	mi->m_last_step_size = time;
+
+	XXDouble *indep_states = model_instance->%XX_STATE_ARRAY_NAME%;
+
+	/* copy the states from the simulator */
+	memcpy (mi->m_states->data, indep_states, %VARPREFIX%STATE_SIZE * sizeof(XXDouble));
+
+
+	/* make sure we do NOT a major integration step */
+	model_instance->major = XXFALSE;
+
+	/* the real call to CVODE
+	 * integrate to the finish time exactly, and set the time
+	 * to this value 
+	 */
+	mi->m_flag = CVode (mi->m_memory, vode_output_time, mi->m_states, &time, NORMAL);
+
+	/* just take one integration step, so that the values can be used... */
+/* 	mi->m_flag = CVode (m_memory, vode_output_time, m_states, &time, ONE_STEP); */
+
+	/* and do a last evaluation with the found states */
+	memcpy(	indep_states, mi->m_states->data, %VARPREFIX%STATE_SIZE * sizeof(XXDouble));
+
+	model_instance->time = time;
+
+	// make sure we do a major integration step
+	model_instance->major = XXTRUE;
+
+	%FUNCTIONPREFIX%CalculateDynamic (model_instance);
+
+	// calculate the difference of the cached previous simulation time
+	mi->m_last_step_size = model_instance->time - mi->m_last_step_size;
+
+	/* interpret the step taken by the integration algorithm, see rkf45.f */
+	switch (mi->m_flag)
+	{
+		/* normal mode of operation */
+		case SUCCESS:
+			/* output_time reached or not yet reached, continuous_time <= output_time */
+			break;
+
+		case CVODE_NO_MEM:
+			
+			if( model_instance->fmiCallbackFunctions != NULL && model_instance->fmiCallbackFunctions->logger != NULL )
+			{
+				model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
+					"No memory given in Vode Call.");
+			}
+
+			return;
+
+		/* step not taken, next call impossible */
+		case TOO_MUCH_WORK:
+			if( model_instance->fmiCallbackFunctions != NULL && model_instance->fmiCallbackFunctions->logger != NULL )
+			{
+				model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
+					"Too many steps taken in the Vode Adams method.");
+			}
+
+			break;
+		case TOO_MUCH_ACC:
+		case ERR_FAILURE:
+			if( model_instance->fmiCallbackFunctions != NULL && model_instance->fmiCallbackFunctions->logger != NULL )
+			{
+				model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
+					"Tolerance test failed in the Vode Adams method.");
+			}
+			break;
+		case CONV_FAILURE:
+			if( model_instance->fmiCallbackFunctions != NULL && model_instance->fmiCallbackFunctions->logger != NULL )
+			{
+				model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
+					"Failed to converge in the Vode Adams method.");
+			}
+			break;
+		case SETUP_FAILURE:
+		case SOLVE_FAILURE:
+			if( model_instance->fmiCallbackFunctions != NULL && model_instance->fmiCallbackFunctions->logger != NULL )
+			{
+				model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
+					"The linear solver's setup routine failed in the Vode Adams method.");
+			}
+			break;
+		case ILL_INPUT:
+			if( model_instance->fmiCallbackFunctions != NULL && model_instance->fmiCallbackFunctions->logger != NULL )
+			{
+				model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
+					"Method arguments inaccurate in the Vode Adams method.");
+			}
+			break;
+		default:
+			/* should not happen */
+			if( model_instance->fmiCallbackFunctions != NULL && model_instance->fmiCallbackFunctions->logger != NULL )
+			{
+				model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
+					"Unknown error in the Vode Adams method..");
+			}
+			break;
+	}
+
+%ELSE%
+	/* no states in the model */
+
+	/* increment the simulation time */
+	model_instance->time = vode_output_time;
+
+	model_instance->major = XXTRUE;
+
+	/* evaluate the dynamic part to calculate the new rates */
+	%FUNCTIONPREFIX%CalculateDynamic (model_instance);
+%ENDIF%
+}
+%ENDIF%

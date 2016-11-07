@@ -222,6 +222,10 @@ IF DEFINED VSVARS32 (
   ECHO copy the generated sources to %SRC_DIR%
   copy "%ROOTPATH%\src\*.c" "%SRC_DIR%"
   copy "%ROOTPATH%\src\*.h" "%SRC_DIR%"
+%IF%%EQ(INTEGRATION_METHOD_NAME,VodeAdams)%
+  copy "%ROOTPATH%\src\Vode\*.c" "%SRC_DIR%"
+  copy "%ROOTPATH%\src\Vode\*.h" "%SRC_DIR%"
+%ENDIF%
 
   ECHO Generate the FMU
   cd "%FMU_DIR%"

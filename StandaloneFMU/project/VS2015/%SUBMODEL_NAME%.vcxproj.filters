@@ -57,6 +57,26 @@
       <Filter>Header Files</Filter>
     </ClInclude>
 %ENDIF%
+%IF%%EQ(INTEGRATION_METHOD_NAME,VodeAdams)%
+    <ClInclude Include="..\..\Vode\src\cvdense.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Vode\src\cvnlmath.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Vode\src\cvnltyps.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Vode\src\cvode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Vode\src\cvvector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Vode\src\dense.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+%ENDIF%
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\EulerAngles.c">
@@ -89,5 +109,22 @@
     <ClCompile Include="..\..\src\xxTable2D.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+%IF%%EQ(INTEGRATION_METHOD_NAME,VodeAdams)%
+    <ClCompile Include="..\..\Vode\src\cvdense.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Vode\src\cvode.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Vode\src\vector.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Vode\src\llnlmath.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Vode\src\dense.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+%ENDIF%
   </ItemGroup>
 </Project>

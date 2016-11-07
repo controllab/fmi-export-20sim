@@ -44,14 +44,14 @@ void %FUNCTIONPREFIX%InitializeSubmodel (%VARPREFIX%ModelInstance* model_instanc
 }
 
 /* The function that calculates the submodel */
-void %FUNCTIONPREFIX%CalculateSubmodel (%VARPREFIX%ModelInstance* model_instance, XXDouble t)
+void %FUNCTIONPREFIX%CalculateSubmodel (%VARPREFIX%ModelInstance* model_instance, XXDouble t, XXDouble outputTime)
 {
 	/* Copy the time */
 	model_instance->time = t;
 
 	/* Calculate the model */
 	%FUNCTIONPREFIX%CalculateInput (model_instance);
-	%FUNCTIONPREFIX%%INTEGRATION_METHOD_NAME%Step (model_instance);
+	%FUNCTIONPREFIX%%INTEGRATION_METHOD_NAME%Step (model_instance, outputTime);
 	%FUNCTIONPREFIX%CalculateOutput (model_instance);
 }
 

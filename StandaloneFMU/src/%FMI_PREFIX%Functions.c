@@ -720,7 +720,7 @@ fmi2Status fmi2DoStep(fmi2Component c,
 	while (model_instance->time < (currentCommunicationPoint + communicationStepSize))
 	{
 		/* check for termination first */
-		if ( model_instance->m_use_finish_time && (model_instance->time > model_instance->finish_time) )
+		if ( model_instance->m_use_finish_time && (model_instance->time >= model_instance->finish_time) )
 		{
 %IF%%FMI2%
 			if(model_instance->fmiCallbackFunctions != NULL && model_instance->fmiCallbackFunctions->logger != NULL)
@@ -740,7 +740,7 @@ fmi2Status fmi2DoStep(fmi2Component c,
 		}
 
 		/* Call the submodel to calculate the output, and increase the time as well */
-		%FUNCTIONPREFIX%CalculateSubmodel (model_instance, model_instance->time);
+		%FUNCTIONPREFIX%CalculateSubmodel (model_instance, model_instance->time, currentCommunicationPoint + communicationStepSize);
 	}
 
 	/* for now */

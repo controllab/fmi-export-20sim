@@ -243,6 +243,14 @@
 %ENDIF%
     <ClInclude Include="..\..\src\fmiGUID.h" />
     <ClInclude Include="..\..\src\xxTable2D.h" />
+%IF%%EQ(INTEGRATION_METHOD_NAME,VodeAdams)%
+	<ClInclude Include="..\..\src\Vode\cvdense.h" />
+	<ClInclude Include="..\..\src\Vode\cvnlmath.h" />
+	<ClInclude Include="..\..\src\Vode\cvnltyps.h" />
+	<ClInclude Include="..\..\src\Vode\cvode.h" />
+	<ClInclude Include="..\..\src\Vode\cvvector.h" />
+	<ClInclude Include="..\..\src\Vode\dense.h" />
+%ENDIF%
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\EulerAngles.c" />
@@ -255,6 +263,13 @@
     <ClCompile Include="..\..\src\%FMI_PREFIX%Functions.c" />
     <ClCompile Include="..\..\src\xxsubmod.c" />
     <ClCompile Include="..\..\src\xxTable2D.c" />
+%IF%%EQ(INTEGRATION_METHOD_NAME,VodeAdams)%
+	<ClCompile Include="..\..\src\Vode\cvdense.c" />
+	<ClCompile Include="..\..\src\Vode\cvode.c" />
+	<ClCompile Include="..\..\src\Vode\vector.c" />
+	<ClCompile Include="..\..\src\Vode\llnlmath.c" />
+	<ClCompile Include="..\..\src\Vode\dense.c" />
+%ENDIF%
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
