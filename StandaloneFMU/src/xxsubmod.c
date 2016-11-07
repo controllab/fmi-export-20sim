@@ -25,12 +25,18 @@
 
 
 /* The initialization function for submodel */
-void %FUNCTIONPREFIX%InitializeSubmodel (%VARPREFIX%ModelInstance* model_instance)
+XXBoolean %FUNCTIONPREFIX%InitializeSubmodel (%VARPREFIX%ModelInstance* model_instance)
 {
 	/* Initialization phase (allocating memory) */
 	model_instance->%XX_INITIALIZE% = XXTRUE;
 	model_instance->steps = 0;
 	%FUNCTIONPREFIX%%INTEGRATION_METHOD_NAME%Initialize (model_instance);
+
+	/* initialize the integration method */
+	if (%FUNCTIONPREFIX%%INTEGRATION_METHOD_NAME%Initialize (model_instance) == XXFALSE)
+	{
+		return XXFALSE;
+	}
 
 	/* Calculate the model for the first time */
 	%FUNCTIONPREFIX%CalculateInitial (model_instance);
@@ -41,22 +47,26 @@ void %FUNCTIONPREFIX%InitializeSubmodel (%VARPREFIX%ModelInstance* model_instanc
 
 	/* End of initialization phase */
 	model_instance->%XX_INITIALIZE% = XXFALSE;
+
+	return XXTRUE;
 }
 
 /* The function that calculates the submodel */
-void %FUNCTIONPREFIX%CalculateSubmodel (%VARPREFIX%ModelInstance* model_instance, XXDouble t, XXDouble outputTime)
+XXBoolean %FUNCTIONPREFIX%CalculateSubmodel (%VARPREFIX%ModelInstance* model_instance, XXDouble t, XXDouble outputTime)
 {
 	/* Copy the time */
 	model_instance->time = t;
 
 	/* Calculate the model */
 	%FUNCTIONPREFIX%CalculateInput (model_instance);
-	%FUNCTIONPREFIX%%INTEGRATION_METHOD_NAME%Step (model_instance, outputTime);
+	if (%FUNCTIONPREFIX%%INTEGRATION_METHOD_NAME%Step (model_instance, outputTime) == XXFALSE)
+		return XXFALSE;
 	%FUNCTIONPREFIX%CalculateOutput (model_instance);
+	return XXTRUE;
 }
 
 /* The termination function for submodel */
-void %FUNCTIONPREFIX%TerminateSubmodel (%VARPREFIX%ModelInstance* model_instance, XXDouble t)
+XXBoolean %FUNCTIONPREFIX%TerminateSubmodel (%VARPREFIX%ModelInstance* model_instance, XXDouble t)
 {
 	/* Copy the time */
 	model_instance->time = t;
@@ -66,5 +76,8 @@ void %FUNCTIONPREFIX%TerminateSubmodel (%VARPREFIX%ModelInstance* model_instance
 
 	/* and terminate the model itself (releasing memory) */
 	%FUNCTIONPREFIX%ModelTerminate (model_instance);
-	%FUNCTIONPREFIX%%INTEGRATION_METHOD_NAME%Terminate (model_instance);
+	if( %FUNCTIONPREFIX%%INTEGRATION_METHOD_NAME%Terminate (model_instance) == XXFALSE)
+		return XXFALSE;
+
+	return XXTRUE;
 }

@@ -27,8 +27,8 @@
 
 
 /* The submodel functions */
-void %FUNCTIONPREFIX%InitializeSubmodel (%VARPREFIX%ModelInstance* model_instance);
-void %FUNCTIONPREFIX%CalculateSubmodel (%VARPREFIX%ModelInstance* model_instance, XXDouble t, XXDouble outputTime);
-void %FUNCTIONPREFIX%TerminateSubmodel (%VARPREFIX%ModelInstance* model_instance, XXDouble t);
+XXBoolean %FUNCTIONPREFIX%InitializeSubmodel (%VARPREFIX%ModelInstance* model_instance);
+XXBoolean %FUNCTIONPREFIX%CalculateSubmodel (%VARPREFIX%ModelInstance* model_instance, XXDouble t, XXDouble outputTime);
+XXBoolean %FUNCTIONPREFIX%TerminateSubmodel (%VARPREFIX%ModelInstance* model_instance, XXDouble t);
 
 #endif

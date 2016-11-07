@@ -43,23 +43,26 @@
  *********************************************************************/
 
 /* the initialization of the Discrete integration method */
-void %FUNCTIONPREFIX%DiscreteInitialize (%VARPREFIX%ModelInstance* model_instance)
+XXBoolean %FUNCTIONPREFIX%DiscreteInitialize (%VARPREFIX%ModelInstance* model_instance)
 {
 	/* The internal time is set to the start time
 	 * so set our discrete time to this value as well
 	 */
 	model_instance->m_discrete_time = model_instance->time;
 	model_instance->major = XXTRUE;
+
+	return XXTRUE;
 }
 
 /* the termination of the Discrete integration method */
-void %FUNCTIONPREFIX%DiscreteTerminate (%VARPREFIX%ModelInstance* model_instance)
+XXBoolean %FUNCTIONPREFIX%DiscreteTerminate (%VARPREFIX%ModelInstance* model_instance)
 {
 	/* nothing to be done */
+	return XXTRUE;
 }
 
 /* the Discrete integration method itself */
-void %FUNCTIONPREFIX%DiscreteStep (%VARPREFIX%ModelInstance* model_instance, XXDouble outputTime)
+XXBoolean %FUNCTIONPREFIX%DiscreteStep (%VARPREFIX%ModelInstance* model_instance, XXDouble outputTime)
 {
 %IF%%NUMBER_STATES%
 	XXInteger index;
@@ -73,7 +76,7 @@ void %FUNCTIONPREFIX%DiscreteStep (%VARPREFIX%ModelInstance* model_instance, XXD
 		 model_instance->time = outputTime;
 
 		 /* and just return */
-		 return;
+		 return XXTRUE;
 	}
 
 	/* for each of the supplied states */
@@ -95,6 +98,8 @@ void %FUNCTIONPREFIX%DiscreteStep (%VARPREFIX%ModelInstance* model_instance, XXD
 
 	/* evaluate the dynamic part to calculate the new rates */
 	%FUNCTIONPREFIX%CalculateDynamic (model_instance);
+
+	return XXTRUE;
 }
 %ENDIF%
 %IF%%EQ(INTEGRATION_METHOD_NAME,Euler)%
@@ -103,20 +108,22 @@ void %FUNCTIONPREFIX%DiscreteStep (%VARPREFIX%ModelInstance* model_instance, XXD
  *********************************************************************/
 
 /* the initialization of the Euler integration method */
-void %FUNCTIONPREFIX%EulerInitialize (%VARPREFIX%ModelInstance* model_instance)
+XXBoolean %FUNCTIONPREFIX%EulerInitialize (%VARPREFIX%ModelInstance* model_instance)
 {
 	/* nothing to be done */
 	model_instance->major = XXTRUE;
+	return XXTRUE;
 }
 
 /* the termination of the Euler integration method */
-void %FUNCTIONPREFIX%EulerTerminate (%VARPREFIX%ModelInstance* model_instance)
+XXBoolean %FUNCTIONPREFIX%EulerTerminate (%VARPREFIX%ModelInstance* model_instance)
 {
 	/* nothing to be done */
+	return XXTRUE;
 }
 
 /* the Euler integration method itself */
-void %FUNCTIONPREFIX%EulerStep (%VARPREFIX%ModelInstance* model_instance, XXDouble outputTime)
+XXBoolean %FUNCTIONPREFIX%EulerStep (%VARPREFIX%ModelInstance* model_instance, XXDouble outputTime)
 {
 	XXDouble stepSize = model_instance->step_size;
 	%VARPREFIX%ModelInstance *mi = model_instance;
@@ -147,6 +154,8 @@ void %FUNCTIONPREFIX%EulerStep (%VARPREFIX%ModelInstance* model_instance, XXDoub
 
 	/* evaluate the dynamic part to calculate the new rates */
 	%FUNCTIONPREFIX%CalculateDynamic (model_instance);
+
+	return XXTRUE;
 }
 %ENDIF%
 %IF%%EQ(INTEGRATION_METHOD_NAME,RungeKutta2)%
@@ -154,22 +163,24 @@ void %FUNCTIONPREFIX%EulerStep (%VARPREFIX%ModelInstance* model_instance, XXDoub
  * RungeKutta2 integration method
  *********************************************************************/
 /* the initialization of the RungeKutta2 integration method */
-void %FUNCTIONPREFIX%RungeKutta2Initialize (%VARPREFIX%ModelInstance* model_instance)
+XXBoolean %FUNCTIONPREFIX%RungeKutta2Initialize (%VARPREFIX%ModelInstance* model_instance)
 {
 %IF%%NUMBER_STATES%
 	/* empty our static arrays */
 	memset (model_instance->q0, 0, %VARPREFIX%STATE_SIZE * sizeof (XXDouble));
 %ENDIF%
+	return XXTRUE;
 }
 
 /* the termination of the RungeKutta2 integration method */
-void %FUNCTIONPREFIX%RungeKutta2Terminate (%VARPREFIX%ModelInstance* model_instance)
+XXBoolean %FUNCTIONPREFIX%RungeKutta2Terminate (%VARPREFIX%ModelInstance* model_instance)
 {
 	/* nothing yet (our arrays are static) */
+	return XXTRUE;
 }
 
 /* the Runge-Kutta-2 integration method itself */
-void %FUNCTIONPREFIX%RungeKutta2Step (%VARPREFIX%ModelInstance* model_instance, XXDouble outputTime)
+XXBoolean %FUNCTIONPREFIX%RungeKutta2Step (%VARPREFIX%ModelInstance* model_instance, XXDouble outputTime)
 {
 	%VARPREFIX%ModelInstance *mi = model_instance;
 	XXDouble output_time = mi->m_use_finish_time ? (mi->finish_time > outputTime ? outputTime : mi->finish_time) : outputTime;
@@ -230,6 +241,7 @@ void %FUNCTIONPREFIX%RungeKutta2Step (%VARPREFIX%ModelInstance* model_instance, 
 
 	/* evaluate the derivative model to calculate the new rates */
 	%FUNCTIONPREFIX%CalculateDynamic (model_instance);
+	return XXTRUE;
 }
 %ENDIF%
 %IF%%EQ(INTEGRATION_METHOD_NAME,RungeKutta4)%
@@ -242,7 +254,7 @@ void %FUNCTIONPREFIX%RungeKutta2Step (%VARPREFIX%ModelInstance* model_instance, 
  */
 static const XXDouble OneOverSix = 1.0 / 6.0;
 
-void %FUNCTIONPREFIX%RungeKutta4Initialize (%VARPREFIX%ModelInstance* model_instance)
+XXBoolean %FUNCTIONPREFIX%RungeKutta4Initialize (%VARPREFIX%ModelInstance* model_instance)
 {
 %IF%%NUMBER_STATES%
 	/* empty our static arrays */
@@ -252,16 +264,18 @@ void %FUNCTIONPREFIX%RungeKutta4Initialize (%VARPREFIX%ModelInstance* model_inst
 	memset (model_instance->q3, 0, %VARPREFIX%STATE_SIZE * sizeof (XXDouble));
 	memset (model_instance->q4, 0, %VARPREFIX%STATE_SIZE * sizeof (XXDouble));
 %ENDIF%
+	return XXTRUE;
 }
 
 /* the termination of the RungeKutta4 integration method */
-void %FUNCTIONPREFIX%RungeKutta4Terminate (%VARPREFIX%ModelInstance* model_instance)
+XXBoolean %FUNCTIONPREFIX%RungeKutta4Terminate (%VARPREFIX%ModelInstance* model_instance)
 {
 	/* nothing yet (our arrays are static) */
+	return XXTRUE;
 }
 
 /* the Runge-Kutta-4 integration method itself */
-void %FUNCTIONPREFIX%RungeKutta4Step (%VARPREFIX%ModelInstance* model_instance, XXDouble outputTime)
+XXBoolean %FUNCTIONPREFIX%RungeKutta4Step (%VARPREFIX%ModelInstance* model_instance, XXDouble outputTime)
 {
 	%VARPREFIX%ModelInstance *mi = model_instance;
 	XXDouble output_time = mi->m_use_finish_time ? (mi->finish_time > outputTime ? outputTime : mi->finish_time) : outputTime;
@@ -360,55 +374,33 @@ void %FUNCTIONPREFIX%RungeKutta4Step (%VARPREFIX%ModelInstance* model_instance, 
 
 	/* evaluate the derivative model to calculate the new rates */
 	%FUNCTIONPREFIX%CalculateDynamic (model_instance);
+	return XXTRUE;
 }
 %ENDIF%
 %IF%%EQ(INTEGRATION_METHOD_NAME,VodeAdams)%
 /* Functions Called by the CVODE Solver */
-void Vodefunction1
-(
-	int number_of_states,
-	double time,
-	iN_Vector* states,
-	iN_Vector* rates,
-	void *function_data
-)
+int Vodefunction1(realtype time, N_Vector y, N_Vector ydot, void *user_data)
 {
 	/* we have to get to our simulation data */
-	%VARPREFIX%ModelInstance* mi = (%VARPREFIX%ModelInstance*)function_data;
+	%VARPREFIX%ModelInstance* mi = (%VARPREFIX%ModelInstance*)user_data;
 
 	/* calculate the model once */
 	XXDouble *indep_states, *indep_rates;
 	indep_states = mi->%XX_STATE_ARRAY_NAME%;
 	indep_rates = mi->%XX_RATE_ARRAY_NAME%;
-	memcpy(	indep_states, states->data, %VARPREFIX%STATE_SIZE * sizeof(XXDouble));
+	memcpy(indep_states, NV_DATA_S(y), %VARPREFIX%STATE_SIZE * sizeof(XXDouble));
 	mi->time = time;
 	%FUNCTIONPREFIX%CalculateDynamic (mi);
-	memcpy (rates->data, indep_rates, %VARPREFIX%STATE_SIZE * sizeof(XXDouble));
+	memcpy(NV_DATA_S(ydot), indep_rates, %VARPREFIX%STATE_SIZE * sizeof(XXDouble));
+	return 0;
 }
 
 /*********************************************************************
  * Vode-Adams integration method
  *********************************************************************/
 /* the more generic re-initialize, necessary if we want to step back in time */
-void %FUNCTIONPREFIX%VodeAdamsReInitialize (%VARPREFIX%ModelInstance* mi)
+XXBoolean %FUNCTIONPREFIX%VodeAdamsReInitialize (%VARPREFIX%ModelInstance* mi)
 {
-	/* first set 0 to our argument arrays */
-	memset(mi->m_iopt, 0, OPT_SIZE * sizeof(long int));
-	memset(mi->m_ropt, 0, OPT_SIZE * sizeof(double));
-
-	/* check for previous attributes */
-	if (mi->m_states)
-	{
-		N_VFree (mi->m_states);
-		mi->m_states = NULL;
-	}
-	if (mi->m_memory)
-	{
-		CVodeFree (mi->m_memory);
-
-		mi->m_memory = NULL;
-		mi->m_dense_performed = XXFALSE;
-	}
 
 	/* only check our remembered states for
 	 * to be deleted when necessary
@@ -431,89 +423,182 @@ void %FUNCTIONPREFIX%VodeAdamsReInitialize (%VARPREFIX%ModelInstance* mi)
 		}
 	}
 	*/
-
 	/* set the attributes */
-	mi->m_states = N_VNew (%VARPREFIX%STATE_SIZE, NULL);
-	if( %VARPREFIX%STATE_SIZE > 0 )
+	mi->m_cvode_y = N_VNew_Serial(%VARPREFIX%STATE_SIZE);
+	if (mi->m_cvode_y == NULL)
 	{
-		/* copy the states from the simulator */
-		memcpy (mi->m_states->data, mi->%XX_STATE_ARRAY_NAME%, %VARPREFIX%STATE_SIZE * sizeof(XXDouble));
+		if (g_fmiCallbackFunctions != NULL && g_fmiCallbackFunctions->logger != NULL)
+		{
+			g_fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
+				"Error allocating internal State Vector");
+		}
+		return XXFALSE;
+	}
+	mi->m_cvode_y0 = N_VNew_Serial(%VARPREFIX%STATE_SIZE);
+	if (mi->m_cvode_y0 == NULL)
+	{
+		if (g_fmiCallbackFunctions != NULL && g_fmiCallbackFunctions->logger != NULL)
+		{
+			g_fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
+				"Error allocating internal Initial State Vector");
+		}
+		return XXFALSE;
+	}
+	/* recommended for non-stiff: CV_ADAMS, CV_FUNCTIONAL
+	 * recommended for stiff: CV_BDF, CV_NEWTON;
+	 */
+	mi->m_cvode_mem = CVodeCreate(mi->m_use_bdf ? CV_BDF : CV_ADAMS, mi->m_use_newton ? CV_NEWTON : CV_FUNCTIONAL);
+	if (mi->m_cvode_mem == NULL)
+	{
+		if (g_fmiCallbackFunctions != NULL && g_fmiCallbackFunctions->logger != NULL)
+		{
+			g_fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
+				"Error creating CVode memory object");
+		}
+		return XXFALSE;
 	}
 
+	/* copy the states from the simulator to the initial values vector */
+	memcpy(NV_DATA_S(mi->m_cvode_y0), mi->s, %VARPREFIX%STATE_SIZE * sizeof(XXDouble));
+
+	mi->m_flag = CVodeInit(mi->m_cvode_mem, Vodefunction1, mi->start_time, mi->m_cvode_y0);
+	if (mi->m_flag != CV_SUCCESS)
+	{
+		/* print error dependent on flag */
+		if (g_fmiCallbackFunctions != NULL && g_fmiCallbackFunctions->logger != NULL)
+		{
+			g_fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
+				"Error calling CVodeInit");
+		}
+		return XXFALSE;
+	}
+	mi->m_flag = CVodeSStolerances(mi->m_cvode_mem, mi->m_relative_tolerance, mi->m_absolute_tolerance);
+	if (mi->m_flag != CV_SUCCESS)
+	{
+		/* print error dependent on flag */
+		if (g_fmiCallbackFunctions != NULL && g_fmiCallbackFunctions->logger != NULL)
+		{
+			g_fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
+				"Error calling CVodeSStolerances");
+		}
+		return XXFALSE;
+	}
+
+	/* if set to zero, then a guess is made */
+	mi->m_flag = CVodeSetInitStep(mi->m_cvode_mem, mi->m_use_initial_step ? mi->m_initial_step_size : 0);
+	if (mi->m_flag != CV_SUCCESS)
+	{
+		/* print error dependent on flag */
+		if (g_fmiCallbackFunctions != NULL && g_fmiCallbackFunctions->logger != NULL)
+		{
+			g_fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
+				"Error calling CVodeSetInitStep");
+		}
+		return XXFALSE;
+	}
+	double maxStepSize = 0;
 	/* set base-class attributes */
-	mi->m_ropt[H0] = mi->m_initial_step_size;
 	if (mi->m_use_maximum_step)
 	{
-		mi->m_ropt[HMAX] = mi->m_maximum_step_size;
+		maxStepSize = mi->m_maximum_step_size;
 	}
 	else
 	{
-		if( mi->m_use_finish_time )
+		if (mi->m_use_finish_time)
 		{
-			mi->m_ropt[HMAX] = (mi->finish_time - mi->start_time) / 1000.0;
+			maxStepSize = (mi->finish_time - mi->start_time) / 1000.0;
 		}
 		else
 		{
 			/* use the original settings in 20-sim */
-			mi->m_ropt[HMAX] = (%FINISH_TIME% - %START_TIME%) / 1000.0;
+			maxStepSize = (%FINISH_TIME% - %START_TIME%) / 1000.0;
 		}
+		/* set it to zero now
+		maxStepSize = 0.0;
+		*/
 	}
 
-	mi->m_ropt[HMIN] = 0.0;
-
-	if( mi->m_use_bdf )
-		mi->m_iopt[MAXORD] = 5;
-	else
-		mi->m_iopt[MAXORD] = 12;
-
-	mi->m_iopt[MXSTEP] = 100000; /* default is 500 */
-	mi->m_iopt[MXHNIL] = 10;
-
-	/* CVodeMalloc allocates and initializes memory */
-	mi->m_memory = CVodeMalloc
-	(
-		%VARPREFIX%STATE_SIZE,
-		Vodefunction1,
-		mi->start_time,
-		mi->m_states,
-		mi->m_use_bdf ? BDF : ADAMS,
-		mi->m_use_newton ? NEWTON : FUNCTIONAL,
-		SS,
-		&mi->m_relative_tolerance,
-		&mi->m_absolute_tolerance,
-		mi,
-		stdout,
-		mi->m_use_maximum_step || mi->m_use_initial_step, /* only use the options when necessary. */
-		mi->m_iopt,
-		mi->m_ropt,
-		NULL
-	);
-
-	if( mi->m_memory == NULL )
+	/* if set to zero, then infinity step is used */
+	mi->m_flag = CVodeSetMaxStep(mi->m_cvode_mem, maxStepSize);
+	if (mi->m_flag != CV_SUCCESS)
 	{
-		if( %VARPREFIX%STATE_SIZE > 0 )
+		/* print error dependent on flag */
+		if (g_fmiCallbackFunctions != NULL && g_fmiCallbackFunctions->logger != NULL)
 		{
-			/* returnVal = XXFALSE; */
-			return;
+			g_fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
+				"Error calling CVodeSetMaxStep");
 		}
+		return XXFALSE;
+	}
+	mi->m_flag = CVodeSetMaxNumSteps(mi->m_cvode_mem, 100000); /* default is 500 */
+	if (mi->m_flag != CV_SUCCESS)
+	{
+		/* print error dependent on flag */
+		if (g_fmiCallbackFunctions != NULL && g_fmiCallbackFunctions->logger != NULL)
+		{
+			g_fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
+				"Error calling CVodeSetMaxStep");
+		}
+		return XXFALSE;
 	}
 
 	/* this used to be just before the Integration method is called itself to take a step
 	 * but it went wrong with the rememberstate function
 	 */
-	if( mi->m_dense_performed == FALSE )
+	if( mi->m_dense_performed == XXFALSE )
 	{
 		/* this allocates cv_mem in the memory structure
 		 * the size is specific for the CVODE Dense
 		 * so make sure that in RememberState()/SetBackRememberedState()
 		 * those are also stored properly!
 		 */
-		CVDense(mi->m_memory, NULL, NULL);
+		mi->m_flag = CVDense(mi->m_cvode_mem, xx_STATE_SIZE);
+
+		if (mi->m_flag != CVDLS_SUCCESS)
+		{
+			switch (mi->m_flag)
+			{
+			case CVDLS_MEM_NULL:
+					if (g_fmiCallbackFunctions != NULL && g_fmiCallbackFunctions->logger != NULL)
+					{
+						g_fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
+							"No memory passed to initialization of linear solver");
+					}
+					return XXFALSE;
+
+			case CVDLS_MEM_FAIL:
+					if (g_fmiCallbackFunctions != NULL && g_fmiCallbackFunctions->logger != NULL)
+					{
+						g_fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
+							"Memory allocation failure during initialization of linear solver");
+					}
+					return XXFALSE;
+
+			case CVDLS_ILL_INPUT:
+					if (g_fmiCallbackFunctions != NULL && g_fmiCallbackFunctions->logger != NULL)
+					{
+						g_fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
+							"Ill input initializing linear solver");
+					}
+					return XXFALSE;
+
+				default:
+					if (g_fmiCallbackFunctions != NULL && g_fmiCallbackFunctions->logger != NULL)
+					{
+						g_fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
+							"Unknown error initializing linear solver");
+					}
+					return XXFALSE;
+
+			}
+			return XXFALSE;
+		}
 		mi->m_dense_performed = XXTRUE;
 	}
+	return XXTRUE;
 }
 /* the initialization of the Euler integration method */
-void %FUNCTIONPREFIX%VodeAdamsInitialize (%VARPREFIX%ModelInstance* model_instance)
+XXBoolean %FUNCTIONPREFIX%VodeAdamsInitialize (%VARPREFIX%ModelInstance* model_instance)
 {
 %IF%%NUMBER_STATES%
 	%VARPREFIX%ModelInstance* mi = model_instance;
@@ -530,8 +615,9 @@ void %FUNCTIONPREFIX%VodeAdamsInitialize (%VARPREFIX%ModelInstance* model_instan
 	mi->m_last_step_size = 0.0;
 
 	mi->m_flag = 0;
-	mi->m_states = NULL;
-	mi->m_memory = NULL;
+	mi->m_cvode_y = NULL;
+	mi->m_cvode_y0 = NULL;
+	mi->m_cvode_mem = NULL;
 	mi->m_use_bdf = XXTRUE;
 	mi->m_use_newton = XXTRUE;
 
@@ -543,20 +629,40 @@ void %FUNCTIONPREFIX%VodeAdamsInitialize (%VARPREFIX%ModelInstance* model_instan
 	mi->m_dense_performed = XXFALSE;
 	
 	/* and call the "generic" reinitialize function */
-	%FUNCTIONPREFIX%VodeAdamsReInitialize(mi);
-
+	if (%FUNCTIONPREFIX%VodeAdamsReInitialize(mi) )
+	{
+		if (g_fmiCallbackFunctions != NULL && g_fmiCallbackFunctions->logger != NULL)
+		{
+			g_fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
+				"Error in call to VodeAdamsReInitialize");
+		}
+		return XXFALSE;
+	}
 %ENDIF%
+	return XXTRUE;
 }
 
 /* the termination of the Euler integration method */
-void %FUNCTIONPREFIX%VodeAdamsTerminate (%VARPREFIX%ModelInstance* model_instance)
+XXBoolean %FUNCTIONPREFIX%VodeAdamsTerminate (%VARPREFIX%ModelInstance* model_instance)
 {
 	%VARPREFIX%ModelInstance* mi = model_instance;
-   // release the attributes
-	if( mi->m_states )
-        N_VFree (mi->m_states);
-	if (mi->m_memory)
-		CVodeFree (mi->m_memory);
+
+	// release the attributes
+	if (mi->m_cvode_y != NULL)
+	{
+		N_VDestroy_Serial(mi->m_cvode_y);
+		mi->m_cvode_y = NULL;
+	}
+	if (mi->m_cvode_y0 != NULL)
+	{
+		N_VDestroy_Serial(mi->m_cvode_y0);
+		mi->m_cvode_y0 = NULL;
+	}
+	if (mi->m_cvode_mem != NULL)
+	{
+		CVodeFree(mi->m_cvode_mem);
+		mi->m_cvode_mem = NULL;
+	}
 
 /*
 	if( m_prev_memory )
@@ -566,15 +672,16 @@ void %FUNCTIONPREFIX%VodeAdamsTerminate (%VARPREFIX%ModelInstance* model_instanc
 	if( m_prev_cvdense_mem )
 		MyFreeDenseMemory(m_prev_cvdense_mem);
 */
+	return XXTRUE;
 }
 
 /* the Vode Adams integration method itself */
-void %FUNCTIONPREFIX%VodeAdamsStep (%VARPREFIX%ModelInstance* model_instance, XXDouble outputTime)
+XXBoolean %FUNCTIONPREFIX%VodeAdamsStep (%VARPREFIX%ModelInstance* model_instance, XXDouble outputTime)
 {
 	%VARPREFIX%ModelInstance* mi = model_instance;
     XXDouble vode_output_time = mi->m_use_finish_time ? (mi->finish_time > outputTime ? outputTime : mi->finish_time) : outputTime;
-
 %IF%%NUMBER_STATES%
+	XXDouble actual_finish_time = mi->m_use_finish_time ? mi->finish_time : outputTime;
 
 	XXDouble time = model_instance->time;
 
@@ -586,8 +693,7 @@ void %FUNCTIONPREFIX%VodeAdamsStep (%VARPREFIX%ModelInstance* model_instance, XX
 	XXDouble *indep_states = model_instance->%XX_STATE_ARRAY_NAME%;
 
 	/* copy the states from the simulator */
-	memcpy (mi->m_states->data, indep_states, %VARPREFIX%STATE_SIZE * sizeof(XXDouble));
-
+	memcpy(NV_DATA_S(mi->m_cvode_y), indep_states, %VARPREFIX%STATE_SIZE * sizeof(XXDouble));
 
 	/* make sure we do NOT a major integration step */
 	model_instance->major = XXFALSE;
@@ -596,81 +702,109 @@ void %FUNCTIONPREFIX%VodeAdamsStep (%VARPREFIX%ModelInstance* model_instance, XX
 	 * integrate to the finish time exactly, and set the time
 	 * to this value 
 	 */
-	mi->m_flag = CVode (mi->m_memory, vode_output_time, mi->m_states, &time, NORMAL);
+	CVodeSetUserData(mi->m_cvode_mem, mi);
+	CVodeSetStopTime(mi->m_cvode_mem, vode_output_time);
+	mi->m_flag = CVode(mi->m_cvode_mem, actual_finish_time, mi->m_cvode_y, &time, CV_NORMAL);
 
-	/* just take one integration step, so that the values can be used... */
-/* 	mi->m_flag = CVode (m_memory, vode_output_time, m_states, &time, ONE_STEP); */
+	if (mi->m_flag >= 0)
+	{
+		/* and do a last evaluation with the found states */
+		memcpy(indep_states, NV_DATA_S(mi->m_cvode_y), %VARPREFIX%STATE_SIZE * sizeof(XXDouble));
 
-	/* and do a last evaluation with the found states */
-	memcpy(	indep_states, mi->m_states->data, %VARPREFIX%STATE_SIZE * sizeof(XXDouble));
+		model_instance->time = time;
 
-	model_instance->time = time;
+		// make sure we do a major integration step
+		model_instance->major = XXTRUE;
 
-	// make sure we do a major integration step
-	model_instance->major = XXTRUE;
+		%FUNCTIONPREFIX%CalculateDynamic (model_instance);
 
-	%FUNCTIONPREFIX%CalculateDynamic (model_instance);
-
-	// calculate the difference of the cached previous simulation time
-	mi->m_last_step_size = model_instance->time - mi->m_last_step_size;
+		// calculate the difference of the cached previous simulation time
+		mi->m_last_step_size = model_instance->time - mi->m_last_step_size;
+	}
 
 	/* interpret the step taken by the integration algorithm, see rkf45.f */
 	switch (mi->m_flag)
 	{
 		/* normal mode of operation */
-		case SUCCESS:
+		case CV_SUCCESS:
+		case CV_ROOT_RETURN:
+		case CV_TSTOP_RETURN:
+
 			/* output_time reached or not yet reached, continuous_time <= output_time */
 			break;
 
-		case CVODE_NO_MEM:
+		case CV_LINIT_FAIL:
+
+			if (g_fmiCallbackFunctions != NULL && g_fmiCallbackFunctions->logger != NULL)
+			{
+				g_fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
+					"Initialization of Vode Adams Method failed.");
+			}
+
+			return XXFALSE;
+
+
+		case CV_NO_MALLOC:
+		case CV_MEM_NULL:
 			
 			if( model_instance->fmiCallbackFunctions != NULL && model_instance->fmiCallbackFunctions->logger != NULL )
 			{
 				model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
-					"No memory given in Vode Call.");
+					"No memory allocated or passed to Vode Adams.");
 			}
 
-			return;
+			return XXFALSE;
 
 		/* step not taken, next call impossible */
-		case TOO_MUCH_WORK:
+		case CV_TOO_MUCH_WORK:
 			if( model_instance->fmiCallbackFunctions != NULL && model_instance->fmiCallbackFunctions->logger != NULL )
 			{
 				model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
 					"Too many steps taken in the Vode Adams method.");
 			}
 
+			return XXFALSE;
+
+		case CV_TOO_MUCH_ACC:
+			if (g_fmiCallbackFunctions != NULL && g_fmiCallbackFunctions->logger != NULL)
+			{
+				g_fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
+					"The Vode Adams method could not satisfy the accuracy demanded.");
+			}
 			break;
-		case TOO_MUCH_ACC:
-		case ERR_FAILURE:
+
+		case CV_ERR_FAILURE:
 			if( model_instance->fmiCallbackFunctions != NULL && model_instance->fmiCallbackFunctions->logger != NULL )
 			{
 				model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
-					"Tolerance test failed in the Vode Adams method.");
+					"Error test failures occurred too many times in Vode Adams method.");
 			}
-			break;
-		case CONV_FAILURE:
+			return XXFALSE;
+
+		case CV_CONV_FAILURE:
 			if( model_instance->fmiCallbackFunctions != NULL && model_instance->fmiCallbackFunctions->logger != NULL )
 			{
 				model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
 					"Failed to converge in the Vode Adams method.");
 			}
-			break;
-		case SETUP_FAILURE:
-		case SOLVE_FAILURE:
+			return XXFALSE;
+
+		case CV_LSETUP_FAIL:
+		case CV_LSOLVE_FAIL:
 			if( model_instance->fmiCallbackFunctions != NULL && model_instance->fmiCallbackFunctions->logger != NULL )
 			{
 				model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
 					"The linear solver's setup routine failed in the Vode Adams method.");
 			}
-			break;
-		case ILL_INPUT:
+			return XXFALSE;
+
+		case CV_ILL_INPUT:
 			if( model_instance->fmiCallbackFunctions != NULL && model_instance->fmiCallbackFunctions->logger != NULL )
 			{
 				model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
-					"Method arguments inaccurate in the Vode Adams method.");
+					"One of the inputs to Vode Adams method is illegal.");
 			}
-			break;
+			return XXFALSE;
 		default:
 			/* should not happen */
 			if( model_instance->fmiCallbackFunctions != NULL && model_instance->fmiCallbackFunctions->logger != NULL )
@@ -678,7 +812,7 @@ void %FUNCTIONPREFIX%VodeAdamsStep (%VARPREFIX%ModelInstance* model_instance, XX
 				model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
 					"Unknown error in the Vode Adams method..");
 			}
-			break;
+			return XXFALSE;
 	}
 
 %ELSE%
@@ -692,5 +826,6 @@ void %FUNCTIONPREFIX%VodeAdamsStep (%VARPREFIX%ModelInstance* model_instance, XX
 	/* evaluate the dynamic part to calculate the new rates */
 	%FUNCTIONPREFIX%CalculateDynamic (model_instance);
 %ENDIF%
+	return XXTRUE;
 }
 %ENDIF%

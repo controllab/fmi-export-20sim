@@ -29,10 +29,11 @@
 #include "%FMI_PREFIX%Functions.h"
 
 %IF%%EQ(INTEGRATION_METHOD_NAME,VodeAdams)%
-#include "Vode/cvode.h"		/* main CVODE header file                       */
-#include "Vode/cvdense.h"	/* use CVDENSE linear solver each internal step */
-%ENDIF%
+#include "cvode/cvode.h"            /* main CVODE header file                       */
+#include "cvode/cvode_dense.h"      /* use CVDENSE linear solver each internal step */
+#include <nvector/nvector_serial.h> /* serial N_Vector types, fct. and macros       */
 
+%ENDIF%
 /* Model size constants */
 #define %VARPREFIX%constants_count %NUMBER_CONSTANTS%
 #define %VARPREFIX%parameter_count %NUMBER_PARAMETERS%
@@ -199,17 +200,17 @@ typedef struct %VARPREFIX%ModelInstance
 	double m_last_step_size;
 
 	int m_flag;
-	double m_ropt [OPT_SIZE];
-	long int m_iopt [OPT_SIZE];
-	void *m_memory;
 
 	/* 
 	  now we should know how big it is
 	void *m_prev_memory;
 	void *m_prev_cvdense_mem;
 	*/
+	
+	N_Vector m_cvode_y;
+	N_Vector m_cvode_y0;
+	void *m_cvode_mem;
 
-	iN_Vector* m_states;
 	XXBoolean m_use_bdf;
 	XXBoolean m_use_newton;
 

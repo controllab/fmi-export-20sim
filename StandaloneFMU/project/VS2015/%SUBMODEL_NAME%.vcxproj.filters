@@ -58,22 +58,40 @@
     </ClInclude>
 %ENDIF%
 %IF%%EQ(INTEGRATION_METHOD_NAME,VodeAdams)%
-    <ClInclude Include="..\..\Vode\src\cvdense.h">
+	<ClInclude Include="..\..\src\cvode\include\cvode\cvode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Vode\src\cvnlmath.h">
+	<ClInclude Include="..\..\src\cvode\include\cvode\cvode_dense.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Vode\src\cvnltyps.h">
+	<ClInclude Include="..\..\src\cvode\include\cvode\cvode_direct.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Vode\src\cvode.h">
+	<ClInclude Include="..\..\src\cvode\include\cvode\cvode_direct_impl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Vode\src\cvvector.h">
+	<ClInclude Include="..\..\src\cvode\include\nvector\nvector_serial.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Vode\src\dense.h">
+	<ClInclude Include="..\..\src\cvode\src\cvode\cvode_direct_impl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+	<ClInclude Include="..\..\src\cvode\src\cvode\cvode_impl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+	<ClInclude Include="..\..\src\cvode\include\sundials\sundials_config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+	<ClInclude Include="..\..\src\cvode\include\sundials\sundials_math.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+	<ClInclude Include="..\..\src\cvode\include\sundials\sundials_nvector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+	<ClInclude Include="..\..\src\cvode\include\sundials\sundials_dense.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+	<ClInclude Include="..\..\src\cvode\include\sundials\sundials_direct.h">
       <Filter>Header Files</Filter>
     </ClInclude>
 %ENDIF%
@@ -110,19 +128,31 @@
       <Filter>Source Files</Filter>
     </ClCompile>
 %IF%%EQ(INTEGRATION_METHOD_NAME,VodeAdams)%
-    <ClCompile Include="..\..\Vode\src\cvdense.c">
+	<ClCompile Include="..\..\src\cvode\src\cvode\cvode.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Vode\src\cvode.c">
+	<ClCompile Include="..\..\src\cvode\src\cvode\cvode_dense.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Vode\src\vector.c">
+	<ClCompile Include="..\..\src\cvode\src\cvode\cvode_direct.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Vode\src\llnlmath.c">
+	<ClCompile Include="..\..\src\cvode\src\cvode\cvode_io.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Vode\src\dense.c">
+	<ClCompile Include="..\..\src\cvode\src\nvec_ser\nvector_serial.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+	<ClCompile Include="..\..\src\cvode\src\sundials\sundials_dense.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+	<ClCompile Include="..\..\src\cvode\src\sundials\sundials_direct.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+	<ClCompile Include="..\..\src\cvode\src\sundials\sundials_math.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+	<ClCompile Include="..\..\src\cvode\src\sundials\sundials_nvector.c">
       <Filter>Source Files</Filter>
     </ClCompile>
 %ENDIF%

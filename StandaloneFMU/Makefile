@@ -19,17 +19,25 @@ XXSIM_SOURCES = EulerAngles.c \
 	xxmodel.c \
 	xxsubmod.c \
 %IF%%EQ(INTEGRATION_METHOD_NAME,VodeAdams)%
-	Vode\cvdense.c \
-	Vode\cvode.c \
-	Vode\dense.c \
-	Vode\llnlmath.c \
-	Vode\vector.c \
+	cvode/src/cvode/cvode.c \
+	cvode/src/cvode/cvode_dense.c \
+	cvode/src/cvode/cvode_direct.c \
+	cvode/src/cvode/cvode_io.c \
+	cvode/src/nvec_ser/nvector_serial.c \
+	cvode/src/sundials/sundials_dense.c \
+	cvode/src/sundials/sundials_direct.c \
+	cvode/src/sundials/sundials_math.c \
+	cvode/src/sundials/sundials_nvector.c \
 %ENDIF%
 	xxTable2D.c
 
 FMU_SOURCES = %FMI_PREFIX%Functions.c $(XXSIM_SOURCES)
 
 INCLUDES=
+%IF%%EQ(INTEGRATION_METHOD_NAME,VodeAdams)%
+INCLUDES += -Isrc/cvode/include
+
+%ENDIF%
 OBJS = $(addprefix $(BUILD)/, $(addsuffix .o, $(basename $(FMU_SOURCES))))
 DEPS = $(addprefix $(BUILD)/, $(addsuffix .d, $(basename $(FMU_SOURCES))))
 
@@ -117,6 +125,11 @@ welcome:
 
 $(BUILD):
 	@mkdir -p $(BUILD)
+%IF%%EQ(INTEGRATION_METHOD_NAME,VodeAdams)%
+	@mkdir -p $(BUILD)/cvode/src/cvode
+	@mkdir -p $(BUILD)/cvode/src/nvec_ser
+	@mkdir -p $(BUILD)/cvode/src/sundials
+%ENDIF%
 
 $(BUILD)/%.o: $(SRC)/%.c Makefile $(BUILD)
 	@echo "[$(CC)] $<"
@@ -130,7 +143,11 @@ createfmudir:
 	@echo Creating an empty FMU
 	@mkdir -p $(FMU_DIR)
 	@mkdir -p $(FMU_SRC_DIR)
-
+%IF%%EQ(INTEGRATION_METHOD_NAME,VodeAdams)%
+	@mkdir -p $(FMU_SRC_DIR)/include/cvode
+	@mkdir -p $(FMU_SRC_DIR)/include/nvector
+	@mkdir -p $(FMU_SRC_DIR)/include/sundials
+%ENDIF%
 fmu: dll createfmudir
 	@if [ $(OS_BITS) -eq 32 ]; then \
 		mkdir -p $(FMU_BIN32_DIR); \
@@ -145,6 +162,30 @@ fmu: dll createfmudir
 	@echo Copy the generated sources to $(FMU_SRC_DIR)
 	@cp $(SRC)/*.c $(FMU_SRC_DIR)
 	@cp $(SRC)/*.h $(FMU_SRC_DIR)
+%IF%%EQ(INTEGRATION_METHOD_NAME,VodeAdams)%
+	@cp $(SRC)/includes.txt $(FMU_SRC_DIR)
+	@cp $(SRC)/cvode/src/cvode/cvode.c $(FMU_SRC_DIR)
+	@cp $(SRC)/cvode/src/cvode/cvode_dense.c $(FMU_SRC_DIR)
+	@cp $(SRC)/cvode/src/cvode/cvode_direct.c $(FMU_SRC_DIR)
+	@cp $(SRC)/cvode/src/cvode/cvode_io.c $(FMU_SRC_DIR)
+	@cp $(SRC)/cvode/src/nvec_ser/nvector_serial.c $(FMU_SRC_DIR)
+	@cp $(SRC)/cvode/src/sundials/sundials_dense.c $(FMU_SRC_DIR)
+	@cp $(SRC)/cvode/src/sundials/sundials_direct.c $(FMU_SRC_DIR)
+	@cp $(SRC)/cvode/src/sundials/sundials_math.c $(FMU_SRC_DIR)
+	@cp $(SRC)/cvode/src/sundials/sundials_nvector.c $(FMU_SRC_DIR)
+	@cp $(SRC)/cvode/include/cvode/cvode.h $(FMU_SRC_DIR)/include/cvode/
+	@cp $(SRC)/cvode/include/cvode/cvode_direct.h $(FMU_SRC_DIR)/include/cvode/
+	@cp $(SRC)/cvode/include/cvode/cvode_dense.h $(FMU_SRC_DIR)/include/cvode/
+	@cp $(SRC)/cvode/src/cvode/cvode_direct_impl.h $(FMU_SRC_DIR)
+	@cp $(SRC)/cvode/src/cvode/cvode_impl.h $(FMU_SRC_DIR)
+	@cp $(SRC)/cvode/include/nvector/nvector_serial.h $(FMU_SRC_DIR)/include/nvector
+	@cp $(SRC)/cvode/include/sundials/sundials_math.h $(FMU_SRC_DIR)/include/sundials
+	@cp $(SRC)/cvode/include/sundials/sundials_nvector.h $(FMU_SRC_DIR)/include/sundials
+	@cp $(SRC)/cvode/include/sundials/sundials_config.h $(FMU_SRC_DIR)/include/sundials
+	@cp $(SRC)/cvode/include/sundials/sundials_dense.h $(FMU_SRC_DIR)/include/sundials
+	@cp $(SRC)/cvode/include/sundials/sundials_direct.h $(FMU_SRC_DIR)/include/sundials
+	@cp $(SRC)/cvode/include/sundials/sundials_types.h $(FMU_SRC_DIR)/include/sundials
+%ENDIF%
 
 	@echo Create the FMU: $(FMU)
 	@cd $(FMU_DIR) && $(ZIP_COMMAND) && mv $(FMU) $(current_dir) && echo Ready!
