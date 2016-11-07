@@ -378,6 +378,7 @@ XXBoolean %FUNCTIONPREFIX%RungeKutta4Step (%VARPREFIX%ModelInstance* model_insta
 }
 %ENDIF%
 %IF%%EQ(INTEGRATION_METHOD_NAME,VodeAdams)%
+%IF%%NUMBER_STATES%
 /* Functions Called by the CVODE Solver */
 int Vodefunction1(realtype time, N_Vector y, N_Vector ydot, void *user_data)
 {
@@ -395,9 +396,11 @@ int Vodefunction1(realtype time, N_Vector y, N_Vector ydot, void *user_data)
 	return 0;
 }
 
+%ENDIF%
 /*********************************************************************
  * Vode-Adams integration method
  *********************************************************************/
+%IF%%NUMBER_STATES%
 /* the more generic re-initialize, necessary if we want to step back in time */
 XXBoolean %FUNCTIONPREFIX%VodeAdamsReInitialize (%VARPREFIX%ModelInstance* mi)
 {
@@ -597,6 +600,8 @@ XXBoolean %FUNCTIONPREFIX%VodeAdamsReInitialize (%VARPREFIX%ModelInstance* mi)
 	}
 	return XXTRUE;
 }
+
+%ENDIF%
 /* the initialization of the Euler integration method */
 XXBoolean %FUNCTIONPREFIX%VodeAdamsInitialize (%VARPREFIX%ModelInstance* model_instance)
 {
@@ -645,6 +650,7 @@ XXBoolean %FUNCTIONPREFIX%VodeAdamsInitialize (%VARPREFIX%ModelInstance* model_i
 /* the termination of the Euler integration method */
 XXBoolean %FUNCTIONPREFIX%VodeAdamsTerminate (%VARPREFIX%ModelInstance* model_instance)
 {
+%IF%%NUMBER_STATES%
 	%VARPREFIX%ModelInstance* mi = model_instance;
 
 	// release the attributes
@@ -672,6 +678,7 @@ XXBoolean %FUNCTIONPREFIX%VodeAdamsTerminate (%VARPREFIX%ModelInstance* model_in
 	if( m_prev_cvdense_mem )
 		MyFreeDenseMemory(m_prev_cvdense_mem);
 */
+%ENDIF%
 	return XXTRUE;
 }
 
