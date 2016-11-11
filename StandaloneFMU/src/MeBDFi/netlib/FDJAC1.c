@@ -15,7 +15,7 @@ static integer c__1 = 1;
 /*<    >*/
 /* Subroutine */ int fdjac1_(S_fp fcn, integer *n, doublereal *x, doublereal *
 	fvec, doublereal *fjac, integer *ldfjac, integer *iflag, integer *ml, 
-	integer *mu, doublereal *epsfcn, doublereal *wa1, doublereal *wa2)
+	integer *mu, doublereal *epsfcn, doublereal *wa1, doublereal *wa2, void *user_data)
 {
     /* Initialized data */
 
@@ -170,7 +170,7 @@ static integer c__1 = 1;
 /*<             x(j) = temp + h >*/
 	x[j] = temp + h__;
 /*<             call fcn(n,x,wa1,iflag) >*/
-	(*fcn)(n, &x[1], &wa1[1], iflag);
+	(*fcn)(n, &x[1], &wa1[1], iflag, user_data);
 /*<             if (iflag .lt. 0) go to 30 >*/
 	if (*iflag < 0) {
 	    goto L30;
@@ -218,7 +218,7 @@ L40:
 /* L60: */
 	}
 /*<             call fcn(n,x,wa1,iflag) >*/
-	(*fcn)(n, &x[1], &wa1[1], iflag);
+	(*fcn)(n, &x[1], &wa1[1], iflag, user_data);
 /*<             if (iflag .lt. 0) go to 100 >*/
 	if (*iflag < 0) {
 	    goto L100;

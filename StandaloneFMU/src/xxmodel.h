@@ -32,14 +32,22 @@
 #include "cvode/cvode.h"            /* main CVODE header file                       */
 #include "cvode/cvode_dense.h"      /* use CVDENSE linear solver each internal step */
 #include <nvector/nvector_serial.h> /* serial N_Vector types, fct. and macros       */
-
 %ENDIF%
+%IF%%EQ(INTEGRATION_METHOD_NAME,MeBDFi)%
+#include "MeBDFi/MeBDFi.h"
+%ENDIF%
+
 /* Model size constants */
 #define %VARPREFIX%constants_count %NUMBER_CONSTANTS%
 #define %VARPREFIX%parameter_count %NUMBER_PARAMETERS%
 #define %VARPREFIX%initialvalue_count %NUMBER_INITIAL_VALUES%
 #define %VARPREFIX%variable_count %NUMBER_VARIABLES%
 #define %VARPREFIX%state_count %NUMBER_STATES%
+%IF%%EQ(INTEGRATION_METHOD_NAME,MeBDFi)%
+#define %VARPREFIX%depstate_count %NUMBER_DEPSTATES%
+#define %VARPREFIX%algloop_count %NUMBER_ALGLOOPS%
+#define %VARPREFIX%constraint_count %NUMBER_CONSTRAINTS%
+%ELSE%
 %IF%%NUMBER_DEPSTATES%
 #define %VARPREFIX%depstate_count %NUMBER_DEPSTATES%
 %ENDIF%
@@ -48,6 +56,7 @@
 %ENDIF%
 %IF%%NUMBER_CONSTRAINTS%
 #define %VARPREFIX%constraint_count %NUMBER_CONSTRAINTS%
+%ENDIF%
 %ENDIF%
 
 %IF%%NUMBER_MATRICES%
@@ -110,6 +119,9 @@ typedef struct %VARPREFIX%ModelInstance
 	XXBoolean %XX_INITIALIZE%;
 	XXBoolean major;
 	XXBoolean stop_simulation;
+	
+	XXBoolean m_reinitState;
+	XXBoolean m_initState;
 
 	/* Model state */
 	XXDouble MEMORY[
@@ -229,14 +241,14 @@ typedef struct %VARPREFIX%ModelInstance
 	XXDouble* %XX_PARAMETER_ARRAY_NAME%;	/* parameters */
 %ENDIF%
 %IF%%NUMBER_INITIAL_VALUES%
-	XXDouble* %XX_INITIAL_VALUE_ARRAY_NAME%;		/* initial values */
+	XXDouble* %XX_INITIAL_VALUE_ARRAY_NAME%;	/* initial values */
 %ENDIF%
 %IF%%NUMBER_VARIABLES%
-	XXDouble* %XX_VARIABLE_ARRAY_NAME%;		/* variables */
+	XXDouble* %XX_VARIABLE_ARRAY_NAME%;	/* variables */
 %ENDIF%
 %IF%%NUMBER_STATES%
 	XXDouble* %XX_STATE_ARRAY_NAME%;	/* states */
-	XXDouble* %XX_RATE_ARRAY_NAME%;		/* rates (or new states) */
+	XXDouble* %XX_RATE_ARRAY_NAME%;	/* rates (or new states) */
 %ENDIF%
 %IF%%NUMBER_DEPSTATES%
 	XXDouble* %XX_DEP_STATE_ARRAY_NAME%;	/* dependent states */
@@ -303,6 +315,11 @@ typedef struct %VARPREFIX%ModelInstance
 #define %VARPREFIX%finish_time model_instance->finish_time
 
 /* Initialization methods */
+XXBoolean %FUNCTIONPREFIX%ModelInstance_Constructor(%VARPREFIX%ModelInstance* model_instance,
+													fmi2String instanceName,
+													fmi2Type fmuType,
+													fmi2String fmuResourceLocation,
+													const fmi2CallbackFunctions *functions);
 void %FUNCTIONPREFIX%ModelInitialize (%VARPREFIX%ModelInstance* model_instance);
 void %FUNCTIONPREFIX%ModelTerminate (%VARPREFIX%ModelInstance* model_instance);
 

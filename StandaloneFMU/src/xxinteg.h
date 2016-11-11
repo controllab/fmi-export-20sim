@@ -56,5 +56,11 @@ XXBoolean %FUNCTIONPREFIX%VodeAdamsInitialize (%VARPREFIX%ModelInstance* model_i
 XXBoolean %FUNCTIONPREFIX%VodeAdamsTerminate (%VARPREFIX%ModelInstance* model_instance);
 XXBoolean %FUNCTIONPREFIX%VodeAdamsStep (%VARPREFIX%ModelInstance* model_instance, XXDouble outputTime);
 %ENDIF%
+%IF%%EQ(INTEGRATION_METHOD_NAME,MeBDFi)%
+XXBoolean %FUNCTIONPREFIX%MeBDFiInitialize (%VARPREFIX%ModelInstance* model_instance);
+XXBoolean %FUNCTIONPREFIX%MeBDFiTerminate (%VARPREFIX%ModelInstance* model_instance);
+XXBoolean %FUNCTIONPREFIX%MeBDFiStep (%VARPREFIX%ModelInstance* model_instance, XXDouble outputTime);
+%ENDIF%
+
 
 #endif

@@ -15,13 +15,12 @@
 #ifndef __MEBDFI_H
 #define __MEBDFI_H
 
-#include "../IntegrationMethod.h"
-
-struct IntegrationMethod
+typedef struct IntegrationMethod
 {
 	XXBoolean m_take_desired_step_busy;
-}
-struct ImplicitMethod
+	struct %VARPREFIX%ModelInstance* m_model_instance;
+} IntegrationMethod;
+typedef struct ImplicitMethod
 {
 	IntegrationMethod m_integration_method;
 
@@ -30,8 +29,8 @@ struct ImplicitMethod
 
 	double m_alg_absolute_tolerance;
 	double m_alg_relative_tolerance;
-};
-struct ImplicitVariableStep
+} ImplicitMethod;
+typedef struct ImplicitVariableStep
 {
 	/* inheritance replaced by membership */
 	ImplicitMethod m_implicit_method;
@@ -41,17 +40,20 @@ struct ImplicitVariableStep
 	double m_initial_step_size;
 	double m_maximum_step_size;
 	double m_last_step_size;
-};
+	
+	/* for remembering the internal state */
+	double m_prev_last_step_size;
+} ImplicitVariableStep;
 
 /***********************************************************
  * Modified Backward Differentiation Formula
  * for problems of the form
  * G(T,Y,Y´)=0.
  ***********************************************************/
-struct MeBDFiMethod
+typedef struct MeBDFiMethod
 {
 	/* inheritance replaced by membership */
-	ImplicitVariablesStep m_implicit_variable_step;
+	ImplicitVariableStep m_implicit_variable_step;
 
 	/* member variables for MeBDFi itself */
 	double m_tout;
@@ -72,16 +74,16 @@ struct MeBDFiMethod
 	int m_liwork;
 	int *m_iwork;
 
-	double *m_work_states;
-	double *m_work_rates;
+	double *m_Y;
+	double *m_YPRIME;
 
 	// and new work arrays to make the bdf method re-entrant */
 	int m_mebdfStaticInts[35]; // 34 + 1
 	double m_mebdfStaticDoubles[26]; // 25 + 1
 	long int m_mebdfStaticLogicals[5]; // 4 + 1
 
-	// and some values, to be able to reset the method
-	// to a previous time (in event detection)
+	/* and some values, to be able to reset the method
+	 * to a previous time (in event detection) */
 	double *m_prev_work;
 	int *m_prev_iwork;
 	int m_prev_idid;
@@ -109,7 +111,7 @@ struct MeBDFiMethod
 	XXBoolean m_check_constraints;
 	XXBoolean *m_active_contraint_array;
 	int m_nr_active_constraints;
-};
+} MeBDFiMethod;
 
 /*
  * function to determine the initial values for the algebraic
@@ -118,16 +120,18 @@ struct MeBDFiMethod
 XXBoolean MeBDFiMethod_DetermineAlgloop(MeBDFiMethod *mebdfi_method);
 
 /* should "smart" constraints be used */
-XXBoolean MeBDFiMethod_GetUseSmartConstraints(MeBDFiMethod *mebdfi_method) { return m_check_constraints;};
-XXBoolean MeBDFiMethod_SetUseSmartConstraints(MeBDFiMethod *mebdfi_method, XXBoolean set) { return m_check_constraints = set;};
+XXBoolean MeBDFiMethod_GetUseSmartConstraints(MeBDFiMethod *mebdfi_method);
+XXBoolean MeBDFiMethod_SetUseSmartConstraints(MeBDFiMethod *mebdfi_method, XXBoolean set);
 
 /* determine the active constraints */
 void MeBDFiMethod_DetermineActiveConstraints(MeBDFiMethod *mebdfi_method);
 XXBoolean MeBDFiMethod_CheckNonActiveConstraints(MeBDFiMethod *mebdfi_method);
 
 /* the constructor for the MeBDFi object */
-void ImplicitVariablesStep_Constructor(ImplicitVariablesStep *implVarStepMethod);
-MeBDFiMethod *MeBDFiMethod_Constructor ();
+void IntegrationMethod_Constructor(IntegrationMethod *intMethod, struct %VARPREFIX%ModelInstance* model_instance);
+void ImplicitMethod_Constructor(ImplicitMethod *implMethod, struct %VARPREFIX%ModelInstance* model_instance);
+void ImplicitVariableStep_Constructor(ImplicitVariableStep *implVarStepMethod, struct %VARPREFIX%ModelInstance* model_instance);
+void MeBDFiMethod_Constructor (MeBDFiMethod *meBDFi, struct %VARPREFIX%ModelInstance* model_instance);
 
 /* initialize functions */
 XXBoolean MeBDFiMethod_Initialize(MeBDFiMethod *mebdfi_method);
@@ -138,12 +142,12 @@ XXBoolean MeBDFiMethod_ReInitialize(MeBDFiMethod *mebdfi_method, XXBoolean major
  * assume that the object has been initialized so that
  * no speed is lost in checking this.
  */
-void MeBDFiMethod_Integrate(MeBDFiMethod *mebdfi_method);
+void MeBDFiMethod_Integrate(MeBDFiMethod *meBDFi, double outputTime, double finishTime);
 
-XXBoolean MeBDFiMethod_GetUseCommunicationInterval(MeBDFiMethod *mebdfi_method) { return m_use_comm_int;};
-void MeBDFiMethod_UseCommunicationInterval(MeBDFiMethod *mebdfi_method, XXBoolean use_it) {m_use_comm_int = use_it;};
-double MeBDFiMethod_GetCommunicationInterval(MeBDFiMethod *mebdfi_method) {return m_comm_int;};
-void MeBDFiMethod_SetCommunicationInterval(MeBDFiMethod *mebdfi_method, double comm_int){	m_comm_int = comm_int;};
+XXBoolean MeBDFiMethod_GetUseCommunicationInterval(MeBDFiMethod *mebdfi_method);
+void MeBDFiMethod_UseCommunicationInterval(MeBDFiMethod *mebdfi_method, XXBoolean use_it);
+double MeBDFiMethod_GetCommunicationInterval(MeBDFiMethod *mebdfi_method);
+void MeBDFiMethod_SetCommunicationInterval(MeBDFiMethod *mebdfi_method, double comm_int);
 
 /*
  * this is to be able to reset the simulator on the previous time...
@@ -156,17 +160,10 @@ void MeBDFiMethod_SetBackRememberedState(MeBDFiMethod *mebdfi_method);
 void MeBDFiMethod_TakeDesiredStep (MeBDFiMethod *mebdfi_method, double *u, double h);
 
 /* this method can handle the algebraic relations itself. */
-XXBoolean MeBDFiMethod_CanHandleAlgebraicRelations(MeBDFiMethod *mebdfi_method)
-{
-	return XXTRUE;
-}
-XXBoolean MeBDFiMethod_CanHandleConstraints(MeBDFiMethod *mebdfi_method)
-{
-	/*  yes we can */
-	return XXTRUE;
-}
+XXBoolean MeBDFiMethod_CanHandleAlgebraicRelations(MeBDFiMethod *mebdfi_method);
+XXBoolean MeBDFiMethod_CanHandleConstraints(MeBDFiMethod *mebdfi_method);
 
-MeBDFiMethod_Destructor(MeBDFiMethod *mebdfi_method);
+void MeBDFiMethod_Destructor(MeBDFiMethod *mebdfi_method);
 
 
 #endif // __MEBDFI_H

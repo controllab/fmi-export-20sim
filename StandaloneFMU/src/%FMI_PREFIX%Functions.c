@@ -417,7 +417,6 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 								fmi2Boolean loggingOn)
 {
 	%VARPREFIX%ModelInstance* model_instance = NULL;
-	int offset = 0;
 
 	/* we should remember the functions pointer in order to make callback functions */
 	if (!functions)
@@ -464,6 +463,12 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 
 	memset(model_instance, 0, sizeof(%VARPREFIX%ModelInstance));
 
+	if( %FUNCTIONPREFIX%ModelInstance_Constructor(model_instance, instanceName, fmuType, fmuResourceLocation, functions) == XXFALSE )
+	{
+		return NULL;
+	}
+	
+#if 0
 	model_instance->instanceName = (%FMI_PREFIX%String) functions->allocateMemory(1 + strlen(instanceName), sizeof(char));
 
 	if (!model_instance->instanceName)
@@ -533,7 +538,7 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 			"FMU can only be used for Co-Simulation, not for Model Exchange");
 		return NULL;
 	}
-
+#endif
 	return (fmi2Component) model_instance;
 }
 %ENDIF%

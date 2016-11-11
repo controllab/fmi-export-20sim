@@ -30,23 +30,28 @@ XXBoolean %FUNCTIONPREFIX%InitializeSubmodel (%VARPREFIX%ModelInstance* model_in
 	/* Initialization phase (allocating memory) */
 	model_instance->%XX_INITIALIZE% = XXTRUE;
 	model_instance->steps = 0;
-	%FUNCTIONPREFIX%%INTEGRATION_METHOD_NAME%Initialize (model_instance);
+	model_instance->m_initState = XXTRUE;
+ 
+	%FUNCTIONPREFIX%CalculateInitial (model_instance);
 
 	/* initialize the integration method */
 	if (%FUNCTIONPREFIX%%INTEGRATION_METHOD_NAME%Initialize (model_instance) == XXFALSE)
 	{
+		model_instance->m_initState = XXFALSE;
 		return XXFALSE;
 	}
 
+%IF%%0%
 	/* Calculate the model for the first time */
-	%FUNCTIONPREFIX%CalculateInitial (model_instance);
 	%FUNCTIONPREFIX%CalculateStatic (model_instance);
 	%FUNCTIONPREFIX%CalculateInput (model_instance);
 	%FUNCTIONPREFIX%CalculateDynamic (model_instance);
 	%FUNCTIONPREFIX%CalculateOutput (model_instance);
+%ENDIF%
 
 	/* End of initialization phase */
 	model_instance->%XX_INITIALIZE% = XXFALSE;
+	model_instance->m_initState = XXFALSE;
 
 	return XXTRUE;
 }

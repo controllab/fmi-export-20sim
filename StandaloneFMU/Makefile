@@ -29,6 +29,47 @@ XXSIM_SOURCES = EulerAngles.c \
 	cvode/src/sundials/sundials_math.c \
 	cvode/src/sundials/sundials_nvector.c \
 %ENDIF%
+%IF%%EQ(INTEGRATION_METHOD_NAME,MeBDFi)%
+	MeBDFi/MeBDFi.c \
+	MeBDFi/MeBDFi.h \
+	MeBDFi/include/f2c.h \
+	MeBDFi/include/fio.h \
+	MeBDFi/include/fmt.h \
+	MeBDFi/include/fp.h \
+	MeBDFi/include/lio.h \
+	MeBDFi/include/sysdep1.h \
+	MeBDFi/libf2c/close.c \
+	MeBDFi/libf2c/dolio.c \
+	MeBDFi/libf2c/endfile.c \
+	MeBDFi/libf2c/err.c \
+	MeBDFi/libf2c/fmt.c \
+	MeBDFi/libf2c/fmtlib.c \
+	MeBDFi/libf2c/lread.c \
+	MeBDFi/libf2c/lwrite.c \
+	MeBDFi/libf2c/open.c \
+	MeBDFi/libf2c/pow_dd.c \
+	MeBDFi/libf2c/pow_di.c \
+	MeBDFi/libf2c/rdfmt.c \
+	MeBDFi/libf2c/rsfe.c \
+	MeBDFi/libf2c/sfe.c \
+	MeBDFi/libf2c/sig_die.c \
+	MeBDFi/libf2c/util.c \
+	MeBDFi/libf2c/wref.c \
+	MeBDFi/libf2c/wrtfmt.c \
+	MeBDFi/libf2c/wsfe.c \
+	MeBDFi/libf2c/wsle.c \
+	MeBDFi/netlib/DOGLEG.c \
+	MeBDFi/netlib/DPMPAR.c \
+	MeBDFi/netlib/ENORM.c \
+	MeBDFi/netlib/FDJAC1.c \
+	MeBDFi/netlib/HYBRD.c \
+	MeBDFi/netlib/HYBRD1.c \
+	MeBDFi/netlib/mebdfiCore.c \
+	MeBDFi/netlib/QFORM.c \
+	MeBDFi/netlib/QRFAC.c \
+	MeBDFi/netlib/R1MPYQ.c \
+	MeBDFi/netlib/R1UPDT.c \
+%ENDIF%
 	xxTable2D.c
 
 FMU_SOURCES = %FMI_PREFIX%Functions.c $(XXSIM_SOURCES)
@@ -36,6 +77,10 @@ FMU_SOURCES = %FMI_PREFIX%Functions.c $(XXSIM_SOURCES)
 INCLUDES=
 %IF%%EQ(INTEGRATION_METHOD_NAME,VodeAdams)%
 INCLUDES += -Isrc/cvode/include
+
+%ENDIF%
+%IF%%EQ(INTEGRATION_METHOD_NAME,MeBDFi)%
+INCLUDES += -Isrc/MeBDFi/include
 
 %ENDIF%
 OBJS = $(addprefix $(BUILD)/, $(addsuffix .o, $(basename $(FMU_SOURCES))))
@@ -130,6 +175,11 @@ $(BUILD):
 	@mkdir -p $(BUILD)/cvode/src/nvec_ser
 	@mkdir -p $(BUILD)/cvode/src/sundials
 %ENDIF%
+%IF%%EQ(INTEGRATION_METHOD_NAME,MeBDFi)%
+	@mkdir -p $(BUILD)/MeBDFi/include
+	@mkdir -p $(BUILD)/MeBDFi/libf2c
+	@mkdir -p $(BUILD)/MeBDFi/netlib
+%ENDIF%
 
 $(BUILD)/%.o: $(SRC)/%.c Makefile $(BUILD)
 	@echo "[$(CC)] $<"
@@ -186,6 +236,47 @@ fmu: dll createfmudir
 	@cp $(SRC)/cvode/include/sundials/sundials_direct.h $(FMU_SRC_DIR)/include/sundials
 	@cp $(SRC)/cvode/include/sundials/sundials_types.h $(FMU_SRC_DIR)/include/sundials
 %ENDIF%
-
+%IF%%EQ(INTEGRATION_METHOD_NAME,MeBDFi)%
+	@cp $(SRC)/includes.txt $(FMU_SRC_DIR)
+	@cp $(SRC)/MeBDFi/MeBDFi.c $(FMU_SRC_DIR)
+	@cp $(SRC)/MeBDFi/MeBDFi.h $(FMU_SRC_DIR)
+	@cp $(SRC)/MeBDFi/include/f2c.h $(FMU_SRC_DIR)/include
+	@cp $(SRC)/MeBDFi/include/fio.h $(FMU_SRC_DIR)/include
+	@cp $(SRC)/MeBDFi/include/fmt.h $(FMU_SRC_DIR)/include
+	@cp $(SRC)/MeBDFi/include/fp.h $(FMU_SRC_DIR)/include
+	@cp $(SRC)/MeBDFi/include/lio.h $(FMU_SRC_DIR)/include
+	@cp $(SRC)/MeBDFi/include/sysdep1.h $(FMU_SRC_DIR)/include
+	@cp $(SRC)/MeBDFi/libf2c/close.c $(FMU_SRC_DIR)
+	@cp $(SRC)/MeBDFi/libf2c/dolio.c $(FMU_SRC_DIR)
+	@cp $(SRC)/MeBDFi/libf2c/endfile.c $(FMU_SRC_DIR)
+	@cp $(SRC)/MeBDFi/libf2c/err.c $(FMU_SRC_DIR)
+	@cp $(SRC)/MeBDFi/libf2c/fmt.c $(FMU_SRC_DIR)
+	@cp $(SRC)/MeBDFi/libf2c/fmtlib.c $(FMU_SRC_DIR)
+	@cp $(SRC)/MeBDFi/libf2c/lread.c $(FMU_SRC_DIR)
+	@cp $(SRC)/MeBDFi/libf2c/lwrite.c $(FMU_SRC_DIR)
+	@cp $(SRC)/MeBDFi/libf2c/open.c $(FMU_SRC_DIR)
+	@cp $(SRC)/MeBDFi/libf2c/pow_dd.c $(FMU_SRC_DIR)
+	@cp $(SRC)/MeBDFi/libf2c/pow_di.c $(FMU_SRC_DIR)
+	@cp $(SRC)/MeBDFi/libf2c/rdfmt.c $(FMU_SRC_DIR)
+	@cp $(SRC)/MeBDFi/libf2c/rsfe.c $(FMU_SRC_DIR)
+	@cp $(SRC)/MeBDFi/libf2c/sfe.c $(FMU_SRC_DIR)
+	@cp $(SRC)/MeBDFi/libf2c/sig_die.c $(FMU_SRC_DIR)
+	@cp $(SRC)/MeBDFi/libf2c/util.c $(FMU_SRC_DIR)
+	@cp $(SRC)/MeBDFi/libf2c/wref.c $(FMU_SRC_DIR)
+	@cp $(SRC)/MeBDFi/libf2c/wrtfmt.c $(FMU_SRC_DIR)
+	@cp $(SRC)/MeBDFi/libf2c/wsfe.c $(FMU_SRC_DIR)
+	@cp $(SRC)/MeBDFi/libf2c/wsle.c $(FMU_SRC_DIR)
+	@cp $(SRC)/MeBDFi/netlib/DOGLEG.c $(FMU_SRC_DIR)
+	@cp $(SRC)/MeBDFi/netlib/DPMPAR.c $(FMU_SRC_DIR)
+	@cp $(SRC)/MeBDFi/netlib/ENORM.c $(FMU_SRC_DIR)
+	@cp $(SRC)/MeBDFi/netlib/FDJAC1.c $(FMU_SRC_DIR)
+	@cp $(SRC)/MeBDFi/netlib/HYBRD.c $(FMU_SRC_DIR)
+	@cp $(SRC)/MeBDFi/netlib/HYBRD1.c $(FMU_SRC_DIR)
+	@cp $(SRC)/MeBDFi/netlib/mebdfiCore.c $(FMU_SRC_DIR)
+	@cp $(SRC)/MeBDFi/netlib/QFORM.c $(FMU_SRC_DIR)
+	@cp $(SRC)/MeBDFi/netlib/QRFAC.c $(FMU_SRC_DIR)
+	@cp $(SRC)/MeBDFi/netlib/R1MPYQ.c $(FMU_SRC_DIR)
+	@cp $(SRC)/MeBDFi/netlib/R1UPDT.c $(FMU_SRC_DIR)
+%ENDIF%
 	@echo Create the FMU: $(FMU)
 	@cd $(FMU_DIR) && $(ZIP_COMMAND) && mv $(FMU) $(current_dir) && echo Ready!

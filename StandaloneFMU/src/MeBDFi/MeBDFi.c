@@ -11,18 +11,58 @@
  *  from:  %COMPANY_NAME%
  *  build: %GENERATION_BUILD%
  **********************************************************/
+ 
+ /*********************************************************
+  *
+  * The Modified Backward Differential Formula Integration Method
+  * uses two vectors as input: Y and YPRIME
+  * On callback MeBDFi a proposel is made for these vectors
+  * in our case Y will contain:
+  *    - Independent States						(INPUT)
+  *    - Dependent States						(OUTPUT)
+  *    - Algebraic Loop Inputs					(INPUT)
+  *    - Constraint Inputs						(INPUT)
+  * YPRIME will contain:
+  *    - Indedendent Rates 						(OUTPUT)
+  *    - Dependent Rates						(INPUT)
+  *    - Differential of Algebraic Loop Inputs	(IGNORED)
+  *    - Differential of Constraint Inputs 		(IGNORED)
+  *
+  * based on this mapping on callback we have to give back
+  * the error in the proposal compared with the model output:
+  *    - Independent Rates
+  *    - Dependendent States
+  *    - Algebraic Outputs
+  *    - Constraint Output
+  **********************************************************/
+  
 
 #include <float.h>
 #include <string.h>
 #include <math.h>
 #include <stdio.h>
 
+#include "../xxmodel.h"
 #include "MeBDFi.h"
 
-/* this variable is needed for the callback functions */
-static Simulator *global_simulator = NULL;
-static MeBDFiMethod *global_int_method = NULL;
+#define MODEL_INSTANCE(meBDFi) meBDFi->m_implicit_variable_step.m_implicit_method.m_integration_method.m_model_instance
+#define RELATIVE_TOLERANCE(meBDFi) meBDFi->m_implicit_variable_step.m_implicit_method.m_relative_tolerance
+#define ABSOLUTE_TOLERANCE(meBDFi) meBDFi->m_implicit_variable_step.m_implicit_method.m_absolute_tolerance
+#define ALG_RELATIVE_TOLERANCE(meBDFi) meBDFi->m_implicit_variable_step.m_implicit_method.m_alg_relative_tolerance
+#define ALG_ABSOLUTE_TOLERANCE(meBDFi) meBDFi->m_implicit_variable_step.m_implicit_method.m_alg_absolute_tolerance
+#define TAKE_DESIRED_STEP_BUSY(meBDFi) meBDFi->m_implicit_variable_step.m_implicit_method.m_integration_method.m_take_desired_step_busy
 
+%IF%%0%
+#define ALLOCATE_MEMORY(memPtr, nrElements, type)\
+memPtr = (type*)malloc( (nrElements) * sizeof(type));\
+memset(memPtr, 0, (nrElements) * sizeof(type))
+#define FREE_MEMORY(memPtr) if(memPtr)free(memPtr);memPtr=NULL
+%ELSE%
+#define ALLOCATE_MEMORY(model_instance, memPtr, nrElements, type)\
+memPtr = (type*)model_instance->fmiCallbackFunctions->allocateMemory(nrElements, sizeof(type));\
+memset(memPtr, 0, (nrElements) * sizeof(type))
+#define FREE_MEMORY(model_instance, memPtr) if(memPtr)model_instance->fmiCallbackFunctions->freeMemory(memPtr);memPtr=NULL
+%ENDIF%
 /* immediate recall for continuation after m_idid < 0 posible?
  *	-1:  no;	0, 1:  yes, with m_info[0] = 0, 1 respectively
  */
@@ -69,8 +109,9 @@ int _cdecl mebdfi_(int *n, double *t0, double *ho,
 				double *rpar, int *ipar,
 				U_fp pderv,
 				int (_cdecl *fcn) (	int *, double *, double *, double *,
-									double *, int *, double *, double *),
-				int * ierr);
+									double *, int *, double *, double *, void *),
+				int * ierr,
+				void *user_data);
 /*     PDERV(T,Y,PD,N,YPRIME,MBND(4),CON,IPAR,RPAR,IERR) */
 /*     RESID(N,T,Y,DELTA,YPRIME,IPAR,RPAR,IERR) */
 
@@ -93,73 +134,123 @@ void SetMeBDFiStatics(int *mebdfStaticInts,
 						double *mebdfStaticDoubles,
 						long int*mebdfStaticLogicals);
 
-
 /* method to solve the initial values for the algebraic loop variables */
-int _cdecl hybrd1_( int (_cdecl *fcn) (int*, double*, double*, int*),
+int _cdecl hybrd1_( int (_cdecl *fcn) (int*, double*, double*, int*, void *),
 				int *n,
 				double *x, double *fvec, double *tol,
 				int *info,
 				double *wa,
-				int *lwa
+				int *lwa,
+				void *
 		);
 
-
-
-int _cdecl MeBDFCalcAlgloopRes(XXModelInstance* %VARPREFIX%model_instance, int * /*n*/, double *xx, double *delta, int * /*flag*/)
+XXBoolean MeBDFiMethod_GetUseSmartConstraints(MeBDFiMethod *meBDFi)
+{
+	return meBDFi->m_check_constraints;
+}
+XXBoolean MeBDFiMethod_SetUseSmartConstraints(MeBDFiMethod *meBDFi, XXBoolean set)
+{
+	meBDFi->m_check_constraints = set;
+	return XXTRUE;
+}
+XXBoolean MeBDFiMethod_GetUseCommunicationInterval(MeBDFiMethod *meBDFi)
+{
+	return meBDFi->m_use_comm_int;
+}
+void MeBDFiMethod_UseCommunicationInterval(MeBDFiMethod *meBDFi, XXBoolean use_it)
+{
+	meBDFi->m_use_comm_int = use_it;
+}
+double MeBDFiMethod_GetCommunicationInterval(MeBDFiMethod *meBDFi)
+{
+	return meBDFi->m_comm_int;
+}
+void MeBDFiMethod_SetCommunicationInterval(MeBDFiMethod *meBDFi, double comm_int)
+{
+	meBDFi->m_comm_int = comm_int;
+}
+XXBoolean MeBDFiMethod_CanHandleAlgebraicRelations(MeBDFiMethod *meBDFi)
+{
+	/*  yes we can */
+	return XXTRUE;
+}
+XXBoolean MeBDFiMethod_CanHandleConstraints(MeBDFiMethod *meBDFi)
+{
+	/*  yes we can */
+	return XXTRUE;
+}	
+%IF%%OR(NUMBER_ALGLOOPS,NUMBER_CONSTRAINTS)%
+int _cdecl MeBDFCalcAlgloopRes(int *n, double *xx, double *delta, int *flag, void *user_data)
 {
 	int i;
+	%VARPREFIX%ModelInstance* model_instance = (%VARPREFIX%ModelInstance*)user_data;
+%IF%%NUMBER_ALGLOOPS%
+	double *algloop_in = model_instance->%XX_ALG_IN_ARRAY_NAME%;
+	double *algloop_out = model_instance->%XX_ALG_OUT_ARRAY_NAME%;
+%ELSE%
+	double *algloop_in = NULL;
+	double *algloop_out = NULL;
+%ENDIF%
+%IF%%NUMBER_CONSTRAINTS%
+	double *constraint_in = &model_instance->%XX_ALG_IN_ARRAY_NAME%[%NUMBER_ALGLOOPS%];
+	double *constraint_out = &model_instance->%XX_ALG_OUT_ARRAY_NAME%[%NUMBER_ALGLOOPS%];
+%ELSE%
+	double *constraint_in = NULL;
+	double *constraint_out = NULL;
+%ENDIF%
 
-	if( global_simulator == NULL )
-		return 1;
+	int nr_algloops = %NUMBER_ALGLOOPS%;
+	int nr_constraints = %NUMBER_CONSTRAINTS%;
+	int index;
 
-	double *algloop_in = %VARPREFIX%model_instance->%XX_ALG_IN_ARRAY_NAME%;  /*global_simulator->GetAlgLoopIn(); */
-	double *algloop_out = %VARPREFIX%model_instance->%XX_ALG_OUT_ARRAY_NAME%;  /*global_simulator->GetAlgLoopOut(); */
-
-	double *constraint_in = &%VARPREFIX%model_instance->%XX_ALG_IN_ARRAY_NAME%[%NUMBER_ALGLOOPS%];  /*global_simulator->GetConstraintIn();*/
-	double *constraint_out = &%VARPREFIX%model_instance->%XX_ALG_OUT_ARRAY_NAME%[%NUMBER_ALGLOOPS%];  /*global_simulator->GetConstraintOut(); */
-
-	int nr_algloops = %NUMBER_ALGLOOPS% /*global_simulator->GetNrAlgLoop(); */
-	int nr_constraints = %NUMBER_CONSTRAINTS% /*global_simulator->GetNrConstraints(); */
-
+%IF%%NUMBER_ALGLOOPS%
 	if( nr_algloops > 0)
 		memcpy(algloop_in, xx, nr_algloops * sizeof(double));
+%ENDIF%
+%IF%%NUMBER_CONSTRAINTS%
 	if( nr_constraints > 0 )
 	{
-		int index = 0;
+		index = 0;
 		for( i = 0; i < nr_constraints; i++ )
 		{
-			if( %VARPREFIX%model_instance->m_mebdfi_method->m_active_contraint_array[i] )
+			if( model_instance->m_mebdfi_method.m_active_contraint_array[i] )
 			{
 				constraint_in[i] = xx[nr_algloops + index];
 				index++;
 			}
 			else
 			{
-				// is this necessary?
+				/* is this necessary? */
 				constraint_in[i] = 0.0;
 			}
 		}
 	}
+%ENDIF%
 
 	/* evaluate the dynamic part to calculate the new rates/depstates/algouts/constraintouts */
-	%FUNCTIONPREFIX%CalculateDynamic (%VARPREFIX%model_instance);
+	%FUNCTIONPREFIX%CalculateDynamic (model_instance);
 
+%IF%%NUMBER_ALGLOOPS%
 	for (i = 0; i < nr_algloops; i++)
 	{
 		delta[i] = algloop_out[i] - algloop_in[i];
 	}
+%ENDIF%
 
-	int index = 0;
+%IF%%NUMBER_CONSTRAINTS%
+	index = 0;
 	for( i = 0; i < nr_constraints; i++ )
 	{
-		if( %VARPREFIX%model_instance->m_mebdfi_method->m_active_contraint_array[i] )
+		if( model_instance->m_mebdfi_method.m_active_contraint_array[i] )
 		{
 			delta[index + nr_algloops] = constraint_out[i];
 			index++;
 		}
 	}
+%ENDIF%
 	return 0;
 }
+%ENDIF%
 
 /************************* ImplicitResidu() *************************
  * Call-back procedure for DASSL.
@@ -170,27 +261,57 @@ int _cdecl MeBDFCalcAlgloopRes(XXModelInstance* %VARPREFIX%model_instance, int *
  * Precondition: for sstime the excitation equations are calculated.
  * Due to change in ddassl.f, rpar[0] = alpha0/h.
  */
-int _cdecl MeBDFImplicitResidu(XXModelInstance* %VARPREFIX%model_instance, int *n, double *time, double *y, double *delta,
-						  double *yprime, int *ipar, double *rpar, double *ierr)
+int _cdecl MeBDFImplicitResidu(int *n, double *time, double *y, double *delta,
+						  double *yprime, int *ipar, double *rpar, double *ierr, void* user_data)
 {
 	int i;
 
 	/* temporary variable substitution */
 	double *rates_est;
+%IF%%OR(NUMBER_DEPSTATES,NUMBER_ALGLOOPS)%
 	double *states_est;
+%ENDIF%
+	%VARPREFIX%ModelInstance* model_instance = (%VARPREFIX%ModelInstance*)user_data;
 
 	/* do time-dept. calculations once per time step */
-	%VARPREFIX%model_instance->time = *time;
+	model_instance->time = *time;
 
-	int nr_ind_states = %NUMBER_STATES%;
-	int nr_dep_states = %NUMBER_DEPSTATES%;
-	int nr_alg_loop = %NUMBER_ALGLOOPS%;
-	int nr_constraints = %NUMBER_CONSTRAINTS%;
+	int nr_ind_states = %VARPREFIX%state_count;
+	int nr_dep_states =  %VARPREFIX%depstate_count;
+	int nr_alg_loop = %VARPREFIX%algloop_count;
+	int nr_constraints = %VARPREFIX%constraint_count;
 
-	double *indep_states = %VARPREFIX%model_instance->%XX_STATE_ARRAY_NAME; /*global_simulator->GetIndepStates(); */
-	double *dep_rates = %VARPREFIX%model_instance->%XX_DEP_STATE_ARRAY_NAME%; /*global_simulator->GetDepRates(); */
-	double *algloop_in = %VARPREFIX%model_instance->%XX_ALG_IN_ARRAY_NAME%;  /*global_simulator->GetAlgLoopIn(); */
-	double *constraint_in = &%VARPREFIX%model_instance->%XX_ALG_IN_ARRAY_NAME%[%NUMBER_ALGLOOPS%];  /*global_simulator->GetConstraintIn(); */
+%IF%%NUMBER_STATES%
+	double *indep_states = model_instance->%XX_STATE_ARRAY_NAME%;
+	double *indep_rates = model_instance->%XX_RATE_ARRAY_NAME%;
+%ELSE%
+	double *indep_states = NULL;
+	double *indep_rates = NULL;
+%ENDIF%
+%IF%%NUMBER_DEPSTATES%
+	double *dep_rates = model_instance->%XX_DEP_RATE_ARRAY_NAME%;
+	double *dep_states = model_instance->%XX_DEP_STATE_ARRAY_NAME%;
+%ELSE%
+	double *dep_rates = NULL;
+	double *dep_states = NULL;
+%ENDIF%
+%IF%%NUMBER_ALGLOOPS%
+	double *algloop_in = model_instance->%XX_ALG_IN_ARRAY_NAME%;
+	double *algloop_out = model_instance->%XX_ALG_OUT_ARRAY_NAME%;
+%ELSE%
+	double *algloop_in = NULL;
+	double *algloop_out = NULL;
+%ENDIF%
+%IF%%NUMBER_CONSTRAINTS%
+	double *constraint_in = &model_instance->%XX_ALG_IN_ARRAY_NAME%[%NUMBER_ALGLOOPS%];
+	double *constraint_out = &model_instance->%XX_ALG_OUT_ARRAY_NAME%[%NUMBER_ALGLOOPS%];
+%ELSE%
+	double *constraint_in = NULL;
+	double *constraint_out = NULL;
+%ENDIF%
+%IF%%NUMBER_CONSTRAINTS%
+	int index;
+%ENDIF%
 
 	/* sometimes the MeBDF method has other arrays given then given
 	 * by us in the call to MeBDF. So check this, and make a copy if necessary
@@ -198,39 +319,46 @@ int _cdecl MeBDFImplicitResidu(XXModelInstance* %VARPREFIX%model_instance, int *
 	 */
 	if( indep_states != y )
 	{
+%IF%%NUMBER_STATES%
 		if( nr_ind_states > 0 )
 			memcpy(indep_states, y, nr_ind_states * sizeof(double));
+%ENDIF%
+%IF%%NUMBER_ALGLOOPS%
 		if( nr_alg_loop > 0 )
 			memcpy(algloop_in, &y[nr_ind_states + nr_dep_states], nr_alg_loop * sizeof(double));
+%ENDIF%
+%IF%%NUMBER_CONSTRAINTS%
 		if( nr_constraints > 0 )
 		{
-				int index = 0;
-				for( i = 0; i < nr_constraints; i++)
+			index = 0;
+			for( i = 0; i < nr_constraints; i++)
+			{
+				if( model_instance->m_mebdfi_method.m_active_contraint_array[i] )
 				{
-					if( %VARPREFIX%model_instance->m_mebdfi_method->m_active_contraint_array[i] )
-					{
-						constraint_in[i] = y[nr_ind_states + nr_dep_states + nr_alg_loop + index];
-						index++;
-					}
-					else
-					{
-						/* ??????????????????????????????????? */
-						constraint_in[i] = 0.0;
-					}
+					constraint_in[i] = y[nr_ind_states + nr_dep_states + nr_alg_loop + index];
+					index++;
+				}
+				else
+				{
+					/* ??????????????????????????????????? */
+					constraint_in[i] = 0.0;
 				}
 			}
 		}
+%ENDIF%
 	}
+
+%IF%%NUMBER_DEPSTATES%
 	if( nr_dep_states > 0 )
 	{
-		// only copy if the source is different as the destination
+		/* only copy if the source is different as the destination */
 		if( dep_rates != &yprime[nr_ind_states] )
 			memcpy(dep_rates, &yprime[nr_ind_states], nr_dep_states * sizeof(double));
 	}
 
+%ENDIF%
 	/* evaluate the dynamic part to calculate the new rates/depstates/algouts/constraintouts */
-	%FUNCTIONPREFIX%CalculateDynamic (%VARPREFIX%model_instance);
-
+	%FUNCTIONPREFIX%CalculateDynamic (model_instance);
 
 	/* calculate corresponding residus; 'est' is input from impl. method;
 	 * the derivatives of the alg.loop var.s are not used (yprime + noffs_alg)
@@ -239,60 +367,57 @@ int _cdecl MeBDFImplicitResidu(XXModelInstance* %VARPREFIX%model_instance, int *
 	/* calculate the error in the rates (should go to zero for a good step) */
 	rates_est = yprime;
 
-	double *indep_rates = %VARPREFIX%model_instance->%XX_RATE_ARRAY_NAME; /* global_simulator->GetIndepRates();*/
-	double *dep_states = %VARPREFIX%model_instance->%XX_DEP_RATE_ARRAY_NAME%; /*global_simulator->GetDepStates();*/
-	double *algloop_out = %VARPREFIX%model_instance->%XX_ALG_OUT_ARRAY_NAME%;  /*global_simulator->GetAlgLoopOut();*/
-	double *constraint_out = &%VARPREFIX%model_instance->%XX_ALG_OUT_ARRAY_NAME%[%NUMBER_ALGLOOPS%];  /*global_simulator->GetConstraintOut(); */
-
+%IF%%NUMBER_STATES%
+	/* independent rates */
 	for (i = 0; i < nr_ind_states; i++, delta++)
 	{
+		/* model output - estimate */
 		*delta = indep_rates[i] - rates_est[i];
 	}
 
-	// and calculate the error in the STATES
+%ENDIF%
+%IF%%NUMBER_DEPSTATES%
+	/* and calculate the error in the dependent states */
 	states_est = y + nr_ind_states;
 	for (i = 0; i < nr_dep_states; i++, delta++)
 	{
+		/* model output - estimate */
 		*delta = dep_states[i] - states_est[i];
 	}
 
-	// and calculate the error in the STATES (which here is the algebraic loop in
-	// variables).
+%ENDIF%
+%IF%%NUMBER_ALGLOOPS%
+	/* and calculate the error in the Algebraic loops
+	 * (which here is the algebraic loop in variables). */
 	states_est = y + nr_ind_states + nr_dep_states;
 	for( i = 0; i < nr_alg_loop; i++, delta++)
 	{
+		/* model output - estimate/input */
 		*delta = algloop_out[i] - states_est[i];
 	}
 
-	if( global_int_method )
+%ENDIF%
+%IF%%NUMBER_CONSTRAINTS%
+	index = 0;
+	for( i = 0; i < nr_constraints; i++)
 	{
-		int index = 0;
-		for( i = 0; i < nr_constraints; i++)
+		if( model_instance->m_mebdfi_method.m_active_contraint_array[i] )
 		{
-			if( global_int_method->m_active_contraint_array[i] )
-			{
-				// the constraint should go to zero.
-				delta[index] = constraint_out[i];
-				index++;
-			}
+			/* the constraint should go to zero. */
+			delta[index] = constraint_out[i];
+			index++;
 		}
 	}
-	else
-	{
-		for( i = 0; i < nr_constraints; i++, delta++)
-			// the constraint should go to zero.
-			*delta = constraint_out[i];
-	}
 
+%ENDIF%
 	return 0;
 }
-static XXBoolean MeBDFStaticsInitialized = XXFALSE;
-void IntegrationMethod_Constructor(IntegrationMethod *intMethod, XXModelInstance* model_instance)
+void IntegrationMethod_Constructor(IntegrationMethod *intMethod, %VARPREFIX%ModelInstance* model_instance)
 {
 	intMethod->m_take_desired_step_busy = XXFALSE;
-	m_model_instance = model_instance;
+	intMethod->m_model_instance = model_instance;
 }
-void ImplicitMethod_Constructor(ImplicitMethod *implMethod, XXModelInstance* model_instance)
+void ImplicitMethod_Constructor(ImplicitMethod *implMethod, %VARPREFIX%ModelInstance* model_instance)
 {
 	/* do the construction of the Implicit Method */
 	IntegrationMethod_Constructor(&implMethod->m_integration_method, model_instance);
@@ -304,7 +429,7 @@ void ImplicitMethod_Constructor(ImplicitMethod *implMethod, XXModelInstance* mod
 	implMethod->m_alg_absolute_tolerance = 1.0e-5;
 	implMethod->m_alg_relative_tolerance = 1.0e-5;
 }
-void ImplicitVariablesStep_Constructor(ImplicitMethod *implVarStepMethod, XXModelInstance* model_instance)
+void ImplicitVariableStep_Constructor(ImplicitVariableStep *implVarStepMethod, %VARPREFIX%ModelInstance* model_instance)
 {
 	/* do the construction of the Implicit Method */
 	ImplicitMethod_Constructor(&implVarStepMethod->m_implicit_method, model_instance);
@@ -317,11 +442,12 @@ void ImplicitVariablesStep_Constructor(ImplicitMethod *implVarStepMethod, XXMode
 	implVarStepMethod->m_maximum_step_size = 1.0;
 
 	implVarStepMethod->m_last_step_size = 0.0;
+	implVarStepMethod->m_prev_last_step_size = 0.0;
 }
-void MeBDFiMethod_Constructor (MeBDFiMethod *meBDFi, XXModelInstance* model_instance)
+void MeBDFiMethod_Constructor (MeBDFiMethod *meBDFi, %VARPREFIX%ModelInstance* model_instance)
 {
 	/* do the construction of the implicit variables step part */
-	ImplicitVariablesStep_Constructor(&meBDFi->m_implicit_variables_step, model_instance);
+	ImplicitVariableStep_Constructor(&meBDFi->m_implicit_variable_step, model_instance);
 	
 	meBDFi->m_use_fixed_step_size = XXFALSE;
 	meBDFi->m_fixed_step_size = 0.0;
@@ -350,8 +476,8 @@ void MeBDFiMethod_Constructor (MeBDFiMethod *meBDFi, XXModelInstance* model_inst
 	meBDFi->m_prev_iwork = NULL;
 	meBDFi->m_prev_idid = 0;
 
-	meBDFi->m_work_states = NULL;
-	meBDFi->m_work_rates = NULL;
+	meBDFi->m_Y = NULL;
+	meBDFi->m_YPRIME = NULL;
 
 	meBDFi->m_check_constraints = XXTRUE;
 	meBDFi->m_active_contraint_array = NULL;
@@ -359,7 +485,7 @@ void MeBDFiMethod_Constructor (MeBDFiMethod *meBDFi, XXModelInstance* model_inst
 
 	meBDFi->m_times_step_continued = 0;
 
-	// and new work arrays to make the bdf method re-entrant */
+	/* and new work arrays to make the bdf method re-entrant */
 	memset(meBDFi->m_mebdfStaticInts, 0, 35 * sizeof(int));
 	memset(meBDFi->m_mebdfStaticDoubles, 0, 26 * sizeof(double)); 
 	memset(meBDFi->m_mebdfStaticLogicals, 0, 5 * sizeof(long int));
@@ -375,152 +501,137 @@ void ImplicitMethod_Destructor(ImplicitMethod *implMethod)
 
 	/* nothing to destruct */
 }
-void ImplicitVariablesStep_Destructor(ImplicitVariablesStep *implVarStepMethod)
+void ImplicitVariableStep_Destructor(ImplicitVariableStep *implVarStepMethod)
 {
 	/* do the destruction of the Implicit Method */
 	ImplicitMethod_Destructor(&implVarStepMethod->m_implicit_method);
 
 	/* nothing to destruct */
 }
-void MeBDFiMethod_Desctructor(MeBDFiMethod *mebdfi_method)
+void MeBDFiMethod_FreeMemory(MeBDFiMethod *meBDFi)
 {
-	ImplicitVariablesStep_Destructor(&meBDFi->m_implicit_variables_step);
-
-	if( mebdfi_method->m_mbnd )
-	{
-		free(mebdfi_method->m_mbnd);
-		mebdfi_method->m_mbnd = NULL;
-	}
-	if( mebdfi_method->m_work )
-	{
-		free(mebdfi_method->m_work);
-		mebdfi_method->m_work = NULL;
-	}
-	if( mebdfi_method->m_iwork )
-	{
-		free(mebdfi_method->m_iwork);
-		mebdfi_method->m_iwork = NULL;
-	}
-	if( mebdfi_method->m_work_states )
-	{
-		free(mebdfi_method->m_work_states);
-		mebdfi_method->m_work_states = NULL;
-	}
-	if( mebdfi_method->m_work_rates )
-	{
-		free(mebdfi_method->m_work_rates);
-		mebdfi_method->m_work_rates = NULL;
-	}
-	if( mebdfi_method->m_prev_work )
-	{
-		free(mebdfi_method->m_prev_work);
-		mebdfi_method->m_prev_work = NULL;
-	}
-	if( mebdfi_method->m_prev_iwork )
-	{
-		free(mebdfi_method->m_prev_iwork);
-		mebdfi_method->m_prev_iwork = NULL;
-	}
-
-	/* check for previous attributes */
-	if( mebdfi_method->m_rtol )
-	{
-		free(mebdfi_method->m_rtol);
-		mebdfi_method->m_rtol = NULL;
-	}
-	if( mebdfi_method->m_atol )
-	{
-		free(mebdfi_method->m_atol);
-		mebdfi_method->m_atol = NULL;
-	}
-	if( mebdfi_method->m_active_contraint_array )
-	{
-		free(mebdfi_method->m_active_contraint_array);
-		mebdfi_method->m_active_contraint_array = NULL;
-	}
+	%VARPREFIX%ModelInstance *model_instance = MODEL_INSTANCE(meBDFi);
+	FREE_MEMORY(model_instance, meBDFi->m_mbnd);
+	FREE_MEMORY(model_instance, meBDFi->m_work);
+	FREE_MEMORY(model_instance, meBDFi->m_iwork);
+	FREE_MEMORY(model_instance, meBDFi->m_Y);
+	FREE_MEMORY(model_instance, meBDFi->m_YPRIME);
+	FREE_MEMORY(model_instance, meBDFi->m_prev_work);
+	FREE_MEMORY(model_instance, meBDFi->m_prev_iwork);
+	FREE_MEMORY(model_instance, meBDFi->m_rtol);
+	FREE_MEMORY(model_instance, meBDFi->m_atol);
+	FREE_MEMORY(model_instance, meBDFi->m_active_contraint_array);
 }
-
-void MeBDFiMethod::DetermineActiveConstraints(MeBDFiMethod *mebdfi_method)
+void MeBDFiMethod_Destructor(MeBDFiMethod *meBDFi)
 {
+	ImplicitVariableStep_Destructor(&meBDFi->m_implicit_variable_step);
+
+	MeBDFiMethod_FreeMemory(meBDFi);
+}
+%IF%%NUMBER_CONSTRAINTS%
+void MeBDFiMethod_DetermineActiveConstraints(MeBDFiMethod *meBDFi)
+{
+	%VARPREFIX%ModelInstance *model_instance = MODEL_INSTANCE(meBDFi);
 	int nr_constraints = %NUMBER_CONSTRAINTS%;
 
-	if( nr_constraints == 0 || mebdfi_method->m_check_constraints == XXFALSE )
+	if( nr_constraints == 0 || meBDFi->m_check_constraints == XXFALSE )
 	{
-		mebdfi_method->m_nr_active_constraints = nr_constraints;
+		meBDFi->m_nr_active_constraints = nr_constraints;
 		return;
 	}
 
-	int nr_ind_states = %NUMBER_STATES%;
-	int nr_dep_states =  %NUMBER_DEPSTATES%;
-	int nr_alg_loop = %NUMBER_ALGLOOPS%;
+	int nr_ind_states = %VARPREFIX%state_count;
+	int nr_dep_states =  %VARPREFIX%depstate_count;
+	int nr_alg_loop = %VARPREFIX%algloop_count;
 
-	// the possible inputs
-	double *indep_states = m_simulator->GetIndepStates();
-	double *dep_states = m_simulator->GetDepStates();
-	double *indep_rates = m_simulator->GetIndepRates();
-	double *dep_rates = m_simulator->GetDepRates();
-	double *algloop_in = m_simulator->GetAlgLoopIn();
-	double *algloop_out = m_simulator->GetAlgLoopOut();
-	double *constraint_in = m_simulator->GetConstraintIn();
+	/* the possible inputs */
+%IF%%NUMBER_STATES%
+	double *indep_states = model_instance->%XX_STATE_ARRAY_NAME%;
+	double *indep_rates = model_instance->%XX_RATE_ARRAY_NAME%;
+%ELSE%
+	double *indep_states = NULL;
+	double *indep_rates = NULL;
+%ENDIF%
+%IF%%NUMBER_DEPSTATES%
+	double *dep_rates = model_instance->%XX_DEP_STATE_ARRAY_NAME%;
+	double *dep_states = model_instance->%XX_DEP_RATE_ARRAY_NAME%;
+%ELSE%
+	double *dep_rates = NULL;
+	double *dep_states = NULL;
+%ENDIF%
+%IF%%NUMBER_ALGLOOPS%
+	double *algloop_in = model_instance->%XX_ALG_IN_ARRAY_NAME%;
+	double *algloop_out = model_instance->%XX_ALG_OUT_ARRAY_NAME%;
+%ELSE%
+	double *algloop_in = NULL;
+	double *algloop_out = NULL;
+%ENDIF%
+%IF%%NUMBER_CONSTRAINTS%
+	double *constraint_in = &model_instance->%XX_ALG_IN_ARRAY_NAME%[%NUMBER_ALGLOOPS%];
+	double *constraint_out = &model_instance->%XX_ALG_OUT_ARRAY_NAME%[%NUMBER_ALGLOOPS%];
+%ELSE%
+	double *constraint_in = NULL;
+	double *constraint_out = NULL;
+%ENDIF%
 
-	// and the output to check
-	double *constraint_out = m_simulator->GetConstraintOut();
-
-	// make a Jacobian to see if a constraint can be handled
+	/* make a Jacobian to see if a constraint can be handled */
 	int i, j;
-	double relEps = m_relative_tolerance;//1e-3;
-	double absEps = m_absolute_tolerance;//1e-5;
+	double relEps = RELATIVE_TOLERANCE(meBDFi);
+	double absEps = ABSOLUTE_TOLERANCE(meBDFi);
 
-	double eps = 0.001 * m_absolute_tolerance; // 1e-8;
+	double eps = 0.001 * absEps;
+	double *nowVal;
 
-	// make sure we don't a major integration step
-	m_simulator->m_major_step = XXFALSE;
+	/* make sure we don't a major integration step */
+	model_instance->major = XXFALSE;
 
-	m_simulator->CalcStatic();
+	/* calculate the static equations */
+	%FUNCTIONPREFIX%CalculateStatic (model_instance);
 
-	// and calculate the initial value problem
-	m_simulator->CalcInput();
+	/* and calculate the input equations */
+	%FUNCTIONPREFIX%CalculateInput (model_instance);
 
-	// and once the dynamic block
-	// so we can store the current result.
-	m_simulator->CalcDynamic();
+	/* evaluate the dynamic block so we can store the current result. */
+	/* evaluate the dynamic part to calculate the new rates/depstates/algouts/constraintouts */
+	%FUNCTIONPREFIX%CalculateDynamic (model_instance);
 
-	double *nowVal = new double[nr_constraints + 1];
+	ALLOCATE_MEMORY(model_instance, nowVal, nr_constraints + 1, double);
 
-	m_nr_active_constraints = 0;
+	meBDFi->m_nr_active_constraints = 0;
 	for( i = 0; i < nr_constraints; i++)
-		m_active_contraint_array[i] = XXFALSE;
+		meBDFi->m_active_contraint_array[i] = XXFALSE;
 
-	// remember the current values.
+	/* remember the current values. */
 	memcpy(nowVal, constraint_out, nr_constraints * sizeof(double));
 
-	//********************************************************************
-	//
-	// INDEP STATES
-	//
-	//********************************************************************
+	/********************************************************************
+	 *
+	 * INDEP STATES
+	 *
+	 ********************************************************************/
 	for( i = 0; i < nr_ind_states; i++)
 	{
-		// if every constraint is controllable then bail out early
-		if( m_nr_active_constraints == nr_constraints )
+		/* if every constraint is controllable then bail out early */
+		if( meBDFi->m_nr_active_constraints == nr_constraints )
 			break;
 
 		double nowStateVal = indep_states[i];
-		if( fabs(nowStateVal) > m_absolute_tolerance )
+		if( fabs(nowStateVal) > ABSOLUTE_TOLERANCE(meBDFi) )
 			indep_states[i] += nowStateVal *relEps;
 		else
 			indep_states[i] += absEps;
 
-		// do a model calculation with this small perturbation
-		m_simulator->CalcDynamic();
+		/* do a model calculation with this small perturbation */
+		%FUNCTIONPREFIX%CalculateDynamic (model_instance);
 
-		// and check if a constraint has changed
+		/* and check if a constraint has changed */
 		for( j = 0; j < nr_constraints; j++)
 		{
-			// probably we should check this agains a small margin
-			// because of numerical small errors
-			// only calculate if necessary
-			if( m_active_contraint_array[j] )
+			/* probably we should check this agains a small margin
+			 * because of numerical small errors
+			 * only calculate if necessary
+			 */
+			if( meBDFi->m_active_contraint_array[j] )
 				continue;
 
 			if( constraint_out[j] - nowVal[j] != 0.0 )
@@ -537,233 +648,230 @@ void MeBDFiMethod::DetermineActiveConstraints(MeBDFiMethod *mebdfi_method)
 
 				if( fabs( (constraint_out[j] - nowVal[j]) / relTo) > eps )
 				{
-					m_nr_active_constraints++;
+					meBDFi->m_nr_active_constraints++;
 
-					m_active_contraint_array[j] = XXTRUE;
+					meBDFi->m_active_contraint_array[j] = XXTRUE;
 				}
 			}
 		}
 
-		// and put back some values
+		/* and put back some values */
 		memcpy(constraint_out, nowVal, nr_constraints * sizeof(double));
 		indep_states[i] = nowStateVal;
-
 	}
 
-	//********************************************************************
-	//
-	// Dep RATES
-	//
-	//********************************************************************
+	/********************************************************************
+	 *
+	 * INDEP RATES
+	 *
+	 ********************************************************************/
 	for( i = 0; i < nr_dep_states; i++)
 	{
-		// if every constraint is controllable then bail out early
-		if( m_nr_active_constraints == nr_constraints )
+		/* if every constraint is controllable then bail out early */
+		if( meBDFi->m_nr_active_constraints == nr_constraints )
 			break;
 
 		double nowRateVal = dep_rates[i];
-		if( nowRateVal > m_absolute_tolerance )
+		if( nowRateVal > ABSOLUTE_TOLERANCE(meBDFi) )
 			dep_rates[i] += nowRateVal *relEps;
 		else
 			dep_rates[i] += absEps;
 
-		// do a model calculation with this small perturbation
-		m_simulator->CalcDynamic();
+		/* do a model calculation with this small perturbation */
+		%FUNCTIONPREFIX%CalculateDynamic (model_instance);
 
-		// and check if a constraint has changed
+		/* and check if a constraint has changed */
 		for( j = 0; j < nr_constraints; j++)
 		{
-			// only check if necessary
-			if(  m_active_contraint_array[j] )
+			/* only check if necessary */
+			if( meBDFi->m_active_contraint_array[j] )
 				continue;
 
-			// probably we should check this agains a small margin
-			// because of numerical small errors
+			/* probably we should check this agains a small margin
+			 * because of numerical small errors
+			 */
 			if( fabs( constraint_out[j] - nowVal[j]) > eps )
 			{
-				m_nr_active_constraints++;
+				meBDFi->m_nr_active_constraints++;
 
-				m_active_contraint_array[j] = XXTRUE;
+				meBDFi->m_active_contraint_array[j] = XXTRUE;
 			}
 		}
-		// and put back some values
+		/* and put back some values */
 		memcpy(constraint_out, nowVal, nr_constraints * sizeof(double));
 		dep_rates[i] = nowRateVal;
 
 	}
 
-	//********************************************************************
-	//
-	// Alg Ins
-	//
-	//********************************************************************
+	/********************************************************************
+	 *
+	 * Alg Ins
+	 *
+	 ********************************************************************/
 	for( i = 0; i < nr_alg_loop; i++)
 	{
-		// if every constraint is controllable then bail out early
-		if( m_nr_active_constraints == nr_constraints )
+		/* if every constraint is controllable then bail out early */
+		if( meBDFi->m_nr_active_constraints == nr_constraints )
 			break;
 
 		double nowAlgLoopVal = algloop_in[i];
-		if( fabs(nowAlgLoopVal) > m_absolute_tolerance )
+		if( fabs(nowAlgLoopVal) > ABSOLUTE_TOLERANCE(meBDFi) )
 			algloop_in[i] += nowAlgLoopVal *relEps;
 		else
 			algloop_in[i] += absEps;
 
-		// do a model calculation with this small perturbation
-		m_simulator->CalcDynamic();
+		/* do a model calculation with this small perturbation */
+		%FUNCTIONPREFIX%CalculateDynamic (model_instance);
 
-		// and check if a constraint has changed
+		/* and check if a constraint has changed */
 		for( j = 0; j < nr_constraints; j++)
-			// only check if necessary
-			if(  m_active_contraint_array[j] )
+		{
+			/* only check if necessary */
+			if( meBDFi->m_active_contraint_array[j] )
 				continue;
 
-			// probably we should check this agains a small margin
-			// because of numerical small errors
+			/* probably we should check this agains a small margin
+			 * because of numerical small errors
+			 */
 			if( fabs( constraint_out[j] - nowVal[j]) > eps )
 			{
-				m_nr_active_constraints++;
+				meBDFi->m_nr_active_constraints++;
 
-				m_active_contraint_array[j] = XXTRUE;
+				meBDFi->m_active_contraint_array[j] = XXTRUE;
 			}
 		}
-		// and put back some values
+		/* and put back some values */
 		memcpy(constraint_out, nowVal, nr_constraints * sizeof(double));
 		algloop_in[i] = nowAlgLoopVal;
-
 	}
 
-	//********************************************************************
-	//
-	// Constraints
-	//
-	//********************************************************************
+	/********************************************************************
+	 *
+	 * Constraints
+	 *
+	 ********************************************************************/
 	for( i = 0; i < nr_constraints; i++)
 	{
-		// if every constraint is controllable then bail out early
-		if( m_nr_active_constraints == nr_constraints )
+		/* if every constraint is controllable then bail out early */
+		if( meBDFi->m_nr_active_constraints == nr_constraints )
 			break;
 
 		double nowConstraintVal = constraint_in[i];
-		if( fabs(nowConstraintVal) > m_absolute_tolerance )
+		if( fabs(nowConstraintVal) > ABSOLUTE_TOLERANCE(meBDFi) )
 			constraint_in[i] += nowConstraintVal *relEps;
 		else
 			constraint_in[i] += absEps;
 
-		// do a model calculation with this small perturbation
-		m_simulator->CalcDynamic();
+		/* do a model calculation with this small perturbation */
+		%FUNCTIONPREFIX%CalculateDynamic (model_instance);
 
-		// and check if a constraint has changed
+		/* and check if a constraint has changed */
 		for( j = 0; j < nr_constraints; j++)
 		{
-			// probably we should check this agains a small margin
-			// because of numerical small errors
+			/* probably we should check this agains a small margin
+			 * because of numerical small errors
+			 */
 			if( fabs( constraint_out[j] - nowVal[j]) > eps )
 			{
-				m_nr_active_constraints++;
+				meBDFi->m_nr_active_constraints++;
 
-				m_active_contraint_array[j] = XXTRUE;
+				meBDFi->m_active_contraint_array[j] = XXTRUE;
 			}
 		}
-		// and put back some values
+		/* and put back some values */
 		memcpy(constraint_out, nowVal, nr_constraints * sizeof(double));
 		constraint_in[i] = nowConstraintVal;
 	}
 
-	delete[] nowVal;
+	FREE_MEMORY(model_instance, nowVal);
 }
-
-XXBoolean MeBDFiMethod::CheckNonActiveConstraints()
-{
-	int i;
-	int nr_constraints = m_simulator->GetNrConstraints();
-
-	// and the output to check
-	double *constraint_out = m_simulator->GetConstraintOut();
-
-	// check whether the non-active constraints
-	// are still zero (implicitly determined)
-	for( i = 0; i < nr_constraints; i++)
-	{
-		// probably we should check this agains a small margin
-		// because of numerical small errors
-		if( m_active_contraint_array[i] == XXFALSE )
-		{
-			// if too large, then return XXFALSE
-			if( fabs(constraint_out[i]) > m_absolute_tolerance) //-6 )
-				return XXFALSE;
-		}
-	}
-
-	return XXTRUE;
-}
-// try to calculate the initial values of the algebraic loop variables.
-XXBoolean MeBDFiMethod::DetermineAlgloop()
+%ENDIF%
+%IF%%OR(NUMBER_ALGLOOPS,NUMBER_CONSTRAINTS)%
+/* try to calculate the initial values of the algebraic loop variables. */
+XXBoolean MeBDFiMethod_DetermineAlgloop(MeBDFiMethod *meBDFi)
 {
 	int lwa, ifail;
-	double *wa, *fvec, *x, xtol = m_alg_absolute_tolerance;
+	double *wa, *fvec, *x, xtol = ALG_ABSOLUTE_TOLERANCE(meBDFi);
 
-	int nr_ind_states = m_simulator->GetNrIndStates();
-	int nr_dep_states =  m_simulator->GetNrDepStates();
-	int nr_alg_loop = m_simulator->GetNrAlgLoop();
-	int nr_constraints = m_simulator->GetNrConstraints();
+	int nr_ind_states = %VARPREFIX%state_count;
+	int nr_dep_states =  %VARPREFIX%depstate_count;
+	int nr_alg_loop = %VARPREFIX%algloop_count;
+	int nr_constraints = %VARPREFIX%constraint_count;
+	%VARPREFIX%ModelInstance* model_instance = MODEL_INSTANCE(meBDFi);
 
-	double *indep_states = m_simulator->GetIndepStates();
-	double *dep_states = m_simulator->GetDepStates();
-	double *indep_rates = m_simulator->GetIndepRates();
-	double *dep_rates = m_simulator->GetDepRates();
-	double *algloop_in = m_simulator->GetAlgLoopIn();
-	double *algloop_out = m_simulator->GetAlgLoopOut();
-	double *constraint_in = m_simulator->GetConstraintIn();
+%IF%%NUMBER_STATES%
+	double *indep_states = model_instance->%XX_STATE_ARRAY_NAME%;
+	double *indep_rates = model_instance->%XX_RATE_ARRAY_NAME%;
+%ELSE%
+	double *indep_states = NULL;
+	double *indep_rates = NULL;
+%ENDIF%
+%IF%%NUMBER_DEPSTATES%
+	double *dep_rates = model_instance->%XX_DEP_STATE_ARRAY_NAME%;
+	double *dep_states = model_instance->%XX_DEP_RATE_ARRAY_NAME%;
+%ELSE%
+	double *dep_rates = NULL;
+	double *dep_states = NULL;
+%ENDIF%
+%IF%%NUMBER_ALGLOOPS%
+	double *algloop_in = model_instance->%XX_ALG_IN_ARRAY_NAME%;
+	double *algloop_out = model_instance->%XX_ALG_OUT_ARRAY_NAME%;
+%ELSE%
+	double *algloop_in = NULL;
+	double *algloop_out = NULL;
+%ENDIF%
+%IF%%NUMBER_CONSTRAINTS%
+	double *constraint_in = &model_instance->%XX_ALG_IN_ARRAY_NAME%[%NUMBER_ALGLOOPS%];
+	double *constraint_out = &model_instance->%XX_ALG_OUT_ARRAY_NAME%[%NUMBER_ALGLOOPS%];
+%ELSE%
+	double *constraint_in = NULL;
+	double *constraint_out = NULL;
+%ENDIF%
 
-	// and the output to check
-	double *constraint_out = m_simulator->GetConstraintOut();
+%IF%%NUMBER_CONSTRAINTS%
+	/* only at the start of a simulation */
+	if( model_instance->m_initState )
+		MeBDFiMethod_DetermineActiveConstraints(meBDFi);
 
-	// only at the start of a simulation
-	if( m_simulator->m_initState )
-		DetermineActiveConstraints();
-
+%ENDIF%
 	int n;
-	n = m_simulator->GetNrAlgLoop() + m_nr_active_constraints;
+	n = %VARPREFIX%algloop_count + meBDFi->m_nr_active_constraints;
 	if (n == 0)
 		return XXTRUE;
 
     lwa = n * (3 * n + 16) / 2;
-	wa = new double[lwa];
-	fvec = new double[n + 1];
-	x = new double[n + 1];
-	// check if allocating went alright.
+	ALLOCATE_MEMORY(model_instance, wa, lwa, double);
+	ALLOCATE_MEMORY(model_instance, fvec, n+1, double);
+	ALLOCATE_MEMORY(model_instance, x, n+1, double);
+	/* check if allocating went alright. */
 	if (x == NULL || wa == NULL || fvec == NULL)
 	{
-		// ShowErrorMessage(_T("Memory allocation error in Modified BDF method"));
-		if( x )
-			delete[] x;
-		if( wa )
-			delete[] wa;
-		if( fvec )
-			delete[] fvec;
+		/* ShowErrorMessage(_T("Memory allocation error in Modified BDF method")); */
+		FREE_MEMORY(model_instance, x);
+		FREE_MEMORY(model_instance, fvec);
+		FREE_MEMORY(model_instance, wa);
 		return XXFALSE;
     }
 	memset(wa, 0, lwa * sizeof(double));
 	memset(fvec, 0, (n + 1) * sizeof(double));
 
-	// set the initial values of the algloop in to the x value
-	// assume the algloop in already has these values
+	/* set the initial values of the algloop in to the x value
+	 * assume the algloop in already has these values */
 	if( nr_alg_loop > 0 )
 		memcpy(x, algloop_in, nr_alg_loop * sizeof(double));
 
-	// set the initial values of the constraint in to the x value
-	// assume the constraint in already has these values
+	/*set the initial values of the constraint in to the x value
+	 * assume the constraint in already has these values */
 	if( nr_constraints > 0 )
 	{
-		if( m_nr_active_constraints == nr_constraints )
+		if( meBDFi->m_nr_active_constraints == nr_constraints )
 			memcpy(&x[nr_alg_loop], constraint_in, nr_constraints * sizeof(double));
 		else
 		{
 			int index = 0;
 			for( int i = 0; i < nr_constraints; i++ )
 			{
-				if( m_active_contraint_array[i] )
+				if( meBDFi->m_active_contraint_array[i] )
 				{
 					x[nr_alg_loop + index] = constraint_in[i];
 					index++;
@@ -772,689 +880,788 @@ XXBoolean MeBDFiMethod::DetermineAlgloop()
 		}
 	}
 
-
     if (xtol <= 0.0)
 		xtol = 0.0001;
 
-	// initialize the algebraic loop in variables on zero
-	// DON'T DO THIS ANYMORE BECAUSE THE ALGEBRAIC LOOP IN VARIABLES
-	// ARE NOW SEEN AS INITIAL VALUES, WHICH THE USER CAN PROVIDE.
-	// THIS IS DONE IN Simulator::InitialCondsToStates()
-//	for (i = 0; i < (int)n; i++)
-//		algloop_in[i] = 0.0;
+%IF%%0%
+	/* initialize the algebraic loop in variables on zero
+	 * DON'T DO THIS ANYMORE BECAUSE THE ALGEBRAIC LOOP IN VARIABLES
+	 * ARE NOW SEEN AS INITIAL VALUES, WHICH THE USER CAN PROVIDE.
+	 * THIS IS DONE IN Simulator::InitialCondsToStates() */
+/*	for (i = 0; i < (int)n; i++)
+ *		algloop_in[i] = 0.0;
+ */
+COMMENTED OUT
+%ENDIF%
 
 	ifail = 0;
 
-    /* test if it IS necessary to determine the initial values of the algebraic-loop variables */
+    /* test if it IS necessary to determine the initial values of the algebraic-loop variables  */
     /* using the root-finding function below. If the result of the initial DAE system (with     */
     /* algebraic-loop variables equal to 0) is consistent, so G(t, y, yprime) == 0, then        */
     /* calling the root-finding function is NOT needed. Dassl is capable of solving the system. */
     /* Some root-finding functions are also not capable of starting in the actual root (e.g.    */
     /* the NAG function c05nbf).   P.W.                                                         */
 
-	// set the global_simulator variable so that the callback function knows on what model to work
-	// on.
-	global_simulator = m_simulator;
+	/* set calculation to minor steps */
+	model_instance->major = XXFALSE;
 
-	if( m_check_constraints )
-		global_int_method = this;
+	/* set x on the initial values. */
 
-	// make sure we do NOT a major integration step
-	m_simulator->m_major_step = XXFALSE;
+%IF%%OR(NUMBER_ALGLOOPS,NUMBER_CONSTRAINTS)%
+	hybrd1_(MeBDFCalcAlgloopRes, &n, x, fvec, &xtol, &ifail, wa, &lwa, model_instance);
+%ELSE%
+	/* No need to solve initial values */
+%ENDIF%
 
+	FREE_MEMORY(model_instance, x);
+	FREE_MEMORY(model_instance, fvec);
+	FREE_MEMORY(model_instance, wa);
 
-	// set x on the initial values.
-
-	hybrd1_(MeBDFCalcAlgloopRes, &n, x, fvec, &xtol, &ifail, wa, &lwa);
-
-	global_int_method = NULL;
-	global_simulator = NULL;
-
-
-	delete[] wa;
-	delete[] fvec;
-	delete[] x;
-
-
-	if ( ifail == 1 ) // warning : at the Netlib this was 0.
+	if ( ifail == 1 ) /* warning : at the Netlib this was 0. */
 	{
 		return XXTRUE;
 	}
 
-	// there was an error if we reach this point.
+	/* there was an error if we reach this point. */
     switch (ifail)
 	{
 		case 0:
-//			msg = _T("Error determining initial algebraic-loop, or constraint variables: improper input parameters for hybrid function.");
-			break;
+/*			msg = _T("Error determining initial algebraic-loop, or constraint variables: improper input parameters for hybrid function.");
+ */			break;
 		case 2:
-//			msg = _T("Error determining initial algebraic-loop, or constraint variables: very many evaluations of algebraic-loop part.");
-			break;
+/*			msg = _T("Error determining initial algebraic-loop, or constraint variables: very many evaluations of algebraic-loop part.");
+ */			break;
 	    case 3:
-//			msg = _T("Error determining initial algebraic-loop, or constraint variables: no further improvement, tolerance too small.");
-			break;
+/*			msg = _T("Error determining initial algebraic-loop, or constraint variables: no further improvement, tolerance too small.");
+ */			break;
 		case 4:
 		case 5:
-//			msg = _T("Error determining initial algebraic-loop, or constraint variables: iteration for algebraic loop is not making good progress.");
-			break;
+/*			msg = _T("Error determining initial algebraic-loop, or constraint variables: iteration for algebraic loop is not making good progress.");
+ */			break;
 		default:
-//			msg = _T("Error determining initial algebraic-loop, or constraint variables: ???");
-		break;
+/*			msg = _T("Error determining initial algebraic-loop, or constraint variables: ???");
+ */		break;
 	}
-//	ShowErrorMessage(msg);
-
-	// accept some more case, in that case let the mebdf method try
-	// it for itself.
+/*	ShowErrorMessage(msg);
+ */
+	/* accept some more case, in that case let the mebdf method try
+	 * it for itself. */
 	if( ifail == 2 || ifail == 3 || ifail == 4 || ifail == 5)
 		return XXTRUE;
 
     return XXFALSE;
 }
+%ENDIF%
 
-XXBoolean MeBDFiMethod::Initialize()
+XXBoolean ImplicitMethod_Initialize(ImplicitMethod *impMethod)
 {
-	m_times_step_continued = 0;
+	return XXTRUE;
+}
+XXBoolean ImplicitVariableStep_Initialize(ImplicitVariableStep *impVarStep)
+{
+	return ImplicitMethod_Initialize(&impVarStep->m_implicit_method);
+}
 
-	int nr_ind_states = m_simulator->GetNrIndStates();
-	int nr_dep_states =  m_simulator->GetNrDepStates();
-	int nr_alg_loop = m_simulator->GetNrAlgLoop();
-	int nr_constraints = m_simulator->GetNrConstraints();
+XXBoolean MeBDFiMethod_Initialize(MeBDFiMethod *meBDFi)
+{
+	meBDFi->m_times_step_continued = 0;
 
-	// at this moment the number of active constraints are not yet determined !!!!
+	int nr_ind_states = %VARPREFIX%state_count;
+	int nr_dep_states =  %VARPREFIX%depstate_count;
+	int nr_alg_loop = %VARPREFIX%algloop_count;
+	int nr_constraints = %VARPREFIX%constraint_count;
+
+	/* at this moment the number of active constraints are not yet determined !!!! */
 	int number_of_states = nr_ind_states + nr_dep_states + nr_alg_loop + nr_constraints;
+	%VARPREFIX%ModelInstance* model_instance = MODEL_INSTANCE(meBDFi);
 
-	m_last_step_size = 0.0;
+	meBDFi->m_implicit_variable_step.m_last_step_size = 0.0;
 
-	// call the base class.
-	if( ImplicitVariableStep::Initialize() == XXFALSE )
+	/* call the parent class */
+	if( ImplicitVariableStep_Initialize(&meBDFi->m_implicit_variable_step) == XXFALSE )
 		return XXFALSE;
 
-	/* check for previous attributes */
-	// clear the old arrays, if there were any.
-	if( m_mbnd )
-		delete [] m_mbnd;
-	if( m_work )
-		delete [] m_work;
-	if( m_iwork )
-		delete [] m_iwork;
-	if( m_work_states )
-		delete [] m_work_states;
-	if( m_work_rates )
-		delete [] m_work_rates;
+	/* clear the "old" arrays */
+	MeBDFiMethod_FreeMemory(meBDFi);
+	
+	meBDFi->m_nr_active_constraints = 0;
 
-	if( m_prev_work )
-		delete [] m_prev_work;
-	if( m_prev_iwork )
-		delete [] m_prev_iwork;
+	/* this should be in the initialize section */
+	meBDFi->m_local_initialStepSize = ( model_instance->finish_time - model_instance->start_time ) / 10000.0;/* 0.0 = not appropriate */
+	if( meBDFi->m_implicit_variable_step.m_use_initial_step_size )
+		meBDFi->m_local_initialStepSize = meBDFi->m_implicit_variable_step.m_initial_step_size;
+	meBDFi->m_method_flag = 22; /* numerical Jacobian */
+	meBDFi->m_idid = 1; 		/* 1 = first call, after that it is 0 */
+	meBDFi->m_lout = 0; 		/* output channel... */
+	
+	ALLOCATE_MEMORY(model_instance, meBDFi->m_mbnd, 4+1, int);
+	
+	/* documentation from the code: */
+	/**************************************************************************
+	 *  WORK() HOUSES THE FOLLOWING ARRAYS
+	 *  Y(N,12)   , YHOLD(N,12) , YNHOLD(N,2) , YMAX(N)
+	 *  ERRORS(N) , SAVE1(N) , SAVE2(N) , SCALE(N) , ARH(N) , PW(MBND(4)*N)
+	 *  PWCOPY(MBND(4)*N)
+	 *  IF THE BANDED OPTION IS NOT BEING USED THEN MBND(4)=N.
+	 **************************************************************************/
+	/* so : */
+	meBDFi->m_mbnd[3] = number_of_states;
 
-	if( m_active_contraint_array )
-		delete [] m_active_contraint_array;
+	meBDFi->m_maxder = 7; /* the recommended value. */
+	meBDFi->m_itol = 2;   /* indicator of the type of error control. */
+				 /* THE FOLLOWING TABLE GIVES THE TYPES (SCALAR/ARRAY)
+				  * OF RTOL AND ATOL, AND THE CORRESPONDING FORM OF ewt(i)
+				  *	  ITOL   RTOL      ATOL       ewt(i)
+				  *	   2    SCALAR    SCALAR   rtol*abs(y(i))   + atol
+				  *	   3    SCALAR    ARRAY    rtol*abs(y(i))   + atol(i)
+				  *	   4    ARRAY     SCALAR   rtol(i)*abs(y(i))+ atol
+				  *	   5    ARRAY     ARRAY    rtol(i)*abs(y(i))+ atol(i)
+	              */
+	meBDFi->m_rpar = 0.0;
+	meBDFi->m_ipar = 0;
+	meBDFi->m_ierr = 0;
 
-	m_nr_active_constraints = 0;
+	meBDFi->m_lwork = 2 * ((32 + meBDFi->m_mbnd[3]) * number_of_states + 3) + 2;
+	ALLOCATE_MEMORY(model_instance, meBDFi->m_work, meBDFi->m_lwork+1, double);
 
-	m_prev_work = NULL;
-	m_prev_iwork = NULL;
-	m_active_contraint_array = NULL;
+	meBDFi->m_liwork = 2 * (number_of_states + 14) + 2;
+	ALLOCATE_MEMORY(model_instance, meBDFi->m_iwork, meBDFi->m_liwork+1, int);
 
-	/* check for previous attributes */
-	if ( m_rtol)
-		delete[] ( m_rtol);
-	if ( m_atol)
-		delete[] ( m_atol);
+	/* if the first element is filled in the complete number of equations
+	 * given to the integration method must fulfill that m_iwork[0] + m_iwork[1] + m_iwork[2] == number_of_states */
+	meBDFi->m_iwork[0] = nr_ind_states;				 /* index 1 variables = number of independent states */
+	meBDFi->m_iwork[1] = nr_dep_states + nr_alg_loop;/* index 2 variables = number of dependent states and algebraic loops */
+	meBDFi->m_iwork[2] = nr_constraints;			 /* index 3 variables = number of constraint variables. */
 
-	// this should be in the initialize section
-	m_local_initialStepSize = ( m_simulator->m_finishTime - m_simulator->m_startTime ) / 10000.0;// 0.0 = not appropriate
-	if( m_use_initial_step_size )
-		m_local_initialStepSize  = m_initial_step_size;
-	m_method_flag = 22; // numerical Jacobian
-	m_idid = 1; // 1 = first call, after that it is 0
-	m_lout = 0; // output channel...
-	m_mbnd = new int [4 + 1];
-	memset(m_mbnd, 0, (4+1)*sizeof(int));
-	// found in the code
-/*     WORK() HOUSES THE FOLLOWING ARRAYS */
-/*     Y(N,12)   , YHOLD(N,12) , YNHOLD(N,2) , YMAX(N) */
-/*     ERRORS(N) , SAVE1(N) , SAVE2(N) , SCALE(N) , ARH(N) , PW(MBND(4)*N)
- */
-/*     PWCOPY(MBND(4)*N) */
-/*     IF THE BANDED OPTION IS NOT BEING USED THEN MBND(4)=N. */
-	// so :
-	m_mbnd[3] = number_of_states;
-
-
-	m_maxder = 7; // the recommended value.
-	m_itol = 2;// indicator of the type of error control.
-				 // THE FOLLOWING TABLE GIVES THE TYPES (SCALAR/ARRAY) */
-				 // OF RTOL AND ATOL, AND THE CORRESPONDING FORM OF ewt(i) */
-				 //	  ITOL   RTOL      ATOL       ewt(i) */
-				 //	   2    SCALAR    SCALAR   rtol*abs(y(i))   + atol */
-				 //	   3    SCALAR    ARRAY    rtol*abs(y(i))   + atol(i) */
-				 //	   4    ARRAY     SCALAR   rtol(i)*abs(y(i))+ atol */
-				 //	   5    ARRAY     ARRAY    rtol(i)*abs(y(i))+ atol(i) */
-
-	m_rpar = 0.0;
-	m_ipar = 0;
-	m_ierr = 0;
-
-	m_lwork = 2 * ((32 + m_mbnd[3]) * number_of_states + 3) + 2;	// the length of the lwork
-
-	m_work = new double[m_lwork + 1];
-	memset(m_work, 0, (m_lwork) * sizeof(double));
-
-	m_liwork = 2 * (number_of_states + 14) + 2;	// the length of the iwork
-
-	m_iwork = new int[m_liwork + 1];
-	memset(m_iwork, 0, (m_liwork) * sizeof(int));
-
-	// if the first element is filled in the complete number of equations
-	// given to the integration method must fulfill that m_iwork[0] + m_iwork[1] + m_iwork[2] == number_of_states
-	m_iwork[0] = nr_ind_states;				 // index 1 variables = number of independent states
-	m_iwork[1] = nr_dep_states + nr_alg_loop;// index 2 variables = number of dependent states and algebraic loops
-	m_iwork[2] = nr_constraints;			 // index 3 variables = number of constraint variables.
-
-	// special case if we don't have any independent states:
-	// too catch the check in the integration method, there m_iwork[0] is made number_of_states
-	// if m_iwork[0] == 0, without checking m_iwork[1] and m_iwork[2]
+	/* special case if we don't have any independent states:
+	 * too catch the check in the integration method, there m_iwork[0] is made number_of_states
+	 * if m_iwork[0] == 0, without checking m_iwork[1] and m_iwork[2]
+	 */
 	if( nr_ind_states == 0 )
 	{
-		// let the method figure it out by itself.
-		// this is actually always an option...
-		m_iwork[0] = 0;
-		m_iwork[1] = 0;
-		m_iwork[2] = 0;
+		/* let the method figure it out by itself.
+		 * this is actually always an option...
+		 */
+		meBDFi->m_iwork[0] = 0;
+		meBDFi->m_iwork[1] = 0;
+		meBDFi->m_iwork[2] = 0;
 	}
 
-	m_iwork[13] = 2147483647; // 500; // maximum number of allowed steps. Set every time, so always continue
+	meBDFi->m_iwork[13] = 2147483647; /* used to be 500 now: maximum number of allowed steps. Set every time, so always continue */
 
-	m_rtol = new double[number_of_states + 1];
-	m_atol = new double[number_of_states + 1];
+	ALLOCATE_MEMORY(model_instance, meBDFi->m_rtol, number_of_states + 1, double);
+	ALLOCATE_MEMORY(model_instance, meBDFi->m_atol, number_of_states + 1, double);
 
 	if( number_of_states > 0 )
 	{
 		int i;
 		for (i = 0; i < nr_ind_states + nr_dep_states; i++)
 		{
-			m_rtol[i] = m_relative_tolerance;
-			m_atol[i] = m_absolute_tolerance;
+			meBDFi->m_rtol[i] = RELATIVE_TOLERANCE(meBDFi);
+			meBDFi->m_atol[i] = ABSOLUTE_TOLERANCE(meBDFi);
 		}
+%IF%%OR(NUMBER_ALGLOOPS,NUMBER_CONSTRAINTS)%
 
-		// and the rest
+		/* and the algebraic tolerances*/
 		for ( ; i < number_of_states; i++)
 		{
-			m_rtol[i] = m_alg_relative_tolerance;
-			m_atol[i] = m_alg_absolute_tolerance;
+			meBDFi->m_rtol[i] = ALG_RELATIVE_TOLERANCE(meBDFi);
+			meBDFi->m_atol[i] = ALG_ABSOLUTE_TOLERANCE(meBDFi);
 		}
+%ENDIF%
 	}
 
-	m_work_states = new double [number_of_states + 1];
-	m_work_rates = new double [number_of_states + 1];
+	ALLOCATE_MEMORY(model_instance, meBDFi->m_Y, number_of_states + 1, double);
+	ALLOCATE_MEMORY(model_instance, meBDFi->m_YPRIME, number_of_states + 1, double);
 
-	if( m_check_constraints )
+	if( meBDFi->m_check_constraints )
 	{
 		if( nr_constraints > 0 )
-			m_active_contraint_array = new XXBoolean[nr_constraints + 1];
-		else
-			m_active_contraint_array = NULL;
-		m_nr_active_constraints = 0;
+		{
+			ALLOCATE_MEMORY(model_instance, meBDFi->m_active_contraint_array, nr_constraints + 1, XXBoolean);
+		}
 	}
 	else
 	{
-		// to make sure we don't have a mistake somewhere.
-		m_nr_active_constraints = nr_constraints;
+		/* to make sure we don't have a mistake somewhere. */
+		meBDFi->m_nr_active_constraints = nr_constraints;
 	}
 
-	// reinitialize from here
-	ReInitialize(XXTRUE, XXTRUE);
+	/* reinitialize from here */
+	MeBDFiMethod_ReInitialize(meBDFi, XXTRUE, XXTRUE);
 
-	// now this one might have changed !!!!!
-	m_iwork[2] = m_nr_active_constraints;	 // index 3 variables = number of constraint variables.
-	number_of_states = nr_ind_states + nr_dep_states + nr_alg_loop + m_nr_active_constraints;
-	m_lwork = 2 * ((32 + m_mbnd[3]) * number_of_states + 3) + 2;	// the length of the lwork
-	m_liwork = 2 * (number_of_states + 14) + 2;	// the length of the iwork
-	m_mbnd[3] = number_of_states;
+	/* now this one might have changed !!!!!
+	 * it only may have become smaller, so no need to re-allocate memory 
+	 */
+	meBDFi->m_iwork[2] = meBDFi->m_nr_active_constraints;	 /* index 3 variables = number of constraint variables. */
+	number_of_states = nr_ind_states + nr_dep_states + nr_alg_loop + meBDFi->m_nr_active_constraints;
+	meBDFi->m_lwork = 2 * ((32 + meBDFi->m_mbnd[3]) * number_of_states + 3) + 2;
+	meBDFi->m_liwork = 2 * (number_of_states + 14) + 2;
+	meBDFi->m_mbnd[3] = number_of_states;
 
-	// and initialize the static state, since some variables are used before given a value
-	// 'cause fortran assumes zero-initialization.
-	InitializeMeBDFiState();
+	/* and initialize the static state, since some variables are used before given a value
+	 * 'cause fortran assumes zero-initialization.
+	 */
+	MeBDFiMethod_InitializeMeBDFiState(meBDFi);
 
 	return XXTRUE;
 }
 
-// this method provides a way to restart the integration method at a certain state (and time)
-// without reallocating all work arrays
-XXBoolean MeBDFiMethod::ReInitialize(XXBoolean major_step, XXBoolean calcModel)
+XXBoolean ImplicitMethod_ReInitialize(ImplicitMethod *impMethod)
 {
-	int nr_ind_states = m_simulator->GetNrIndStates();
-	int nr_dep_states =  m_simulator->GetNrDepStates();
-	int nr_alg_loop = m_simulator->GetNrAlgLoop();
-	int nr_constraints = m_simulator->GetNrConstraints();
+	return XXTRUE;
+}
+XXBoolean ImplicitVariableStep_ReInitialize(ImplicitVariableStep *impVarStep, XXBoolean major_step, XXBoolean calcModel)
+{
+	return ImplicitMethod_ReInitialize(&impVarStep->m_implicit_method);
+}
+/* this method provides a way to restart the integration method at a certain state (and time)
+ * without reallocating all work arrays */
+XXBoolean MeBDFiMethod_ReInitialize(MeBDFiMethod *meBDFi, XXBoolean major_step, XXBoolean calcModel)
+{
+	int nr_ind_states = %VARPREFIX%state_count;
+	int nr_dep_states =  %VARPREFIX%depstate_count;
+	int nr_alg_loop = %VARPREFIX%algloop_count;
+	int nr_constraints = %VARPREFIX%constraint_count;
 
-	// here the active constraints have te be determined !!!
+	/* here the active constraints have te be determined !!! */
 	int number_of_states = nr_ind_states + nr_dep_states + nr_alg_loop + nr_constraints;
+	%VARPREFIX%ModelInstance *model_instance = MODEL_INSTANCE(meBDFi);
 
-	if (ImplicitVariableStep::ReInitialize(major_step, calcModel) == XXFALSE)
+	if (ImplicitVariableStep_ReInitialize(&meBDFi->m_implicit_variable_step, major_step, calcModel) == XXFALSE)
 	{
 		return XXFALSE;
 	}
 
-	// this should be in the initialize section
-	m_local_initialStepSize = m_simulator->m_finishTime / 1000.0;// 0.0 = not appropriate
-	if( m_use_initial_step_size )
-		m_local_initialStepSize  = m_initial_step_size;
-
-	// if we are surely in an initialize state then
-	// start with a first call an initial value problem
-	if( m_simulator->m_reinitState || m_simulator->m_initState )
+	/* this should be in the initialize section */
+	meBDFi->m_local_initialStepSize = model_instance->finish_time / 1000.0;/* 0.0 = not appropriate */
+	if( meBDFi->m_implicit_variable_step.m_use_initial_step_size )
 	{
-		m_idid = 1; // 1 = first call, after that it is 0
+		meBDFi->m_local_initialStepSize = meBDFi->m_implicit_variable_step.m_initial_step_size;
+	}
+
+	/* if we are surely in an initialize state then
+	 * start with a first call an initial value problem */
+	if( model_instance->m_reinitState || model_instance->m_initState )
+	{
+		meBDFi->m_idid = 1; /* 1 = first call, after that it is 0 or 2*/
 	}
 	else
 	{
-		// assume we are placed back gracefully to a previous time
-		// and that a first call step is not necessary.
-		// go exactly to the output
-		if( m_take_desired_step_busy )
+		/* assume we are placed back gracefully to a previous time
+		 * and that a first call step is not necessary.
+		 * go exactly to the output */
+		if( TAKE_DESIRED_STEP_BUSY(meBDFi) )
 		{
-			// if we're reset from the starting point, then really
-			// start all over again
-			if( m_simulator->m_simulationTime == m_simulator->m_startTime )
-				m_idid = 1;
-			else
-				// now we can use some information from the past
-
-				// this must be 0. Integration will go sligthly beyond tout
-				// but will interpolate to tout to give the proper answer.
-				// this is fine for event detection! To go precisely to the point
-				// you will get in trouble with event localization!.
-				m_idid = 0;
-		}
-		else
-		{
-			m_idid = 3;
-		}
-	}
-
-	// check if we must take a used step size.
-	if( number_of_states == 0 )
-	{
-		if( m_use_comm_int )
-		{
-			m_fixed_step_size = m_comm_int;
-		}
-		else
-		{
-			if( m_use_maximum_step_size )
+			/* if we're reset from the starting point, then really
+			 * start all over again */
+			if( model_instance->time == model_instance->start_time )
 			{
-				m_fixed_step_size = m_maximum_step_size;
+				meBDFi->m_idid = 1;
 			}
 			else
 			{
-				if( m_use_initial_step_size )
-					m_fixed_step_size = m_initial_step_size;
+				/* now we can use some information from the past */
+
+				/* this must be 0. Integration will go sligthly beyond tout
+				 * but will interpolate to tout to give the proper answer.
+				 * this is fine for event detection! To go precisely to the point
+				 * you will get in trouble with event localization!. */
+				meBDFi->m_idid = 0;
+			}
+		}
+		else
+		{
+			/* for 20-sim simulations, integration is returned after every step */
+			/* in order to store that point as a point on csv or plot: idid = 3 */
+			/* in an FMU it is perfectly fine to go up to the desired output time: idid = 0 or 2 */
+			/*meBDFi->m_idid = 3; return after one step*/
+			meBDFi->m_idid = 2; 	/* 2 or 0: 0 may go slightly beyond, 2 hit exactly */
+		}
+	}
+
+	/* check if we must take a used step size. */
+	if( number_of_states == 0 )
+	{
+		if( meBDFi->m_use_comm_int )
+		{
+			meBDFi->m_fixed_step_size = meBDFi->m_comm_int;
+		}
+		else
+		{
+			if( meBDFi->m_implicit_variable_step.m_use_maximum_step_size )
+			{
+				meBDFi->m_fixed_step_size = meBDFi->m_implicit_variable_step.m_maximum_step_size;
+			}
+			else
+			{
+				if( meBDFi->m_implicit_variable_step.m_use_initial_step_size )
+					meBDFi->m_fixed_step_size = meBDFi->m_implicit_variable_step.m_initial_step_size;
 				else
 				{
-					m_fixed_step_size = (m_simulator->m_finishTime - m_simulator->m_startTime ) / 1000;
+					meBDFi->m_fixed_step_size = (model_instance->finish_time - model_instance->start_time ) / 1000;
 				}
 			}
 		}
 
-		// check if we have to set the fixed step size for a desired step
-		if( m_take_desired_step_busy )
-			m_fixed_step_size = m_simulator->m_finishTime - m_simulator->m_simulationTime;
-		m_use_fixed_step_size = XXTRUE;
+		/* check if we have to set the fixed step size for a desired step */
+		if( TAKE_DESIRED_STEP_BUSY(meBDFi) )
+		{
+			meBDFi->m_fixed_step_size = model_instance->finish_time - model_instance->time;
+		}
+		meBDFi->m_use_fixed_step_size = XXTRUE;
 	}
 	else
 	{
-		m_use_fixed_step_size = XXFALSE;
+		meBDFi->m_use_fixed_step_size = XXFALSE;
 
-		if( m_use_comm_int )
+		if( meBDFi->m_use_comm_int )
 		{
-			m_fixed_step_size = m_comm_int;
+			meBDFi->m_fixed_step_size = meBDFi->m_comm_int;
 		}
 		else
-			m_fixed_step_size = 0.0;
+		{
+			meBDFi->m_fixed_step_size = 0.0;
+		}
 	}
-
-	// calculate the static equations
-//	m_simulator->CalcInit();
+%IF%%0%
+	/* calculate the static equations */
+/*	m_simulator->CalcInit(); */
+%ENDIF%
 
 	if( calcModel )
 	{
-		m_simulator->CalcStatic();
+		%FUNCTIONPREFIX%CalculateStatic (model_instance);
 
-		// and calculate the initial value problem
-		m_simulator->CalcInput();
+		/* and calculate the initial value problem */
+		%FUNCTIONPREFIX%CalculateInput (model_instance);
 
-		// make sure we do a major integration step
-		m_simulator->m_major_step = major_step;
+		/* make sure we do a major integration step */
+		model_instance->major = major_step;
 
-		m_simulator->CalcDynamic();
+		%FUNCTIONPREFIX%CalculateDynamic (model_instance);
 	}
 
-	// don't do the output part here yet, because the algebraic loop procedure
-	// might call the dynamic block again.
-	// so do the output equation at the end of this function
+	/* don't do the output part here yet, because the algebraic loop procedure
+	 * might call the dynamic block again.
+	 * so do the output equation at the end of this function */
 	if( number_of_states > 0 )
 	{
-		// only determine algloop of we not in a take desired step
-		// in that case we assume to have been placed back gracefully
-		// to a previous time will all states intact.
-		if( m_simulator->m_reinitState || m_simulator->m_initState )
+%IF%%OR(NUMBER_ALGLOOPS,NUMBER_CONSTRAINTS)%
+		/* only determine algloop of we not in a take desired step
+		 * in that case we assume to have been placed back gracefully
+		 * to a previous time will all states intact. */
+		if( model_instance->m_reinitState || model_instance->m_initState )
 		{
-			// if there are algebraic loop or constraint variables in the system, try to calculate the initial
-			// values of those variables using hybrid.
-			if ( DetermineAlgloop() == XXFALSE )
+			/* if there are algebraic loop or constraint variables in the system, try to calculate the initial
+			 * values of those variables using hybrid. */
+			if ( MeBDFiMethod_DetermineAlgloop(meBDFi) == XXFALSE )
 			{
 				return XXFALSE;
 			}
 		}
 
-		// if no algebraic loop variables return..
-		// set the dependent states in the states array, to the value of the dependent states calculated
-		// see for details of the specific arrays the initialization function of the simulator.
+%ENDIF%
+%IF%%NUMBER_DEPSTATES%
+		/* if no algebraic loop variables return..
+		 * set the dependent states in the states array, to the value of the dependent states calculated
+		 * see for details of the specific arrays the initialization function of the simulator.*/
 		if( nr_dep_states > 0 )
 		{
-			double *states = m_simulator->GetStates();
-			double *dep_states = m_simulator->GetDepStates();
-			memcpy(&states[nr_ind_states], dep_states,  nr_dep_states * sizeof(double));
+			memcpy(&meBDFi->m_Y[nr_ind_states], model_instance->%XX_DEP_STATE_ARRAY_NAME%, nr_dep_states * sizeof(double));
 		}
-
-		m_tout = m_use_fixed_step_size ? m_simulator->m_simulationTime : m_simulator->m_finishTime;
+%ENDIF%
+		meBDFi->m_tout = meBDFi->m_use_fixed_step_size ? model_instance->time : model_instance->finish_time;
 	}
 	else
-		m_tout = m_simulator->m_simulationTime;
+	{
+		meBDFi->m_tout = model_instance->time;
+	}
 
 	if( calcModel )
 	{
-		// we did a dynamic block calculation, so the output must be up to date with this
-		// calculation.
-		m_simulator->CalcOutput();
+		/* we did a dynamic block calculation, so the output must be up to date with this calculation. */
+		%FUNCTIONPREFIX%CalculateOutput (model_instance);
 	}
 
 	return XXTRUE;
 }
 
-void MeBDFiMethod::Integrate()
+void MeBDFiMethod_Integrate(MeBDFiMethod *meBDFi, double outputTime, double finishTime)
 {
 	XXBoolean init_good = XXTRUE;
+%IF%%OR(OR(NUMBER_DEPSTATES,NUMBER_ALGLOOPS),NUMBER_CONSTRAINTS)%
+	int offset;
+%ENDIF%
+%IF%%OR(NUMBER_ALGLOOPS,NUMBER_CONSTRAINTS)%
+	int i, index;
+%ENDIF%
 
-	int nr_ind_states = m_simulator->GetNrIndStates();
-	int nr_dep_states =  m_simulator->GetNrDepStates();
-	int nr_alg_loop = m_simulator->GetNrAlgLoop();
-	int nr_constraints = m_simulator->GetNrConstraints();
+	int nr_ind_states = %VARPREFIX%state_count;
+	int nr_dep_states =  %VARPREFIX%depstate_count;
+	int nr_alg_loop = %VARPREFIX%algloop_count;
+	int nr_constraints = %VARPREFIX%constraint_count;
+	%VARPREFIX%ModelInstance* model_instance = MODEL_INSTANCE(meBDFi);
 
-	double *indep_states = m_simulator->GetIndepStates();
-	double *dep_states = m_simulator->GetDepStates();
-	double *indep_rates = m_simulator->GetIndepRates();
-	double *dep_rates = m_simulator->GetDepRates();
-	double *algloop_in = m_simulator->GetAlgLoopIn();
-	double *algloop_out = m_simulator->GetAlgLoopOut();
-	double *constraint_in = m_simulator->GetConstraintIn();
+%IF%%NUMBER_STATES%
+	double *indep_states = model_instance->%XX_STATE_ARRAY_NAME%;
+	double *indep_rates = model_instance->%XX_RATE_ARRAY_NAME%;
+%ELSE%
+	double *indep_states = NULL;
+	double *indep_rates = NULL;
+%ENDIF%
+%IF%%NUMBER_DEPSTATES%
+	double *dep_rates = model_instance->%XX_DEP_STATE_ARRAY_NAME%;
+	double *dep_states = model_instance->%XX_DEP_RATE_ARRAY_NAME%;
+%ELSE%
+	double *dep_rates = NULL;
+	double *dep_states = NULL;
+%ENDIF%
+%IF%%NUMBER_ALGLOOPS%
+	double *algloop_in = model_instance->%XX_ALG_IN_ARRAY_NAME%;
+	double *algloop_out = model_instance->%XX_ALG_OUT_ARRAY_NAME%;
+%ELSE%
+	double *algloop_in = NULL;
+	double *algloop_out = NULL;
+%ENDIF%
+%IF%%NUMBER_CONSTRAINTS%
+	double *constraint_in = &model_instance->%XX_ALG_IN_ARRAY_NAME%[%NUMBER_ALGLOOPS%];
+	double *constraint_out = &model_instance->%XX_ALG_OUT_ARRAY_NAME%[%NUMBER_ALGLOOPS%];
+%ELSE%
+	double *constraint_in = NULL;
+	double *constraint_out = NULL;
+%ENDIF%
 
-	// and the output to check
-	double *constraint_out = m_simulator->GetConstraintOut();
+	int number_of_states = nr_ind_states + nr_dep_states + nr_alg_loop + meBDFi->m_nr_active_constraints;
 
-	int number_of_states = nr_ind_states + nr_dep_states + nr_alg_loop + m_nr_active_constraints;
-
-	if( m_use_fixed_step_size && number_of_states == 0 )
+	if( meBDFi->m_use_fixed_step_size && number_of_states == 0 )
 	{
-		m_last_step_size = m_fixed_step_size;
+		meBDFi->m_implicit_variable_step.m_last_step_size = meBDFi->m_fixed_step_size;
 
-		if( m_take_desired_step_busy )
+		if( TAKE_DESIRED_STEP_BUSY(meBDFi) )
 		{
-			m_simulator->m_simulationTime = m_simulator->m_finishTime;
+			model_instance->time = model_instance->finish_time;
 		}
 		else
 		{
-			// this is an Euler step with no states or rates.
-			m_simulator->m_simulationTime += m_fixed_step_size;
+			/* this is an Euler step with no states or rates. */
+			model_instance->time += meBDFi->m_fixed_step_size;
 		}
 
-		/* calc the dynamic model, since the last values given by dassl are not yet gone
-		through the model. */
-		// make sure we do a major integration step
-		m_simulator->m_major_step = XXTRUE;
+		/* calc the dynamic model, since the last values given by dassl are not yet gone through the model. */
+		/* make sure we do a major integration step */
+		model_instance->major = XXTRUE;
 
-		m_simulator->CalcDynamic();
+		%FUNCTIONPREFIX%CalculateDynamic (model_instance);
 
 		/* calculate the model to obtain all variables to be up to date */
-//		m_simulator->CalcOutput();
+/*		%FUNCTIONPREFIX%CalculateOutput (model_instance); */
 		return;
 	}
 
-	// take a variable step using ddassl from netlib.
+	/* take a variable step using ddassl from netlib. */
 
-	/* actual call to dassl routine */
-	global_simulator = m_simulator;
+	/* make sure we do NOT do a major integration step */
+	model_instance->major = XXFALSE;
 
-	if( m_check_constraints )
-		global_int_method = this;
+	meBDFi->m_implicit_variable_step.m_last_step_size = model_instance->time;
 
-	// make sure we do NOT a major integration step
-	m_simulator->m_major_step = XXFALSE;
-
-	m_last_step_size = m_simulator->m_simulationTime;
-
-	// this will copy all the initial values too.
-	if( nr_constraints == m_nr_active_constraints )
+	/* this will copy all the initial values too. */
+	if( nr_constraints == meBDFi->m_nr_active_constraints )
 	{
-		memcpy(m_work_states, states, number_of_states * sizeof(double));
-		memcpy(m_work_rates, rates, number_of_states * sizeof(double));
+		/* memcpy(m_Y, states, number_of_states * sizeof(double)); */
+		memcpy(meBDFi->m_Y, model_instance->%XX_STATE_ARRAY_NAME%, nr_ind_states * sizeof(double));
+%IF%%OR(NUMBER_ALGLOOPS,NUMBER_CONSTRAINTS)%
+		offset = nr_ind_states + nr_dep_states;
+		memcpy(&meBDFi->m_Y[offset], model_instance->%XX_ALG_IN_ARRAY_NAME%, (nr_alg_loop + nr_constraints) * sizeof(double));
+%ENDIF%		
+%IF%%NUMBER_DEPSTATES%
+		/* memcpy(m_YPRIME, rates, number_of_states * sizeof(double)); */
+		offset = nr_ind_states;
+		memcpy(&meBDFi->m_YPRIME[offset], model_instance->%XX_DEP_RATE_ARRAY_NAME%, nr_dep_states * sizeof(double));
+%ENDIF%
 	}
 	else
 	{
-		// the states
-		memcpy(m_work_states, states, (nr_ind_states + nr_dep_states + nr_alg_loop) * sizeof(double));
-		memcpy(m_work_rates, rates, (nr_ind_states + nr_dep_states + nr_alg_loop) * sizeof(double));
+		/* the states */
+		/* memcpy(m_Y, states, (nr_ind_states + nr_dep_states + nr_alg_loop) * sizeof(double));*/
+		memcpy(meBDFi->m_Y, model_instance->%XX_STATE_ARRAY_NAME%, nr_ind_states * sizeof(double));
+%IF%%NUMBER_ALGLOOPS%
+		offset = nr_ind_states + nr_dep_states;
+		memcpy(&meBDFi->m_Y[offset], model_instance->%XX_ALG_IN_ARRAY_NAME%, nr_alg_loop * sizeof(double));
+%ENDIF%
 
-		// the constraints
-		double *constraintInArray =  &m_work_states[nr_ind_states + nr_dep_states + nr_alg_loop];
-		double *constraintOutArray = &m_work_rates[nr_ind_states + nr_dep_states + nr_alg_loop];
-		int i, index = 0;
+%IF%%NUMBER_DEPSTATES%
+		/* memcpy(m_YPRIME, rates, (nr_ind_states + nr_dep_states + nr_alg_loop) * sizeof(double)); */
+		offset = nr_ind_states;
+		memcpy(&meBDFi->m_YPRIME[offset], model_instance->%XX_DEP_RATE_ARRAY_NAME%, nr_dep_states * sizeof(double));
+%ENDIF%
+
+%IF%%NUMBER_CONSTRAINTS%
+		/* the constraints */
+		offset = nr_ind_states + nr_dep_states + nr_alg_loop;
+		double *constraintInArray =  &meBDFi->m_Y[offset];
+		double *constraintOutArray = &meBDFi->m_YPRIME[offset];
+		offset = nr_alg_loop;
+		index = 0;
 		for( i = 0; i < nr_constraints; i++)
 		{
-			if( m_active_contraint_array[i] )
+			if( meBDFi->m_active_contraint_array[i] )
 			{
-				constraintInArray[index] = states[nr_ind_states + nr_dep_states + nr_alg_loop + i];
-				constraintOutArray[index] = rates[nr_ind_states + nr_dep_states + nr_alg_loop + i];
+				constraintInArray[index] = model_instance->%XX_ALG_IN_ARRAY_NAME%[offset];  /* states[nr_ind_states + nr_dep_states + nr_alg_loop + i]; */
+				constraintOutArray[index] = model_instance->%XX_ALG_OUT_ARRAY_NAME%[offset]; /* rates[nr_ind_states + nr_dep_states + nr_alg_loop + i]; */
 				index++;
+				offset++;
 			}
+			/* is this necessary ?? 
 			else
 			{
-				// is this necessary ??
 				states[nr_ind_states + nr_dep_states + nr_alg_loop + i] = 0.0;
 			}
+			*/
 		}
+%ENDIF%
 	}
 
-	// normally to the end of simulation is the maximum step
+	/* normally to the end of simulation is the maximum step */
 	double max_step;
 
-	double rememberInitialStep = m_local_initialStepSize;
-	if( m_take_desired_step_busy )
+	double rememberInitialStep = meBDFi->m_local_initialStepSize;
+	if( TAKE_DESIRED_STEP_BUSY(meBDFi) )
 	{
-		m_local_initialStepSize = (m_tout - m_simulator->m_simulationTime) / 1000.0;
+		meBDFi->m_local_initialStepSize = (meBDFi->m_tout - model_instance->time) / 1000.0;
+	}
+	if( meBDFi->m_local_initialStepSize == 0.0 )
+	{
+		/* catch the case where finish_time is set to zero, and not used */
+		meBDFi->m_local_initialStepSize = outputTime / 100.0;
 	}
 
-	if( m_use_maximum_step_size && (m_take_desired_step_busy == XXFALSE ) )
-		// but maximum step can be restricted...
-		max_step = m_simulator->m_simulationTime + m_maximum_step_size;
+	/* never go beyond finishTime */
+	max_step = finishTime;
+	/* go to the desired outputTime */
+	meBDFi->m_tout = outputTime;
+
+	/* check if a maximum step is set, and take desired step busy */
+	if( meBDFi->m_implicit_variable_step.m_use_maximum_step_size && (TAKE_DESIRED_STEP_BUSY(meBDFi) == XXFALSE ) )
+	{
+		/* but maximum step can be restricted... */
+		max_step = model_instance->time + meBDFi->m_implicit_variable_step.m_maximum_step_size;
+	}
+#if 0
 	else
-		max_step = m_tout;
+	{
+		/* set the max step on the desired output time */
+		max_step = meBDFi->m_tout;
+	}
+#endif
 
+	/* the actual call to the Netlib MeBDFi integration method */
+	mebdfi_(&number_of_states, &model_instance->time, &meBDFi->m_local_initialStepSize ,
+			meBDFi->m_Y,	/* initial values for the states, on first call */
+			meBDFi->m_YPRIME,	/* initial value for the rates, on first call. */
+			&meBDFi->m_tout,
+			&max_step, 				/* end of the range of integration ????? */
+			&meBDFi->m_method_flag,
+			&meBDFi->m_idid, 		/* the type of call, init is 1, after that zero */
+			&meBDFi->m_lout, 		/* output channel for message passing ???? */
 
-	mebdfi_(&number_of_states, &m_simulator->m_simulationTime, &m_local_initialStepSize ,
-			m_work_states, // initial values for the states, on first call
-			m_work_rates, // initial value for the rates, on first call.
-			&m_tout,
-			&max_step, // end of the range of integration ?????
-			&m_method_flag,
-			&m_idid, // the type of call, init is 1, after that zero
-			&m_lout, // output channel for message passing ????
-
-			// the work arrays
+			/* the work arrays */
 /*    THE DIMENSION OF THE REAL WORKSPACE, WORK, HAS TO BE AT LEAST */
 /*     (32 + MBND(4))*N+2 WHILE THE DIMENSION OF THE INTEGER */
 /*    WORKSPACE HAS TO BE AT LEAST N+14. */
-			&m_lwork,
-			m_work,
-			&m_liwork,
-			m_iwork,
+			&meBDFi->m_lwork,
+			meBDFi->m_work,
+			&meBDFi->m_liwork,
+			meBDFi->m_iwork,
 
-			m_mbnd, // for use when the newton iteration is banded
-					// not used because we specified 22 for the m_method_flag.
-			&m_maxder, // the maximum order is maxdr + 1.
-			&m_itol,	// the tolerance flag, probably 2 for errors being both a scalar
-			m_rtol,		// the relative tolerance
-			m_atol,		// the absolute tolerance
-			&m_rpar,		// for communication between f and pderv and the user's calling program
-			&m_ipar,		// for communication between f and pderv and the user's calling program
-			NULL,		// the pderv function, is a dummy, maybe it can be NULL
+			meBDFi->m_mbnd, 		/* for use when the newton iteration is banded */
+									/* not used because we specified 22 for the m_method_flag. */
+			&meBDFi->m_maxder, 		/* the maximum order is maxdr + 1. */
+			&meBDFi->m_itol,		/* the tolerance flag, probably 2 for errors being both a scalar */
+			meBDFi->m_rtol,			/* the relative tolerance */
+			meBDFi->m_atol,			/* the absolute tolerance */
+			&meBDFi->m_rpar,		/* for communication between f and pderv and the user's calling program */
+			&meBDFi->m_ipar,		/* for communication between f and pderv and the user's calling program */
+			NULL,					/* the pderv function, is a dummy, maybe it can be NULL */
 			MeBDFImplicitResidu,
-			&m_ierr);
+			&meBDFi->m_ierr,
+			model_instance);
 
 
-	if( m_take_desired_step_busy == XXTRUE )
+	if( TAKE_DESIRED_STEP_BUSY(meBDFi) == XXTRUE )
 	{
-		m_local_initialStepSize = rememberInitialStep;
+		meBDFi->m_local_initialStepSize = rememberInitialStep;
 	}
 
-	// should we reset the m_idid flag to 0 explicitly for continuation after initial call?
+	/* remember the last step taken. */
+	meBDFi->m_implicit_variable_step.m_last_step_size = model_instance->time - meBDFi->m_implicit_variable_step.m_last_step_size;
 
-	global_int_method = NULL;
-	global_simulator = NULL;
+	/* Set back the boolean of major steps */
+	model_instance->major = XXTRUE;
 
-	// remember the last step taken.
-	m_last_step_size = m_simulator->m_simulationTime - m_last_step_size;
-
-	// Set back the boolean of major steps
-	m_simulator->m_major_step = XXTRUE;
-
-	if( m_idid >= 0 )
+	if( meBDFi->m_idid >= 0 )
 	{
-		// if it was a successful first call
-		// set the m_idid flag to the continue integration step
-		if( m_idid == 1 )
+		/* if it was a successful first call
+		 * set the m_idid flag to the continue integration step */
+%IF%%0%
+		if( meBDFi->m_idid == 1 )
 		{
-			if( m_take_desired_step_busy )
-				// go exactly to the output
-				m_idid = 2;
+			if( TAKE_DESIRED_STEP_BUSY(meBDFi) )
+			{
+			/* go exactly to the output */
+				meBDFi->m_idid = 2;
+			}
 			else
-				// free to go over the output point but return after one point
-				m_idid = 3;
+			{
+				/* free to go over the output point but return after one point */
+				/*meBDFi->m_idid = 3; return after one step */
+				meBDFi->m_idid = 0;		/* for FMU: integrate up to tout */
+			}
 		}
-
-		// everything was alright
-		// calc the dynamic model, since the last values given by dassl are not yet gone
-		//through the model.
-
-		if( nr_constraints == m_nr_active_constraints )
+%ELSE%
+		if( meBDFi->m_idid == 0 || meBDFi->m_idid == 1 )
 		{
-			memcpy( states, m_work_states, number_of_states * sizeof(double));
-			memcpy( rates, m_work_rates, number_of_states * sizeof(double));
+			/* FMU implementation: go exactly to the output point*/
+			meBDFi->m_idid = 2; /* 2 or 0: 0 may go slightly beyond, 2 hit exactly */
+		}
+%ENDIF%			
+
+		/* everything was alright
+		 * calc the dynamic model, since the last values given by dassl are not yet gone
+		 *through the model. */
+
+		if( nr_constraints == meBDFi->m_nr_active_constraints )
+		{
+			/* memcpy( states, m_Y, number_of_states * sizeof(double)); */
+			/* independent states */
+			memcpy(model_instance->%XX_STATE_ARRAY_NAME%, meBDFi->m_Y, nr_ind_states * sizeof(double));
+
+%IF%%OR(NUMBER_ALGLOOPS,NUMBER_CONSTRAINTS)%
+			/* alg in + constraint in */
+			offset = nr_ind_states + nr_dep_states;
+			memcpy(model_instance->%XX_ALG_IN_ARRAY_NAME%, &meBDFi->m_Y[offset], (nr_alg_loop + nr_constraints )* sizeof(double));
+%ENDIF%						
+%IF%%NUMBER_DEPSTATES%
+			/* memcpy( rates, m_YPRIME, number_of_states * sizeof(double)); */
+			/* dependent states */
+			offset = nr_ind_states;
+			memcpy(model_instance->%XX_DEP_RATE_ARRAY_NAME%, &meBDFi->m_YPRIME[offset], nr_dep_states * sizeof(double));
+%ENDIF%
 		}
 		else
 		{
-			// the states
-			memcpy(states, m_work_states, (nr_ind_states + nr_dep_states + nr_alg_loop) * sizeof(double));
-			memcpy(rates, m_work_rates, (nr_ind_states + nr_dep_states + nr_alg_loop) * sizeof(double));
-
-			// the constraints
-			double *constraintInArray =  &m_work_states[nr_ind_states + nr_dep_states + nr_alg_loop];
-			double *constraintOutArray =  &m_work_rates[nr_ind_states + nr_dep_states + nr_alg_loop];
-			int i, index = 0;
+			/* memcpy(states, m_Y, (nr_ind_states + nr_dep_states + nr_alg_loop) * sizeof(double)); */
+			/* independent states */
+			memcpy(model_instance->%XX_STATE_ARRAY_NAME%, meBDFi->m_Y, nr_ind_states * sizeof(double));
+%IF%%NUMBER_ALGLOOPS%
+			/* alg in  */
+			offset = nr_ind_states + nr_dep_states;
+			memcpy(model_instance->%XX_ALG_IN_ARRAY_NAME%, &meBDFi->m_Y[offset], nr_alg_loop * sizeof(double));
+%ENDIF%
+%IF%%NUMBER_DEPSTATES%
+			/* memcpy(rates, m_YPRIME, (nr_ind_states + nr_dep_states + nr_alg_loop) * sizeof(double));*/
+			/* dependent states */
+			offset = nr_ind_states;
+			memcpy(model_instance->%XX_DEP_RATE_ARRAY_NAME%, &meBDFi->m_YPRIME[offset], nr_dep_states * sizeof(double));
+%ENDIF%
+%IF%%NUMBER_CONSTRAINTS%
+			/* the constraints */
+			double *constraintInArray =  &meBDFi->m_Y[nr_ind_states + nr_dep_states + nr_alg_loop];
+			/* double *constraintOutArray =  &meBDFi->m_YPRIME[nr_ind_states + nr_dep_states + nr_alg_loop]; */
+			index = 0;
+			offset = nr_alg_loop;
 			for( i = 0; i < nr_constraints; i++)
 			{
-				if( m_active_contraint_array[i] )
+				if( meBDFi->m_active_contraint_array[i] )
 				{
-					states[nr_ind_states + nr_dep_states + nr_alg_loop + i] = constraintInArray[index];
-					rates[nr_ind_states + nr_dep_states + nr_alg_loop + i] = constraintOutArray[index];
+					model_instance->%XX_ALG_IN_ARRAY_NAME%[offset] = constraintInArray[index];
+					/* model_instance->%XX_ALG_OUT_ARRAY_NAME%[offset] = constraintOutArray[index]; is this necessary ?*/
 					index++;
+					offset++;
 				}
-#if 0
-				else
-				{
-					// is this necessary
-//					rates[i] = 0;
-					
-					// grn: 2008-02-15, this should probably be then:
-					rates[nr_ind_states + nr_dep_states + nr_alg_loop + i] = 0;
-				}
-#endif
 			}
+%ENDIF%
 		}
 
-		m_simulator->CalcDynamic();
+		%FUNCTIONPREFIX%CalculateDynamic (model_instance);
 
-		// and we're ready
+		/* and we're ready */
 		return;
 	}
 
-	// check if there is a possibility to continue
-	if( m_idid >= -12 && ididrestart[-m_idid] >= 0)
+	/* check if there is a possibility to continue */
+	if( meBDFi->m_idid >= -12 && ididrestart[-meBDFi->m_idid] >= 0)
 	{
-		m_times_step_continued++;
-		if( m_times_step_continued >= 50 )
+		meBDFi->m_times_step_continued++;
+		if( meBDFi->m_times_step_continued >= 50 )
 		{
-			// and reset the thins
-			m_times_step_continued = 0;
+			/* and reset the thins */
+			meBDFi->m_times_step_continued = 0;
 		}
-//		else
-//		{
-//			ShowWarningMessage(_T("About 500 steps are taken: Modified BDF Method is not making good progress..."));
-//		}
+/*		else
+ *		{
+ *			ShowWarningMessage(_T("About 500 steps are taken: Modified BDF Method is not making good progress..."));
+ *		}
+ */
 
-		if( 1 ) // answer == IDYES )
+		if( 1 ) /* answer == IDYES ) */
 		{
 			init_good = XXTRUE;
-			if( ididrestart[-m_idid] == 0 )
+			if( ididrestart[-meBDFi->m_idid] == 0 )
 			{
-				// tell bdf to make an initial step again,
-				// this will be made 1 after the initialization.
-				m_idid = -1;
+				/* tell bdf to make an initial step again,
+				 * this will be made 1 after the initialization. */
+				meBDFi->m_idid = -1;
 
-				// make sure we do NOT a major integration step
-				m_simulator->m_major_step = XXFALSE;
+				/* make sure we do NOT do a major integration step */
+				model_instance->major = XXFALSE;
 
-				// if no algebraic loop variables return..
-				// set the dependent states in the states array, to the value of the dependent states calculated
-				// see for details of the specific arrays the initialization function of the simulator.
+%IF%%NUMBER_DEPSTATES%
+				/* if no algebraic loop variables return..
+				 * set the dependent states in the states array, to the value of the dependent states calculated
+				 * see for details of the specific arrays the initialization function of the simulator. */
 				if( nr_dep_states > 0 )
 				{
-					double *states = m_simulator->GetStates();
+/*					double *states = m_simulator->GetStates();
 					double *dep_states = m_simulator->GetDepStates();
 					memcpy(&states[nr_ind_states], dep_states,  nr_dep_states * sizeof(double));
+*/
+					memcpy(&meBDFi->m_Y[nr_ind_states], model_instance->%XX_DEP_STATE_ARRAY_NAME%, nr_dep_states * sizeof(double));
 				}
-
-				// this will also determine the constraint variables.
-				init_good = DetermineAlgloop();
+%ENDIF%
+%IF%%OR(NUMBER_ALGLOOPS,NUMBER_CONSTRAINTS)%
+				/* this will also determine the constraint variables. */
+				init_good = MeBDFiMethod_DetermineAlgloop(meBDFi);
+%ENDIF%
 			}
 
 			if( init_good == XXTRUE )
 			{
-				// just try again, with a new initialization
-				// calc the dynamic model, since the last values given by dassl are not yet gone
-				// through the model.
+				/* just try again, with a new initialization
+				 * calc the dynamic model, since the last values given by dassl are not yet gone
+				 * through the model. */
 
-				// make sure we do a major integration step
-				m_simulator->m_major_step = XXTRUE;
+				/* make sure we do a major integration step */
+				model_instance->major = XXTRUE;
 
-				m_simulator->CalcDynamic();
+				%FUNCTIONPREFIX%CalculateDynamic (model_instance);
 
-				// and we're ready
+				/* and we're ready */
 				return;
 			}
 		}
 	}
 
-	// here it was all wrong, so tell the simulator to stop.
-	m_simulator->m_finishrequest = XXTRUE;
+	/* here it was all wrong, so tell the simulator to stop. */
+	model_instance->stop_simulation = XXTRUE;
 
-	// Show some error information according to the idid value.
-	if ( m_idid >= -12 )
+	/* Show some error information according to the idid value. */
+	if ( meBDFi->m_idid >= -12 )
 	{
 
-		switch( m_idid )
+		switch( meBDFi->m_idid )
 		{
 			case -1:
 /*
@@ -1486,7 +1693,7 @@ of input parameters."));
 				break;
 			case -5:
 /*
-				// this message will not be presented to the user.
+				/ / this message will not be presented to the user.
 				errorMessage.Format(_T("Modified BDF Method: idid was -1 on input, but the desired changes\n\
 of parameters were not implemented because tout was beyond t.\n\
 Interpolation at t = tout was performed as on a normal return.\n\
@@ -1529,131 +1736,266 @@ exceeded to continue."));
 	}
 }
 
-void MeBDFiMethod::InitializeMeBDFiState()
+void MeBDFiMethod_InitializeMeBDFiState(MeBDFiMethod *meBDFi)
 {
-	memset(m_mebdfStaticInts, 0, 35 *sizeof(int));
-	memset(m_mebdfStaticDoubles, 0, 26 *sizeof(double));
-	memset(m_mebdfStaticLogicals, 0, 5 *sizeof(long int));
-	SetMeBDFiStatics(m_mebdfStaticInts,
-					m_mebdfStaticDoubles,
-					m_mebdfStaticLogicals);
+	memset(meBDFi->m_mebdfStaticInts, 0, 35 *sizeof(int));
+	memset(meBDFi->m_mebdfStaticDoubles, 0, 26 *sizeof(double));
+	memset(meBDFi->m_mebdfStaticLogicals, 0, 5 *sizeof(long int));
+	SetMeBDFiStatics(meBDFi->m_mebdfStaticInts,
+					meBDFi->m_mebdfStaticDoubles,
+					meBDFi->m_mebdfStaticLogicals);
 
 }
-// this is to be able to reset the simulator on the previous time...
-// it will remember the work arrays...
-void MeBDFiMethod::RememberState()
+void ImplicitVariableStep_RememberState(ImplicitVariableStep *implVarStep)
 {
-	if( m_prev_work == NULL )
-	{
-		// allocate since it is the first call
-		m_prev_work = new double[m_lwork + 1];
-	}
-	if( m_prev_iwork == NULL )
-	{
-		// allocate since it is the first call
-		m_prev_iwork = new int[m_liwork + 1];
-	}
-
-	m_prev_idid = m_idid;
-
-	// and do memcopies
-	memcpy(m_prev_work, m_work, m_lwork * sizeof(double));
-	memcpy(m_prev_iwork, m_iwork, m_liwork * sizeof(int));
-
-
-	RememberMeBDFiStatics(m_mebdfStaticInts,
-							m_mebdfStaticDoubles,
-							m_mebdfStaticLogicals);
-
-	// and the base class
-	ImplicitVariableStep::RememberState();
+	implVarStep->m_prev_last_step_size = implVarStep->m_last_step_size;
 }
-void MeBDFiMethod::SetBackRememberedState()
+/* this is to be able to reset the simulator on the previous time...
+ * it will remember the work arrays... */
+void MeBDFiMethod_RememberState(MeBDFiMethod *meBDFi)
 {
-	if( m_prev_work == NULL || m_prev_iwork == NULL )
+	%VARPREFIX%ModelInstance *model_instance = MODEL_INSTANCE(meBDFi);
+	if( meBDFi->m_prev_work == NULL )
+	{
+		/* allocate since it is the first call */
+		ALLOCATE_MEMORY(model_instance, meBDFi->m_prev_work, meBDFi->m_lwork + 1, double);
+	}
+	if( meBDFi->m_prev_iwork == NULL )
+	{
+		/* allocate since it is the first call */
+		ALLOCATE_MEMORY(model_instance, meBDFi->m_prev_iwork, meBDFi->m_liwork + 1, int);
+	}
+
+	meBDFi->m_prev_idid = meBDFi->m_idid;
+
+	/* and do memcopies */
+	memcpy(meBDFi->m_prev_work, meBDFi->m_work, meBDFi->m_lwork * sizeof(double));
+	memcpy(meBDFi->m_prev_iwork, meBDFi->m_iwork, meBDFi->m_liwork * sizeof(int));
+
+	RememberMeBDFiStatics(meBDFi->m_mebdfStaticInts,
+							meBDFi->m_mebdfStaticDoubles,
+							meBDFi->m_mebdfStaticLogicals);
+
+	/* and the parent class */
+	ImplicitVariableStep_RememberState(&meBDFi->m_implicit_variable_step);
+}
+void ImplicitVariableStep_SetBackRememberedState(ImplicitVariableStep *implVarStep)
+{
+	implVarStep->m_last_step_size = implVarStep->m_prev_last_step_size;
+}
+void MeBDFiMethod_SetBackRememberedState(MeBDFiMethod *meBDFi)
+{
+	if( meBDFi->m_prev_work == NULL || meBDFi->m_prev_iwork == NULL )
 		return;
 
-	m_idid = m_prev_idid;
+	meBDFi->m_idid = meBDFi->m_prev_idid;
 
-	// and do memcopies
-	memcpy(m_work, m_prev_work, m_lwork * sizeof(double));
-	memcpy(m_iwork, m_prev_iwork, m_liwork * sizeof(int));
+	/* and do memcopies */
+	memcpy(meBDFi->m_work, meBDFi->m_prev_work, meBDFi->m_lwork * sizeof(double));
+	memcpy(meBDFi->m_iwork, meBDFi->m_prev_iwork, meBDFi->m_liwork * sizeof(int));
 
-	SetMeBDFiStatics(m_mebdfStaticInts,
-					m_mebdfStaticDoubles,
-					m_mebdfStaticLogicals);
+	SetMeBDFiStatics(meBDFi->m_mebdfStaticInts,
+					meBDFi->m_mebdfStaticDoubles,
+					meBDFi->m_mebdfStaticLogicals);
 
-	// and the base class
-	ImplicitVariableStep::SetBackRememberedState();
+	/* and the parent class */
+	ImplicitVariableStep_SetBackRememberedState(&meBDFi->m_implicit_variable_step);
 }
 
-// this function is used to steer the integration method when
-// an event occurs. It takes the next step with a size equal to the
-// supplied argument (and resets to the previous step size afterwards)
-void MeBDFiMethod::TakeDesiredStep (double *u, double h)
+/* take a normal simulation step 
+ * output:
+ * 1 = OK, additional steps can be taken
+ * 0 = OK, simulation finished
+ * -1 = FAIL, something went wrong */
+XXInteger MeBDFi_OneNormalSimulationStep(MeBDFiMethod *meBDFi)
 {
-	ImplicitVariableStep::TakeDesiredStep(u, h);
+	%VARPREFIX%ModelInstance* model_instance = MODEL_INSTANCE(meBDFi);
+	if ( model_instance->time >= model_instance->finish_time || model_instance->stop_simulation == XXTRUE )
+	{
+		/* only stop if we are really at the end, or an finish request was placed. */
 
-	// tell mebdf to start again with an initialization (since the timing has changed)
-	// new by grn...
-	m_idid = 1;
+/*		if( TAKE_DESIRED_STEP_BUSY(meBDFi) == XXFALSE )
+			EndSimulation(); */
 
-	return;
+		/* Indicate we're finished */
+		return 0;/* simResultSuccessSimulationFinished; */
+	}
 
-	int nr_ind_states = m_simulator->GetNrIndStates();
-	int nr_dep_states =  m_simulator->GetNrDepStates();
-	int nr_alg_loop = m_simulator->GetNrAlgLoop();
-	int nr_constraints = m_simulator->GetNrConstraints();
+	/* calculate the input block */
+	%FUNCTIONPREFIX%CalculateInput (model_instance);
 
-//	int number_of_states = nr_ind_states + nr_dep_states + nr_alg_loop + nr_constraints;
+	/* check if something went wrong */
+	if( model_instance->stop_simulation == XXTRUE ) /* || g_matherr_panic) */
+	{
+		/* g_matherr_panic = XXFALSE; */
+		model_instance->stop_simulation = XXTRUE; /* in case it was only g_matherr_panic */
+		/* reset the global which indicates a global math library exception
+		  don't check on the current value, because this is faster */
+		/* EndSimulation(); */
+/*		if( m_stop_level == 0 ) */
+			return -1;
+
+		/* just a premature gracefull stop of the simulation */
+		/* return 0;simResultSuccessSimulationFinished; */
+	}
+
+	/* here the integration method should take over. Because the dynamic block calculates
+	 * the states and rates, and this may be done with a variable step, and thus the block
+	 * may be calculated multiple times. We assume the integration method was initialized. */
+	meBDFi->m_idid = 3;
+	MeBDFiMethod_Integrate(meBDFi, model_instance->finish_time, model_instance->finish_time);
+
+	/* check if something went wrong */
+	if( model_instance->stop_simulation == XXTRUE ) /* || g_matherr_panic) */
+	{
+		/* g_matherr_panic = XXFALSE; */
+		model_instance->stop_simulation = XXTRUE; /* in case it was only g_matherr_panic */
+		/* reset the global which indicates a global math library exception
+		  don't check on the current value, because this is faster */
+		/* EndSimulation(); */
+/*		if( m_stop_level == 0 ) */
+			return -1;
+
+		/* just a premature gracefull stop of the simulation */
+		/* return 0;simResultSuccessSimulationFinished; */
+	}
+
+	%FUNCTIONPREFIX%CalculateOutput (model_instance);
+
+	/* check if something went wrong */
+	if( model_instance->stop_simulation == XXTRUE ) /* || g_matherr_panic) */
+	{
+		/* g_matherr_panic = XXFALSE; */
+		model_instance->stop_simulation = XXTRUE; /* in case it was only g_matherr_panic */
+		/* reset the global which indicates a global math library exception
+		  don't check on the current value, because this is faster */
+		/* EndSimulation(); */
+/*		if( m_stop_level == 0 ) */
+			return -1;
+
+		/* just a premature gracefull stop of the simulation */
+		/* return 0;simResultSuccessSimulationFinished; */
+	}
+
+%IF%%0%
+#if 0
+	/* do you remember the time? (free to Michael Jackson)
+	 * if there are event functions, those will remember the time themselves */
+	if( m_event_function_present == XXFALSE )
+		m_previous_time = m_simulationTime;
+
+	/* and check if we finished the simulation
+	 * in that case, call the calculate function and return XXFALSE
+	 * to indicate that no further steps need to be taken. */
+	if ( m_simulationTime >= m_finishTime )
+	{
+		/* only stop if we are really at the end */
+		if( m_event_occurred == XXFALSE )
+		{
+			EndSimulation();
+			/* XXFALSE means that no further steps will be taken */
+			return simResultSuccessSimulationFinished;
+		}
+
+		/* Event occurred, so that should be handled, so return additional steps can be taken. */
+		return simResultSuccessAdditionalStepsCanBeTaken;
+	}
+#endif
+%ENDIF%
+	return 1;
+}
+
+/* this function is used to steer the integration method when
+ * an event occurs. It takes the next step with a size equal to the
+ * supplied argument (and resets to the previous step size afterwards) */
+void MeBDFiMethod_TakeDesiredStep (MeBDFiMethod *meBDFi, double *u, double h)
+{
+	/* original C++ call with virtual functions inside that ends up in MeBDFiMethod again */
+	/* ImplicitVariableStep_TakeDesiredStep(meBDFi, u, h); */
+
+	/* set the new finish time on the desired step
+     * remembering the current finish time */
+	%VARPREFIX%ModelInstance* model_instance = MODEL_INSTANCE(meBDFi);
+
+    double previous_finish_time = model_instance->finish_time;
+    model_instance->finish_time = model_instance->time + h;
+
+	/* make sure the method knows, that it has to integrate to the
+	 * desired step */
+	TAKE_DESIRED_STEP_BUSY(meBDFi) = XXTRUE;
+
+    /* re-initialize the method
+	 * with a non-major step */
+    MeBDFiMethod_ReInitialize(meBDFi, XXFALSE, XXTRUE);
+
+	model_instance->major = XXTRUE;
+
+    /* simulate until the the finish time is reached */
+	while( MeBDFi_OneNormalSimulationStep(meBDFi) == 1) /* Simulator::simResultSuccessAdditionalStepsCanBeTaken); */
+
+	TAKE_DESIRED_STEP_BUSY(meBDFi) = XXFALSE;
+
+    /* and set back the finish time */
+    model_instance->finish_time = previous_finish_time;
+
+	/* tell mebdf to start again with an initialization (since the timing has changed) */
+	meBDFi->m_idid = 1;
+%IF%%0%
+#if 0
+
+	int nr_ind_states = %VARPREFIX%state_count;
+	int nr_dep_states =  %VARPREFIX%depstate_count;
+	int nr_alg_loop = %VARPREFIX%algloop_count;
+	int nr_constraints = %VARPREFIX%constraint_count;
+
+/*	int number_of_states = nr_ind_states + nr_dep_states + nr_alg_loop + nr_constraints; */
 	int number_of_states = nr_ind_states + nr_dep_states + nr_alg_loop + m_nr_active_constraints;
 
-	// set the new finish time on the desired step
-	// remembering the current finish time
-	double previous_finish_time = m_simulator->m_finishTime;
-	m_simulator->m_finishTime = m_simulator->m_simulationTime + h;
+	/* set the new finish time on the desired step
+	 * remembering the current finish time */
+	double previous_finish_time = model_instance->finish_time;
+	model_instance->finish_time = model_instance->time + h;
 
-	// make sure the method knows, that it has to integrate to the
-	// desired step
-	m_take_desired_step_busy = XXTRUE;
+	/* make sure the method knows, that it has to integrate to the desired step */
+	TAKE_DESIRED_STEP_BUSY(meBDFi) = XXTRUE;
 
-	// re-initialize the method
-	// with a non-major step
-//    ReInitialize(XXFALSE, XXTRUE);
+	/* re-initialize the method
+	 * with a non-major step */
+/*    ReInitialize(XXFALSE, XXTRUE); */
 
-/*******************************************************************/
-// put the integration method in a state where it goes exactly to the
-// desired output time
-/*******************************************************************/
+/*******************************************************************
+ * put the integration method in a state where it goes exactly to the
+ * desired output time
+ *******************************************************************/
 	if( number_of_states == 0 )
 	{
-		// just use a fixed step size, to go the the desired time
-		m_fixed_step_size = m_simulator->m_finishTime - m_simulator->m_simulationTime;
-		m_use_fixed_step_size = XXTRUE;
+		/* just use a fixed step size, to go the the desired time */
+		meBDFi->m_fixed_step_size = model_instance->finish_time - model_instance->time;
+		meBDFi->m_use_fixed_step_size = XXTRUE;
 	}
-	// tell mebdf to start again with an initialization (since the timing has changed)
+	/* tell mebdf to start again with an initialization (since the timing has changed) */
 	m_idid = 1;
-	m_tout = m_simulator->m_finishTime;
+	m_tout = model_instance->finish_time;
 
-/*******************************************************************/
-// No simulate until end-time is reached.
-/*******************************************************************/
-	m_simulator->m_major_step = XXTRUE;
+/*******************************************************************
+ * No simulate until end-time is reached.
+ *******************************************************************/
+	model_instance->major = XXTRUE;
 
-	// simulate until the the finish time is reached
+	/* simulate until the the finish time is reached */
 	while(m_simulator->OneSimulationStep(u, NULL));
 
-/*******************************************************************/
-// Set back the correct state, where we simulate normally again.
-/*******************************************************************/
-	m_take_desired_step_busy = XXFALSE;
+/*******************************************************************
+ * Set back the correct state, where we simulate normally again.
+ *******************************************************************/
+	TAKE_DESIRED_STEP_BUSY(meBDFi) = XXFALSE;
 
-	// and set back the finish time
-	m_simulator->m_finishTime = previous_finish_time;
+	/* and set back the finish time */
+	model_instance->finish_time = previous_finish_time;
 
-	// normal continuation, output each point...
+	/* normal continuation, output each point... */
 
-	// the next time, completely reinitialize again
+	/* the next time, completely reinitialize again */
 	m_idid = 1;
 
 	if( number_of_states == 0 )
@@ -1664,34 +2006,40 @@ void MeBDFiMethod::TakeDesiredStep (double *u, double h)
 		}
 		else
 		{
-			if( m_use_maximum_step_size )
+			if( meBDFi->m_implicit_variable_step.m_use_maximum_step_size )
 			{
-				m_fixed_step_size = m_maximum_step_size;
+				meBDFi->m_fixed_step_size = meBDFi->m_implicit_variable_step.m_maximum_step_size;
 			}
 			else
 			{
-				if( m_use_initial_step_size )
-					m_fixed_step_size = m_initial_step_size;
+				if( meBDFi->m_implicit_variable_step.m_use_initial_step_size )
+					meBDFi->m_fixed_step_size = meBDFi->m_implicit_variable_step.m_initial_step_size;
 				else
 				{
-//					if( m_simulator->GetEventOrResetOccurred() )
-//						m_fixed_step_size = (m_simulator->m_finishTime - m_simulator->m_startTime ) / 1000;
-//					else
-						m_fixed_step_size = (m_simulator->m_finishTime - m_simulator->m_simulationTime ) / 1000;
+%IF%%0%
+					if( m_simulator->GetEventOrResetOccurred() )
+						meBDFi->m_fixed_step_size = (model_instance->finish_time - model_instance->start_time ) / 1000;
+					else
+%ENDIF%
+						meBDFi->m_fixed_step_size = (model_instance->finish_time - model_instance->time ) / 1000;
 				}
 			}
 		}
-		m_tout = m_simulator->m_simulationTime;
+		meBDFi->m_tout = model_instance->time;
 	}
 	else
 	{
-		if( m_use_comm_int )
+		if( meBDFi->m_use_comm_int )
 		{
-			m_fixed_step_size = m_comm_int;
+			meBDFi->m_fixed_step_size = meBDFi->m_comm_int;
 		}
 		else
-			m_fixed_step_size = 0.0;
-		m_tout = m_use_fixed_step_size ? m_simulator->m_simulationTime : m_simulator->m_finishTime;
+		{
+			meBDFi->m_fixed_step_size = 0.0;
+		}
+		meBDFi->m_tout = meBDFi->m_use_fixed_step_size ? model_instance->time : model_instance->finish_time;
 	}
+#endif
+%ENDIF%
 }
 

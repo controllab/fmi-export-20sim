@@ -265,6 +265,15 @@
 	<ClInclude Include="..\..\src\cvode\include\sundials\sundials_dense.h" />
 	<ClInclude Include="..\..\src\cvode\include\sundials\sundials_direct.h" />
 %ENDIF%
+%IF%%EQ(INTEGRATION_METHOD_NAME,MeBDFi)%
+	<ClInclude Include="..\..\src\MeBDFi\MeBDFi.h" />
+	<ClInclude Include="..\..\src\MeBDFi\include\f2c.h" />
+	<ClInclude Include="..\..\src\MeBDFi\include\fio.h" />
+	<ClInclude Include="..\..\src\MeBDFi\include\fmt.h" />
+	<ClInclude Include="..\..\src\MeBDFi\include\fp.h" />
+	<ClInclude Include="..\..\src\MeBDFi\include\lio.h" />
+	<ClInclude Include="..\..\src\MeBDFi\include\sysdep1.h" />
+%ENDIF%
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\EulerAngles.c" />
@@ -287,6 +296,40 @@
 	<ClCompile Include="..\..\src\cvode\src\sundials\sundials_direct.c" />
 	<ClCompile Include="..\..\src\cvode\src\sundials\sundials_math.c" />
 	<ClCompile Include="..\..\src\cvode\src\sundials\sundials_nvector.c" />
+%ENDIF%
+%IF%%EQ(INTEGRATION_METHOD_NAME,MeBDFi)%
+	<ClCompile Include="..\..\src\MeBDFi\MeBDFi.c" />
+	<ClCompile Include="..\..\src\MeBDFi\libf2c\close.c" />
+	<ClCompile Include="..\..\src\MeBDFi\libf2c\dolio.c" />
+	<ClCompile Include="..\..\src\MeBDFi\libf2c\endfile.c" />
+	<ClCompile Include="..\..\src\MeBDFi\libf2c\err.c" />
+	<ClCompile Include="..\..\src\MeBDFi\libf2c\fmt.c" />
+	<ClCompile Include="..\..\src\MeBDFi\libf2c\fmtlib.c" />
+	<ClCompile Include="..\..\src\MeBDFi\libf2c\lread.c" />
+	<ClCompile Include="..\..\src\MeBDFi\libf2c\lwrite.c" />
+	<ClCompile Include="..\..\src\MeBDFi\libf2c\open.c" />
+	<ClCompile Include="..\..\src\MeBDFi\libf2c\pow_dd.c" />
+	<ClCompile Include="..\..\src\MeBDFi\libf2c\pow_di.c" />
+	<ClCompile Include="..\..\src\MeBDFi\libf2c\rdfmt.c" />
+	<ClCompile Include="..\..\src\MeBDFi\libf2c\rsfe.c" />
+	<ClCompile Include="..\..\src\MeBDFi\libf2c\sfe.c" />
+	<ClCompile Include="..\..\src\MeBDFi\libf2c\sig_die.c" />
+	<ClCompile Include="..\..\src\MeBDFi\libf2c\util.c" />
+	<ClCompile Include="..\..\src\MeBDFi\libf2c\wref.c" />
+	<ClCompile Include="..\..\src\MeBDFi\libf2c\wrtfmt.c" />
+	<ClCompile Include="..\..\src\MeBDFi\libf2c\wsfe.c" />
+	<ClCompile Include="..\..\src\MeBDFi\libf2c\wsle.c" />
+	<ClCompile Include="..\..\src\MeBDFi\netlib\DOGLEG.c" />
+	<ClCompile Include="..\..\src\MeBDFi\netlib\DPMPAR.c" />
+	<ClCompile Include="..\..\src\MeBDFi\netlib\ENORM.c" />
+	<ClCompile Include="..\..\src\MeBDFi\netlib\FDJAC1.c" />
+	<ClCompile Include="..\..\src\MeBDFi\netlib\HYBRD.c" />
+	<ClCompile Include="..\..\src\MeBDFi\netlib\HYBRD1.c" />
+	<ClCompile Include="..\..\src\MeBDFi\netlib\mebdfiCore.c" />
+	<ClCompile Include="..\..\src\MeBDFi\netlib\QFORM.c" />
+	<ClCompile Include="..\..\src\MeBDFi\netlib\QRFAC.c" />
+	<ClCompile Include="..\..\src\MeBDFi\netlib\R1MPYQ.c" />
+	<ClCompile Include="..\..\src\MeBDFi\netlib\R1UPDT.c" />
 %ENDIF%
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

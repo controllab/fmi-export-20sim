@@ -361,7 +361,7 @@ void SetMeBDFiStatics(integer *mebdfStaticInts,
 	doublereal *work, integer *liwork, integer *iwork, integer *mbnd, 
 	integer *maxder, integer *itol, doublereal *rtol, doublereal *atol, 
 	doublereal *rpar, integer *ipar, U_fp pderv, U_fp resid, integer *
-	ierr)
+	ierr, void *user_data) /* last argument added by Controllab */
 {
     /* Format strings */
     static char fmt_9020[] = "(/,/,\002 ***** ERROR ***** INTEGRATION HALTED\
@@ -392,7 +392,7 @@ void SetMeBDFiStatics(integer *mebdfStaticInts,
 	     doublereal *, doublereal *, doublereal *, integer *, U_fp, U_fp, 
 	    integer *, integer *, integer *, integer *, integer *, integer *, 
 	    integer *, integer *, integer *, integer *, integer *, doublereal 
-	    *, doublereal *, doublereal *, integer *);
+	    *, doublereal *, doublereal *, integer *, void *);
     
 	
 	/* epsjac is the machine precision, won't change for other models */
@@ -815,7 +815,7 @@ void SetMeBDFiStatics(integer *mebdfStaticInts,
 	    &atol[1], &rpar[1], &ipar[1], (U_fp)pderv, (U_fp)resid, &iwork[4],
 	     &iwork[5], &iwork[6], &iwork[7], &iwork[8], &iwork[9], &iwork[10]
 	    , &iwork[11], &iwork[12], &iwork[13], &iwork[14], &work[1], &work[
-	    2], &l_epsjac, ierr);
+	    2], &l_epsjac, ierr, user_data);
 /*     >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
 /*     WORK() HOUSES THE FOLLOWING ARRAYS */
 
@@ -848,7 +848,7 @@ void SetMeBDFiStatics(integer *mebdfStaticInts,
 	nqused, integer *nstep, integer *nfail, integer *nre, integer *nje, 
 	integer *ndec, integer *nbsol, integer *npset, integer *ncoset, 
 	integer *maxord, integer *maxstp, doublereal *uround, doublereal *
-	hused, doublereal *epsjac, integer *ierr)
+	hused, doublereal *epsjac, integer *ierr, void *user_data) /* last argument added by Controllab */
 {
     /* Format strings */
     static char fmt_9160[] = "(/,/,\002STEPSIZE IS TOO SMALL\002)";
@@ -912,7 +912,7 @@ N INPUT\002,/,\002         HMIN REDUCED BY A FACTOR OF 1.0E10\002,/,/)";
 	    doublereal *, integer *, U_fp, U_fp, integer *, integer *, 
 	    integer *, integer *, integer *, integer *, integer *, integer *, 
 	    integer *, integer *, integer *, doublereal *, doublereal *, 
-	    doublereal *, integer *);
+	    doublereal *, integer *, void *);
     
 	/* only used locally */
 	/*static*/ doublereal vhold;
@@ -1381,7 +1381,7 @@ L20:
 	    yhold[yhold_offset], &ynhold[ynhold_offset], &arh[1], &ipiv[1], 
 	    lout, maxder, itol, &rtol[1], &atol[1], &rpar[1], &ipar[1], (U_fp)
 	    pderv, (U_fp)resid, nqused, nstep, nfail, nre, nje, ndec, nbsol, 
-	    npset, ncoset, maxord, maxstp, uround, epsjac, hused, ierr);
+	    npset, ncoset, maxord, maxstp, uround, epsjac, hused, ierr, user_data);
 /*      IF(IERR.NE.0) THEN */
 /*      WRITE(LOUT,9150) */
 /*      RETURN */
@@ -1960,7 +1960,7 @@ L80:
 	doublereal *save2, doublereal *save3, doublereal *pw, doublereal *
 	pwcopy, doublereal *wrkspc, integer *ipiv, integer *itol, doublereal *
 	rtol, doublereal *atol, integer *npset, integer *nje, integer *nre, 
-	integer *ndec, integer *ipar, doublereal *rpar, integer *ierr)
+	integer *ndec, integer *ipar, doublereal *rpar, integer *ierr, void *user_data) /* last argument added by Controllab */
 {
     /* System generated locals */
     integer y_dim1, y_offset, i__1, i__2, i__3, i__4;
@@ -2193,7 +2193,7 @@ L30:
     }
 /*<       CALL RESID(N,T,Y,SAVE2,YPRIME,IPAR,RPAR,IERR)  >*/
     (*resid)(n, t, &y[y_offset], &save2[1], &yprime[1], &ipar[1], &rpar[1], 
-	    ierr);
+	    ierr, user_data);
 /*<       NRE=NRE+1 >*/
     ++(*nre);
 /*<       DO 60 J = 1,N >*/
@@ -2225,7 +2225,7 @@ L30:
 	yprime[j] += r__ / *con;
 /*<          CALL RESID(N,T,Y,WRKSPC,YPRIME,IPAR,RPAR,IERR)         >*/
 	(*resid)(n, t, &y[y_offset], &wrkspc[1], &yprime[1], &ipar[1], &rpar[
-		1], ierr);
+		1], ierr, user_data);
 /*<          DO 50 I = 1,N >*/
 	i__2 = *n;
 	for (i__ = 1; i__ <= i__2; ++i__) {
@@ -2258,7 +2258,7 @@ L30:
 L51:
 /*<       CALL RESID(N,T,Y,SAVE2,YPRIME,IPAR,RPAR,IERR) >*/
     (*resid)(n, t, &y[y_offset], &save2[1], &yprime[1], &ipar[1], &rpar[1], 
-	    ierr);
+	    ierr, user_data);
 /*<       NRE = NRE+1 >*/
     ++(*nre);
 /*<       MBA = min0(MBND(3),N) >*/
@@ -2301,7 +2301,7 @@ L51:
 	}
 /*<          CALL RESID(N,T,Y,WRKSPC,YPRIME,IPAR,RPAR,IERR) >*/
 	(*resid)(n, t, &y[y_offset], &wrkspc[1], &yprime[1], &ipar[1], &rpar[
-		1], ierr);
+		1], ierr, user_data);
 /*<          DO 261 JJ=J,N,MBND(3) >*/
 	i__3 = *n;
 	i__2 = mbnd[3];
@@ -3758,7 +3758,7 @@ L60:
 	integer *nind3, integer *ipiv, integer *lmb, integer *itol, 
 	doublereal *rtol, doublereal *atol, integer *ipar, doublereal *rpar, 
 	doublereal *hused, integer *nbsol, integer *nre, integer *nqused, 
-	S_fp resid, integer *ierr)
+	S_fp resid, integer *ierr, void *user_data) /* last argument added by Controllab */
 {
     /* Initialized data */
 
@@ -3886,7 +3886,7 @@ L60:
 
 /*<       call resid(n,t,y,save2,yprime,ipar,rpar,ierr) >*/
     (*resid)(n, t, &y[y_offset], &save2[1], &yprime[1], &ipar[1], &rpar[1], 
-	    ierr);
+	    ierr, user_data);
 /*<       IF(MF.GE.23) THEN >*/
     if (*mf >= 23) {
 /*<          CALL DGBSL(PW,MBND(4),N,MBND(1),MBND(2),IPIV,SAVE2,0) >*/
@@ -3947,7 +3947,7 @@ L25:
 /*<  30   CONTINUE >*/
 L30:
 /*<       call resid(n,t,save1,save2,yprime,ipar,rpar,ierr) >*/
-    (*resid)(n, t, &save1[1], &save2[1], &yprime[1], &ipar[1], &rpar[1], ierr)
+    (*resid)(n, t, &save1[1], &save2[1], &yprime[1], &ipar[1], &rpar[1], ierr, user_data)
 	    ;
 /*<       nre=nre+1 >*/
     ++(*nre);
@@ -4068,7 +4068,7 @@ L30:
 	nfail, integer *nre, integer *nje, integer *ndec, integer *nbsol, 
 	integer *npset, integer *ncoset, integer *maxord, integer *maxstp, 
 	doublereal *uround, doublereal *epsjac, doublereal *hused, integer *
-	ierr)
+	ierr, void *user_data) /* last argument added by Controllab */
 {
     /* Initialized data */
 
@@ -4109,7 +4109,7 @@ L FUNCTION   CALL\002)";
 	    doublereal *, doublereal *, doublereal *, doublereal *, 
 	    doublereal *, integer *, integer *, doublereal *, doublereal *, 
 	    integer *, integer *, integer *, integer *, integer *, doublereal 
-	    *, integer *);
+	    *, integer *, void *);
 
     /*static*/ doublereal vtol;
     /*static*/ doublereal d__;
@@ -4145,7 +4145,7 @@ L FUNCTION   CALL\002)";
 	    doublereal *, doublereal *, integer *, integer *, integer *, 
 	    integer *, integer *, integer *, integer *, integer *, doublereal 
 	    *, doublereal *, integer *, doublereal *, doublereal *, integer *,
-	     integer *, integer *, S_fp, integer *);
+	     integer *, integer *, S_fp, integer *, void *);
 
     /*static*/ integer m3step;
     /*static*/ doublereal ho;
@@ -4836,7 +4836,7 @@ L110:
 	    mbnd[1], nind1, nind2, nind3, &ier, (S_fp)pderv, (S_fp)resid, &
 	    nrenew, &ymax[1], &save1[1], &save2[1], &scale[1], &pw[1], &
 	    pwcopy[1], &error[1], &ipiv[1], itol, &rtol[1], &atol[1], npset, 
-	    nje, nre, ndec, &ipar[1], &rpar[1], ierr);
+	    nje, nre, ndec, &ipar[1], &rpar[1], ierr, user_data);
 /*<       IF(IERR.NE.0) GOTO 8000 >*/
     if (*ierr != 0) {
 	goto L8000;
@@ -4885,7 +4885,7 @@ L120:
 		g_crate1, &g_tcrat1, &m1, &worked, &ymax[1], &error[1], &save1[1],
 		 &save2[1], &scale[1], &pw[1], mf, &mbnd[1], nind1, nind2, 
 		nind3, &ipiv[1], &c__1, itol, &rtol[1], &atol[1], &ipar[1], &
-		rpar[1], hused, nbsol, nre, nqused, (S_fp)resid, ierr);
+		rpar[1], hused, nbsol, nre, nqused, (S_fp)resid, ierr, user_data);
 /*<          IF(IERR.NE.0) GOTO 8000 >*/
 	if (*ierr != 0) {
 	    goto L8000;
@@ -4897,7 +4897,7 @@ L120:
 		g_crate1, &g_tcrat1, &m1, &worked, &ymax[1], &error[1], &save1[1],
 		 &save2[1], &scale[1], &pw[1], mf, &mbnd[1], nind1, nind2, 
 		nind3, &ipiv[1], &c__0, itol, &rtol[1], &atol[1], &ipar[1], &
-		rpar[1], hused, nbsol, nre, nqused, (S_fp)resid, ierr);
+		rpar[1], hused, nbsol, nre, nqused, (S_fp)resid, ierr, user_data);
 /*<          IF(IERR.NE.0) GOTO 8000 >*/
 	if (*ierr != 0) {
 	    goto L8000;
@@ -5156,7 +5156,7 @@ L120:
 	     &g_tcrat2, &m2, &worked, &ymax[1], &error[1], &save1[1], &save2[1],
 	     &scale[1], &pw[1], mf, &mbnd[1], nind1, nind2, nind3, &ipiv[1], &
 	    c__1, itol, &rtol[1], &atol[1], &ipar[1], &rpar[1], hused, nbsol, 
-	    nre, nqused, (S_fp)resid, ierr);
+	    nre, nqused, (S_fp)resid, ierr, user_data);
 /*<       IF(IERR.NE.0) GOTO 8000 >*/
     if (*ierr != 0) {
 	goto L8000;
@@ -5258,7 +5258,7 @@ L300:
     }
 /*<       CALL RESID(N,T,Y,SAVE1,YPRIME,IPAR,RPAR,IERR) >*/
     (*resid)(n, t, &y[y_offset], &save1[1], &yprime[1], &ipar[1], &rpar[1], 
-	    ierr);
+	    ierr, user_data);
 /*<       if (ierr .ne. 0) go to 8000 >*/
     if (*ierr != 0) {
 	goto L8000;
