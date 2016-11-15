@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tokenParser xsi:noNamespaceSchemaLocation="tokenparser.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<parse>
+		<tokenFiles>
+			<tokenFile>%GENERATION_DIR%\src\tokens.xml</tokenFile>
+			<tokenFile>%GENERATION_DIR%\src\fmiTokens.xml</tokenFile>
+		</tokenFiles>
+		<parseFiles>
+			<files sourcePath="%TEMPLATE_DIR%\src" destinationPath="%GENERATION_DIR%\src">
+				<file><source>xxmodel.c</source></file>
+				<file><source>xxmodel.h</source></file>
+				<file><source>xxsubmod.c</source></file>
+				<file><source>xxsubmod.h</source></file>
+				<file><source>xxfuncs.c</source></file>
+				<file><source>xxfuncs.h</source></file>
+				<file><source>xxmatrix.c</source></file>
+				<file><source>xxmatrix.h</source></file>
+				<file><source>xxinteg.c</source></file>
+				<file><source>xxinteg.h</source></file>
+				<file><source>xxinverse.c</source></file>
+				<file><source>MotionProfiles.h</source></file>
+				<file><source>MotionProfiles.c</source></file>
+				<file><source>EulerAngles.h</source></file>
+				<file><source>EulerAngles.c</source></file>
+				<file><source>xxTable2D.h</source></file>
+				<file><source>xxTable2D.c</source></file>
+				<file><source>xxtypes.h</source></file>
+				<file><source>FMI_PREFIXFunctions.c</source><destination>%FMI_PREFIX%Functions.c</destination></file>
+%IF%%EQ(FMIVERSION,1.0)%
+				<file copyOnly="true"><source>fmiPlatformTypes.h</source></file>
+				<file copyOnly="true"><source>fmiFunctions.h</source></file>
+%ENDIF%
+%IF%%EQ(FMIVERSION,2.0)%
+				<file copyOnly="true"><source>fmi2Functions.h</source></file>
+				<file copyOnly="true"><source>fmi2TypesPlatform.h</source></file>
+				<file copyOnly="true"><source>fmi2FunctionTypes.h</source></file>
+%ENDIF%
+			</files>
+%IF%%EQ(INTEGRATION_METHOD_NAME,VodeAdams)%
+			<files sourcePath="%TEMPLATE_DIR%\src\cvode\src\cvode" destinationPath="%GENERATION_DIR%\src\cvode\src\cvode">
+				<file copyOnly="true"><source>cvode.c</source></file>
+				<file copyOnly="true"><source>cvode_dense.c</source></file>
+				<file copyOnly="true"><source>cvode_direct.c</source></file>
+				<file copyOnly="true"><source>cvode_io.c</source></file>
+				<file copyOnly="true"><source>cvode_direct_impl.h</source></file>
+				<file copyOnly="true"><source>cvode_impl.h</source></file>
+			</files>
+			<files sourcePath="%TEMPLATE_DIR%\src\cvode\src\nvec_ser" destinationPath="%GENERATION_DIR%\src\cvode\src\nvec_ser">
+				<file copyOnly="true"><source>nvector_serial.c</source></file>
+			</files>
+			<files sourcePath="%TEMPLATE_DIR%\src\cvode\src\sundials" destinationPath="%GENERATION_DIR%\src\cvode\src\sundials">
+				<file copyOnly="true"><source>sundials_dense.c</source></file>
+				<file copyOnly="true"><source>sundials_direct.c</source></file>
+				<file copyOnly="true"><source>sundials_math.c</source></file>
+				<file copyOnly="true"><source>sundials_nvector.c</source></file>
+			</files>
+			<files sourcePath="%TEMPLATE_DIR%\src\cvode\include\cvode" destinationPath="%GENERATION_DIR%\src\cvode\include\cvode">
+				<file copyOnly="true"><source>cvode.h</source></file>
+				<file copyOnly="true"><source>cvode_direct.h</source></file>
+				<file copyOnly="true"><source>cvode_dense.h</source></file>
+			</files>
+			<files sourcePath="%TEMPLATE_DIR%\src\cvode\include\nvector" destinationPath="%GENERATION_DIR%\src\cvode\include\nvector">
+				<file copyOnly="true"><source>nvector_serial.h</source></file>
+			</files>
+			<files sourcePath="%TEMPLATE_DIR%\src\cvode\include\sundials" destinationPath="%GENERATION_DIR%\src\cvode\include\sundials">
+				<file copyOnly="true"><source>sundials_math.h</source></file>
+				<file copyOnly="true"><source>sundials_nvector.h</source></file>
+				<file copyOnly="true"><source>sundials_config.h</source></file>
+				<file copyOnly="true"><source>sundials_dense.h</source></file>
+				<file copyOnly="true"><source>sundials_direct.h</source></file>
+				<file copyOnly="true"><source>sundials_types.h</source></file>
+			</files>
+%ENDIF%
+%IF%%EQ(INTEGRATION_METHOD_NAME,MeBDFi)%
+			<files sourcePath="%TEMPLATE_DIR%\src\MeBDFi" destinationPath="%GENERATION_DIR%\src\MeBDFi">
+				<file><source>MeBDFi.c</source></file>
+				<file><source>MeBDFi.h</source></file>
+			</files>
+			<files sourcePath="%TEMPLATE_DIR%\src\MeBDFi\include" destinationPath="%GENERATION_DIR%\src\MeBDFi\include">
+				<file copyOnly="true"><source>f2c.h</source></file>
+				<file copyOnly="true"><source>fio.h</source></file>
+				<file copyOnly="true"><source>fmt.h</source></file>
+				<file copyOnly="true"><source>fp.h</source></file>
+				<file copyOnly="true"><source>lio.h</source></file>
+				<file copyOnly="true"><source>sysdep1.h</source></file>
+			</files>
+			<files sourcePath="%TEMPLATE_DIR%\src\MeBDFi\libf2c" destinationPath="%GENERATION_DIR%\src\MeBDFi\libf2c">
+				<file copyOnly="true"><source>close.c</source></file>
+				<file copyOnly="true"><source>dolio.c</source></file>
+				<file copyOnly="true"><source>endfile.c</source></file>
+				<file copyOnly="true"><source>err.c</source></file>
+				<file copyOnly="true"><source>fmt.c</source></file>
+				<file copyOnly="true"><source>fmtlib.c</source></file>
+				<file copyOnly="true"><source>lread.c</source></file>
+				<file copyOnly="true"><source>lwrite.c</source></file>
+				<file copyOnly="true"><source>open.c</source></file>
+				<file copyOnly="true"><source>pow_dd.c</source></file>
+				<file copyOnly="true"><source>pow_di.c</source></file>
+				<file copyOnly="true"><source>rdfmt.c</source></file>
+				<file copyOnly="true"><source>rsfe.c</source></file>
+				<file copyOnly="true"><source>sfe.c</source></file>
+				<file copyOnly="true"><source>sig_die.c</source></file>
+				<file copyOnly="true"><source>util.c</source></file>
+				<file copyOnly="true"><source>wref.c</source></file>
+				<file copyOnly="true"><source>wrtfmt.c</source></file>
+				<file copyOnly="true"><source>wsfe.c</source></file>
+				<file copyOnly="true"><source>wsle.c</source></file>
+			</files>
+			<files sourcePath="%TEMPLATE_DIR%\src\MeBDFi\netlib" destinationPath="%GENERATION_DIR%\src\MeBDFi\netlib">
+				<file copyOnly="true"><source>DOGLEG.c</source></file>
+				<file copyOnly="true"><source>DPMPAR.c</source></file>
+				<file copyOnly="true"><source>ENORM.c</source></file>
+				<file copyOnly="true"><source>FDJAC1.c</source></file>
+				<file copyOnly="true"><source>HYBRD.c</source></file>
+				<file copyOnly="true"><source>HYBRD1.c</source></file>
+				<file copyOnly="true"><source>mebdfiCore.c</source></file>
+				<file copyOnly="true"><source>QFORM.c</source></file>
+				<file copyOnly="true"><source>QRFAC.c</source></file>
+				<file copyOnly="true"><source>R1MPYQ.c</source></file>
+				<file copyOnly="true"><source>R1UPDT.c</source></file>
+			</files>
+%ENDIF%
+			<files sourcePath="%TEMPLATE_DIR%\src" destinationPath="%GENERATION_DIR%\src">
+				<file><source>ModelConfiguration.xml</source></file>
+				<file><source>variables.txt</source></file>
+				<file><source>includes.txt</source></file>
+			</files>
+			<files sourcePath="%TEMPLATE_DIR%\template" destinationPath="%GENERATION_DIR%\template">
+				<file><source>mcf2modelDescription.xsl</source></file>
+			</files>
+			<files sourcePath="%TEMPLATE_DIR%\project\VS2010" destinationPath="%GENERATION_DIR%\project\VS2010">
+				<file><source>SUBMODEL_NAME.sln</source><destination>%SUBMODEL_NAME%.sln</destination></file>
+				<file><source>SUBMODEL_NAME.vcxproj</source><destination>%SUBMODEL_NAME%.vcxproj</destination></file>
+				<file><source>SUBMODEL_NAME.vcxproj.filters</source><destination>%SUBMODEL_NAME%.vcxproj.filters</destination></file>
+			</files>
+			<files sourcePath="%TEMPLATE_DIR%\project\VS2013" destinationPath="%GENERATION_DIR%\project\VS2013">
+				<file><source>SUBMODEL_NAME.sln</source><destination>%SUBMODEL_NAME%.sln</destination></file>
+				<file><source>SUBMODEL_NAME.vcxproj</source><destination>%SUBMODEL_NAME%.vcxproj</destination></file>
+				<file><source>SUBMODEL_NAME.vcxproj.filters</source><destination>%SUBMODEL_NAME%.vcxproj.filters</destination></file>
+			</files>
+			<files sourcePath="%TEMPLATE_DIR%\project\VS2015" destinationPath="%GENERATION_DIR%\project\VS2015">
+				<file><source>SUBMODEL_NAME.sln</source><destination>%SUBMODEL_NAME%.sln</destination></file>
+				<file><source>SUBMODEL_NAME.vcxproj</source><destination>%SUBMODEL_NAME%.vcxproj</destination></file>
+				<file><source>SUBMODEL_NAME.vcxproj.filters</source><destination>%SUBMODEL_NAME%.vcxproj.filters</destination></file>
+			</files>
+			<files sourcePath="%TEMPLATE_DIR%\project" destinationPath="%GENERATION_DIR%\project">
+				<file><source>build.bat</source></file>
+			</files>
+			<files sourcePath="%TEMPLATE_DIR%" destinationPath="%GENERATION_DIR%">
+				<file><source>Makefile</source></file>
+			</files>
+		</parseFiles>
+	</parse>
+</tokenParser>
+
+
+
+
+
+

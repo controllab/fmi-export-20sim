@@ -39,10 +39,11 @@
 
 #ifndef XX_TYPES_H
 #define XX_TYPES_H
-%IF%%FMI1%
+
+%IF%%EQ(FMIVERSION,1.0)%
 #include "fmiPlatformTypes.h"
 %ENDIF%
-%IF%%FMI2%
+%IF%%EQ(FMIVERSION,2.0)%
 #include "fmi2FunctionTypes.h"
 %ENDIF%
 
@@ -63,7 +64,6 @@ typedef struct
 } XXMatrix;
 
 %ENDIF%
-
 /* Defines */
 #define XXTRUE  %FMI_PREFIX%True
 #define XXFALSE %FMI_PREFIX%False

@@ -334,3 +334,4 @@ IF DEFINED VSVARS32 (
   )
   IF %exitcode% NEQ 0 EXIT /B %exitcode%
   EXIT
+

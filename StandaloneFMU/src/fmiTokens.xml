@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tokens>
+%IF%%EQ(FMIVERSION,1.0)%
+	<token name="FMI_PREFIX"><![CDATA[fmi]]></token>
+%ENDIF%
+%IF%%EQ(FMIVERSION,2.0)%
+	<token name="FMI_PREFIX"><![CDATA[fmi2]]></token>
+%ENDIF%
+</tokens>

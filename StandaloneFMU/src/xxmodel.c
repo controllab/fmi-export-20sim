@@ -98,20 +98,31 @@ const char* g_fmuResourceLocation = NULL;
 extern const char* URIToNativePath(%VARPREFIX%ModelInstance* model_instance, const char* uri);
 
 XXBoolean %FUNCTIONPREFIX%ModelInstance_Constructor(%VARPREFIX%ModelInstance* model_instance,
-													fmi2String instanceName,
-													fmi2Type fmuType,
-													fmi2String fmuResourceLocation,
+													%FMI_PREFIX%String instanceName,
+%IF%%EQ(FMIVERSION,2.0)%
+													%FMI_PREFIX%Type fmuType,
+													%FMI_PREFIX%String fmuResourceLocation,
+%ENDIF%
+%IF%%EQ(FMIVERSION,1.0)%
+													fmiCallbackFunctions fmi_functions)
+%ENDIF%
+%IF%%EQ(FMIVERSION,2.0)%
 													const fmi2CallbackFunctions *functions)
+%ENDIF%
 {
 	int offset = 0;
+
+%IF%%EQ(FMIVERSION,1.0)%
+	fmiCallbackFunctions *functions = &fmi_functions;
+%ENDIF%
 
 	/* initialize the members of the model_instance structure */
 	model_instance->instanceName = (%FMI_PREFIX%String) functions->allocateMemory(1 + strlen(instanceName), sizeof(char));
 
 	if (!model_instance->instanceName)
 	{
-		functions->logger(functions->componentEnvironment, instanceName, fmi2Error, "error",
-			"fmi2Instantiate: Out of memory while allocating instance name");
+		functions->logger(NULL, instanceName, %FMI_PREFIX%Error, "error",
+			"%FMI_PREFIX%Instantiate: Out of memory while allocating instance name");
 		return XXFALSE;
 	}
 	strcpy((char *)model_instance->instanceName, (char *)instanceName);
@@ -171,17 +182,28 @@ XXBoolean %FUNCTIONPREFIX%ModelInstance_Constructor(%VARPREFIX%ModelInstance* mo
 %ENDIF%
 
 	/* Register the callback */
+%IF%%EQ(FMIVERSION,1.0)%
+	model_instance->fmiCallbackFunctions = fmi_functions;
+
+	/* Remember the resource folder location */
+	model_instance->resourceLocation = NULL;
+%ENDIF%
+%IF%%EQ(FMIVERSION,2.0)%
 	model_instance->fmiCallbackFunctions = functions;
+
 	/* Remember the resource folder location */
 	model_instance->resourceLocation = URIToNativePath(model_instance, fmuResourceLocation);
+%ENDIF%
 
+%IF%%EQ(FMIVERSION,2.0)%
 	/* check if we are setup for co-simulation, that's the only possible option for now */
-	if( fmuType != fmi2CoSimulation )
+	if( fmuType != %FMI_PREFIX%CoSimulation )
 	{
-		model_instance->fmiCallbackFunctions->logger(NULL, instanceName, fmi2Error, "error",
+		model_instance->fmiCallbackFunctions->logger(NULL, instanceName, %FMI_PREFIX%Error, "error",
 			"FMU can only be used for Co-Simulation, not for Model Exchange");
 		return XXFALSE;
 	}
+%ENDIF%
 	return XXTRUE;
 }
 
@@ -401,7 +423,7 @@ XXBoolean %FUNCTIONPREFIX%ModelWarning (%VARPREFIX%ModelInstance* model_instance
 {
 	if(model_instance->fmiCallbackFunctions != NULL && model_instance->fmiCallbackFunctions->logger != NULL)
 	{
-		model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Warning, "warning", message);
+		model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", %FMI_PREFIX%Warning, "warning", message);
 	}
 	return 0;
 }
@@ -414,7 +436,7 @@ XXBoolean %FUNCTIONPREFIX%ModelStopSimulation (%VARPREFIX%ModelInstance* model_i
 
 	if(model_instance->fmiCallbackFunctions != NULL && model_instance->fmiCallbackFunctions->logger != NULL)
 	{
-		model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error", message);
+		model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", %FMI_PREFIX%Error, "error", message);
 	}
 	return 0;
 }

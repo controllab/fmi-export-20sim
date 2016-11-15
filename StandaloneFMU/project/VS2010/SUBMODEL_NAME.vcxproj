@@ -237,10 +237,10 @@
     <ClInclude Include="..\..\src\xxsubmod.h" />
     <ClInclude Include="..\..\src\xxtypes.h" />
     <ClInclude Include="..\..\src\%FMI_PREFIX%Functions.h" />
-%IF%%FMI1%
+%IF%%EQ(FMIVERSION,1.0)%
     <ClInclude Include="..\..\src\fmiPlatformTypes.h" />
 %ENDIF%
-%IF%%FMI2%
+%IF%%EQ(FMIVERSION,2.0)%
     <ClInclude Include="..\..\src\fmi2FunctionTypes.h" />
     <ClInclude Include="..\..\src\fmi2TypesPlatform.h" />
 %ENDIF%

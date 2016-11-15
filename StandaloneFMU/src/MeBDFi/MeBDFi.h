@@ -48,7 +48,7 @@ typedef struct ImplicitVariableStep
 /***********************************************************
  * Modified Backward Differentiation Formula
  * for problems of the form
- * G(T,Y,Y´)=0.
+ * G(T,Y,Y')=0.
  ***********************************************************/
 typedef struct MeBDFiMethod
 {
@@ -165,6 +165,5 @@ XXBoolean MeBDFiMethod_CanHandleConstraints(MeBDFiMethod *mebdfi_method);
 
 void MeBDFiMethod_Destructor(MeBDFiMethod *mebdfi_method);
 
-
-#endif // __MEBDFI_H
+#endif
 

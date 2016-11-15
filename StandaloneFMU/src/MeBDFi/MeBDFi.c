@@ -52,17 +52,19 @@
 #define ALG_ABSOLUTE_TOLERANCE(meBDFi) meBDFi->m_implicit_variable_step.m_implicit_method.m_alg_absolute_tolerance
 #define TAKE_DESIRED_STEP_BUSY(meBDFi) meBDFi->m_implicit_variable_step.m_implicit_method.m_integration_method.m_take_desired_step_busy
 
-%IF%%0%
-#define ALLOCATE_MEMORY(memPtr, nrElements, type)\
-memPtr = (type*)malloc( (nrElements) * sizeof(type));\
+%IF%%EQ(FMIVERSION,1.0)%
+#define ALLOCATE_MEMORY(model_instance, memPtr, nrElements, type)\
+memPtr = (type*)model_instance->fmiCallbackFunctions.allocateMemory(nrElements, sizeof(type));\
 memset(memPtr, 0, (nrElements) * sizeof(type))
-#define FREE_MEMORY(memPtr) if(memPtr)free(memPtr);memPtr=NULL
-%ELSE%
+#define FREE_MEMORY(model_instance, memPtr) if(memPtr)model_instance->fmiCallbackFunctions.freeMemory(memPtr);memPtr=NULL
+%ENDIF%
+%IF%%EQ(FMIVERSION,2.0)%
 #define ALLOCATE_MEMORY(model_instance, memPtr, nrElements, type)\
 memPtr = (type*)model_instance->fmiCallbackFunctions->allocateMemory(nrElements, sizeof(type));\
 memset(memPtr, 0, (nrElements) * sizeof(type))
 #define FREE_MEMORY(model_instance, memPtr) if(memPtr)model_instance->fmiCallbackFunctions->freeMemory(memPtr);memPtr=NULL
 %ENDIF%
+
 /* immediate recall for continuation after m_idid < 0 posible?
  *	-1:  no;	0, 1:  yes, with m_info[0] = 0, 1 respectively
  */
@@ -1449,6 +1451,7 @@ void MeBDFiMethod_Integrate(MeBDFiMethod *meBDFi, double outputTime, double fini
 		/* but maximum step can be restricted... */
 		max_step = model_instance->time + meBDFi->m_implicit_variable_step.m_maximum_step_size;
 	}
+%IF%%0%
 #if 0
 	else
 	{
@@ -1456,6 +1459,7 @@ void MeBDFiMethod_Integrate(MeBDFiMethod *meBDFi, double outputTime, double fini
 		max_step = meBDFi->m_tout;
 	}
 #endif
+%ENDIF%
 
 	/* the actual call to the Netlib MeBDFi integration method */
 	mebdfi_(&number_of_states, &model_instance->time, &meBDFi->m_local_initialStepSize ,
@@ -2042,4 +2046,3 @@ void MeBDFiMethod_TakeDesiredStep (MeBDFiMethod *meBDFi, double *u, double h)
 #endif
 %ENDIF%
 }
-

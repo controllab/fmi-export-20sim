@@ -256,11 +256,6 @@ XXInteger EulerAngles_RotationMatrixFromQuaternion (XXDouble *inarr, XXInteger i
 
 /* RotationMatrix to Quaternion */
 XXInteger EulerAngles_QuaternionFromRotationMatrix (XXDouble *inarr, XXInteger inputs, XXDouble *outarr, XXInteger outputs, XXInteger major);
-
-
-
-
-
 #endif
-
 %ENDIF%
+

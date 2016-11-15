@@ -44,12 +44,12 @@
     <ClInclude Include="..\..\src\xxTable2D.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-%IF%%FMI1%
+%IF%%EQ(FMIVERSION,1.0)%
     <ClInclude Include="..\..\src\fmiPlatformTypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
 %ENDIF%
-%IF%%FMI2%
+%IF%%EQ(FMIVERSION,2.0)%
     <ClInclude Include="..\..\src\fmi2FunctionTypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>

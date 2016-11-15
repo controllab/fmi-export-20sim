@@ -983,5 +983,5 @@ XXInteger EulerAngles_QuaternionFromRotationMatrix (XXDouble *inarr, XXInteger i
 	/* 0 is success */
 	return 0;
 }
-
 %ENDIF%
+

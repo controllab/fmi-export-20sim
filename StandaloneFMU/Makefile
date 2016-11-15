@@ -280,3 +280,4 @@ fmu: dll createfmudir
 %ENDIF%
 	@echo Create the FMU: $(FMU)
 	@cd $(FMU_DIR) && $(ZIP_COMMAND) && mv $(FMU) $(current_dir) && echo Ready!
+

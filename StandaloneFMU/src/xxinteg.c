@@ -37,7 +37,7 @@
 #define %VARPREFIX%STATE_SIZE %NUMBER_STATES%
 
 %ENDIF%
-%IF%%FMI1%
+%IF%%EQ(FMIVERSION,1.0)%
 #define FMI_LOG_ERROR(model_instance,message)	if ( model_instance->fmiCallbackFunctions.logger != NULL)\
 	{\
 		model_instance->fmiCallbackFunctions.logger(NULL, "%SUBMODEL_NAME%", fmiError, "error",\
@@ -45,7 +45,7 @@
 	}
 
 %ENDIF%
-%IF%%FMI2%
+%IF%%EQ(FMIVERSION,2.0)%
 #define FMI_LOG_ERROR(model_instance,message)	if (model_instance->fmiCallbackFunctions != NULL && model_instance->fmiCallbackFunctions->logger != NULL)\
 	{\
 		model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",\

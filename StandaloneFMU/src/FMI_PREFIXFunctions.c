@@ -28,10 +28,10 @@
 #include <ctype.h>
 
 /* make a FMI_Dll_Export that is for both FMI1 and FMI2 */
-%IF%%FMI1%
+%IF%%EQ(FMIVERSION,1.0)%
 #define FMI_Dll_Export DllExport
 %ENDIF%
-%IF%%FMI2%
+%IF%%EQ(FMIVERSION,2.0)%
 #define FMI_Dll_Export FMI2_Export
 %ENDIF%
 
@@ -124,13 +124,13 @@ const char* URIToNativePath(%VARPREFIX%ModelInstance* model_instance, const char
 	}
 
 	/* Allocate memory for the return value including terminating \0 and extra path separator */
-%IF%%FMI1%
+%IF%%EQ(FMIVERSION,1.0)%
 	if (model_instance->fmiCallbackFunctions.allocateMemory != NULL)
 	{
 		path = (char*) model_instance->fmiCallbackFunctions.allocateMemory(path_len + 2, sizeof(char));
 	}
 %ENDIF%
-%IF%%FMI2%
+%IF%%EQ(FMIVERSION,2.0)%
 	if ((model_instance->fmiCallbackFunctions) &&( model_instance->fmiCallbackFunctions->allocateMemory != NULL))
 	{
 		path = (char*) model_instance->fmiCallbackFunctions->allocateMemory(path_len + 2, sizeof(char));
@@ -202,10 +202,10 @@ const char* URIToNativePath(%VARPREFIX%ModelInstance* model_instance, const char
 /* Inquire version numbers of header files */
 FMI_Dll_Export const char* %FMI_PREFIX%GetTypesPlatform()
 {
-%IF%%FMI1%
+%IF%%EQ(FMIVERSION,1.0)%
 	return fmiPlatform;
 %ENDIF%
-%IF%%FMI2%
+%IF%%EQ(FMIVERSION,2.0)%
 	return fmi2TypesPlatform;
 %ENDIF%
 }
@@ -213,13 +213,13 @@ FMI_Dll_Export const char* %FMI_PREFIX%GetVersion()
 {
 	return %FMI_PREFIX%Version;
 }
-%IF%%FMI1%
+%IF%%EQ(FMIVERSION,1.0)%
 FMI_Dll_Export fmiStatus fmiSetDebugLogging  (fmiComponent c, fmiBoolean loggingOn)
 {
 	return fmiOK;       /* not yet */
 }
 %ENDIF%
-%IF%%FMI2%
+%IF%%EQ(FMIVERSION,2.0)%
 FMI_Dll_Export fmi2Status fmi2SetDebugLogging  (fmi2Component c, fmi2Boolean loggingOn,
 											size_t nCategories,
 											const fmi2String categories[])
@@ -339,7 +339,7 @@ FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%SetString(%FMI_PREFIX%Component c,
 {
 	return %FMI_PREFIX%Error;   /* not yet */
 }
-%IF%%FMI1%
+%IF%%EQ(FMIVERSION,1.0)%
 /* FMI functions for Co-Simulation 1.0 */
 fmiComponent fmiInstantiateSlave(fmiString instanceName,
 								fmiString GUID,
@@ -387,27 +387,16 @@ fmiComponent fmiInstantiateSlave(fmiString instanceName,
 
 	memset(model_instance, 0, sizeof(%VARPREFIX%ModelInstance));
 
-	model_instance->instanceName = (%FMI_PREFIX%String) functions.allocateMemory(1 + strlen(instanceName), sizeof(char));
-
-	if (!model_instance->instanceName)
+	if( %FUNCTIONPREFIX%ModelInstance_Constructor(model_instance, instanceName, functions) == XXFALSE )
 	{
-		functions.logger(NULL, instanceName, fmiError, "error",
-			"Out of memory while allocating instance name");
 		return NULL;
 	}
-	strcpy((char *)model_instance->instanceName, (char *)instanceName);
-
-	/* Register the callback */
-	model_instance->fmiCallbackFunctions = functions;
-
-	/* Remember the resource folder location */
-	model_instance->resourceLocation = URIToNativePath(model_instance, fmuLocation);
 
 	return (fmiComponent) model_instance;
 }
 %ENDIF%
 
-%IF%%FMI2%
+%IF%%EQ(FMIVERSION,2.0)%
 fmi2Component fmi2Instantiate(fmi2String instanceName,
 								fmi2Type fmuType,
 								fmi2String fmuGUID,
@@ -467,82 +456,11 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 	{
 		return NULL;
 	}
-	
-#if 0
-	model_instance->instanceName = (%FMI_PREFIX%String) functions->allocateMemory(1 + strlen(instanceName), sizeof(char));
 
-	if (!model_instance->instanceName)
-	{
-		functions->logger(functions->componentEnvironment, instanceName, fmi2Error, "error",
-			"fmi2Instantiate: Out of memory while allocating instance name");
-		return NULL;
-	}
-	strcpy((char *)model_instance->instanceName, (char *)instanceName);
-
-	/* Prepare the model instance struct */
-	model_instance->start_time = %START_TIME%;
-	model_instance->finish_time = 0.0;
-	model_instance->m_use_finish_time = XXFALSE;
-	model_instance->step_size = %TIME_STEP_SIZE%;
-	model_instance->time = 0.0;
-	model_instance->steps = 0;
-	model_instance->%XX_INITIALIZE% = XXTRUE;
-	model_instance->major = XXTRUE;
-	model_instance->stop_simulation = XXFALSE;
-
-	/* Set the offsets within the model_instance->MEMORY array */
-%IF%%NUMBER_CONSTANTS%
-	model_instance->%XX_CONSTANT_ARRAY_NAME% = &model_instance->MEMORY[offset]; /* constants offset */
-	offset = offset + %VARPREFIX%constants_count;
-%ENDIF%
-%IF%%NUMBER_PARAMETERS%
-	model_instance->%XX_PARAMETER_ARRAY_NAME% = &model_instance->MEMORY[offset];	/* parameters offset */
-	offset = offset + %VARPREFIX%parameter_count;
-%ENDIF%
-%IF%%NUMBER_INITIAL_VALUES%
-	model_instance->%XX_INITIAL_VALUE_ARRAY_NAME% = &model_instance->MEMORY[offset];		/* initial values offset */
-	offset = offset + %VARPREFIX%initialvalue_count;
-%ENDIF%
-%IF%%NUMBER_VARIABLES%
-	model_instance->%XX_VARIABLE_ARRAY_NAME% = &model_instance->MEMORY[offset];		/* variables offset */
-	offset = offset + %VARPREFIX%variable_count;
-%ENDIF%
-%IF%%NUMBER_STATES%
-	model_instance->%XX_STATE_ARRAY_NAME% = &model_instance->MEMORY[offset];		/* states offset */
-	offset = offset + %VARPREFIX%state_count;
-	model_instance->%XX_RATE_ARRAY_NAME% = &model_instance->MEMORY[offset];		/* rates offset */
-	offset = offset + %VARPREFIX%state_count;
-%ENDIF%
-%IF%%NUMBER_DEPSTATES%
-	%VARPREFIX%model_instance->%XX_DEP_STATE_ARRAY_NAME% = &%VARPREFIX%model_instance->MEMORY[offset];		/* states offset */
-	offset = offset + %VARPREFIX%depstate_count;
-	%VARPREFIX%model_instance->%XX_DEP_RATE_ARRAY_NAME% = &%VARPREFIX%model_instance->MEMORY[offset];		/* rates offset */
-	offset = offset + %VARPREFIX%depstate_count;
-%ENDIF%
-%IF%%OR(NUMBER_ALGLOOPS,NUMBER_CONSTRAINTS)%
-	%VARPREFIX%model_instance->%XX_ALG_IN_ARRAY_NAME% = &%VARPREFIX%model_instance->MEMORY[offset];		/* states offset */
-	offset = offset + %VARPREFIX%algloop_count + %VARPREFIX%constraint_count;
-	%VARPREFIX%model_instance->%XX_ALG_OUT_ARRAY_NAME% = &%VARPREFIX%model_instance->MEMORY[offset];		/* rates offset */
-	offset = offset + %VARPREFIX%algloop_count + %VARPREFIX%constraint_count;
-%ENDIF%
-
-	/* Register the callback */
-	model_instance->fmiCallbackFunctions = functions;
-	/* Remember the resource folder location */
-	model_instance->resourceLocation = URIToNativePath(model_instance, fmuResourceLocation);
-
-	/* check if we are setup for co-simulation, that's the only possible option for now */
-	if( fmuType != fmi2CoSimulation )
-	{
-		model_instance->fmiCallbackFunctions->logger(NULL, instanceName, fmi2Error, "error",
-			"FMU can only be used for Co-Simulation, not for Model Exchange");
-		return NULL;
-	}
-#endif
 	return (fmi2Component) model_instance;
 }
 %ENDIF%
-%IF%%FMI1%
+%IF%%EQ(FMIVERSION,1.0)%
 fmiStatus fmiInitializeSlave(fmiComponent c,
 							 fmiReal tStart,
 							 fmiBoolean StopTimeDefined,
@@ -567,7 +485,7 @@ fmiStatus fmiInitializeSlave(fmiComponent c,
 	return fmiOK;
 }
 %ENDIF%
-%IF%%FMI2%
+%IF%%EQ(FMIVERSION,2.0)%
 fmi2Status fmi2SetupExperiment(fmi2Component c,
 							fmi2Boolean toleranceDefined,
 							fmi2Real tolerance,
@@ -606,10 +524,10 @@ fmi2Status fmi2ExitInitializationMode(fmi2Component c)
 	return fmi2OK;
 }
 %ENDIF%
-%IF%%FMI1%
+%IF%%EQ(FMIVERSION,1.0)%
 fmiStatus fmiTerminateSlave(fmiComponent c)
 %ENDIF%
-%IF%%FMI2%
+%IF%%EQ(FMIVERSION,2.0)%
 fmi2Status fmi2Terminate(fmi2Component c)
 %ENDIF%
 {
@@ -624,10 +542,10 @@ fmi2Status fmi2Terminate(fmi2Component c)
 	/* all done */
 	return %FMI_PREFIX%OK;
 }
-%IF%%FMI1%
+%IF%%EQ(FMIVERSION,1.0)%
 fmiStatus fmiResetSlave(fmiComponent c)
 %ENDIF%
-%IF%%FMI2%
+%IF%%EQ(FMIVERSION,2.0)%
 fmi2Status fmi2Reset(fmi2Component c)
 %ENDIF%
 {
@@ -642,7 +560,7 @@ fmi2Status fmi2Reset(fmi2Component c)
 	return %FMI_PREFIX%OK;
 }
 
-%IF%%FMI1%
+%IF%%EQ(FMIVERSION,1.0)%
 void fmiFreeSlaveInstance(fmiComponent c)
 {
 	%VARPREFIX%ModelInstance* model_instance = (%VARPREFIX%ModelInstance*) c;
@@ -665,7 +583,7 @@ void fmiFreeSlaveInstance(fmiComponent c)
 	model_instance =  NULL;
 }
 %ENDIF%
-%IF%%FMI2%
+%IF%%EQ(FMIVERSION,2.0)%
 void fmi2FreeInstance(fmi2Component c)
 {
 	%VARPREFIX%ModelInstance* model_instance = (%VARPREFIX%ModelInstance*) c;
@@ -708,10 +626,10 @@ void fmi2FreeInstance(fmi2Component c)
 	return %FMI_PREFIX%Error;
 }
 
-%IF%%FMI1%
+%IF%%EQ(FMIVERSION,1.0)%
 fmiStatus fmiCancelStep(fmiComponent c)
 %ENDIF%
-%IF%%FMI2%
+%IF%%EQ(FMIVERSION,2.0)%
 fmi2Status fmi2CancelStep(fmi2Component c)
 %ENDIF%
 {
@@ -719,13 +637,13 @@ fmi2Status fmi2CancelStep(fmi2Component c)
 	return %FMI_PREFIX%Error;
 }
 
-%IF%%FMI1%
+%IF%%EQ(FMIVERSION,1.0)%
 fmiStatus fmiDoStep(fmiComponent c,
 					fmiReal currentCommunicationPoint,
 					fmiReal communicationStepSize,
 					fmiBoolean newStep)
 %ENDIF%
-%IF%%FMI2%
+%IF%%EQ(FMIVERSION,2.0)%
 fmi2Status fmi2DoStep(fmi2Component c,
 					fmi2Real currentCommunicationPoint,
 					fmi2Real communicationStepSize,
@@ -746,7 +664,7 @@ fmi2Status fmi2DoStep(fmi2Component c,
 		/* check for termination first */
 		if ( model_instance->m_use_finish_time && (model_instance->time >= model_instance->finish_time) )
 		{
-%IF%%FMI2%
+%IF%%EQ(FMIVERSION,2.0)%
 			if(model_instance->fmiCallbackFunctions != NULL && model_instance->fmiCallbackFunctions->logger != NULL)
 			{
 				model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",
@@ -804,7 +722,7 @@ fmi2Status fmi2DoStep(fmi2Component c,
 	return %FMI_PREFIX%Discard;
 }
 
-%IF%%FMI2%
+%IF%%EQ(FMIVERSION,2.0)%
 fmi2Status fmi2GetContinuousStates(fmi2Component c, fmi2Real x[], size_t nx)
 {
 %IF%%NUMBER_STATES%
@@ -829,7 +747,7 @@ fmi2Status fmi2GetContinuousStates(fmi2Component c, fmi2Real x[], size_t nx)
 }
 %ENDIF%
 
-%IF%%FMI2%
+%IF%%EQ(FMIVERSION,2.0)%
 fmi2Status fmi2GetFMUstate (fmi2Component c, fmi2FMUstate* FMUstate)
 {
 	/* not yet */
