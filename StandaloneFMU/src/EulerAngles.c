@@ -14,7 +14,7 @@
 /*****************************************************************************
 --------------------------------------------------------------------------
 
- Copyright © 1995-2007 Controllab Products B.V. All Rights Reserved.
+ Copyright (c) 1995-2007 Controllab Products B.V. All Rights Reserved.
 
              www.controllab.nl
                www.20sim.com
