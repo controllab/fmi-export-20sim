@@ -43,7 +43,7 @@
 #include "xxmatrix.h"
 %ENDIF%
 %IF%%NUMBEROF_DLL_MotionProfiles%
-#include "motionprofiles.h"
+#include "MotionProfiles.h"
 %ENDIF%
 %IF%%NUMBEROF_DLL_EulerAngles%
 #include "EulerAngles.h"

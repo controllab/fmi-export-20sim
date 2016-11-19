@@ -20,7 +20,7 @@
 #include "xxinteg.h"
 #include "xxfuncs.h"
 #include "xxsubmod.h"
-#include "motionprofiles.h"
+#include "MotionProfiles.h"
 #include "EulerAngles.h"
 
 
