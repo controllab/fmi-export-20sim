@@ -22,7 +22,9 @@
 #include "xxfuncs.h"
 #include "xxTable2D.h"
 
-static char g_lastError[512];
+#define LASTERRMSGBUFSIZE 512
+
+static char g_lastError[LASTERRMSGBUFSIZE];
 
 /*
 * \brief A type definition for a 2D lookup table.
@@ -86,7 +88,7 @@ XXInteger Table2D_Table2DInit(XXDouble* inarr, XXInteger inputs, XXDouble* outar
 	/* is it possible to allocate more tables */
 	if (g_table_count > %NUMBEROF_DLL_Table2D_Table2DInit%)
 	{
-		strncpy(g_lastError, "All tables already allocated", 512);
+		strncpy(g_lastError, "All tables already allocated", LASTERRMSGBUFSIZE);
 		return 1;
 	}
 
@@ -118,7 +120,8 @@ XXInteger Table2D_Table2DInit(XXDouble* inarr, XXInteger inputs, XXDouble* outar
 %ENDIF%
 	if (fStream == NULL)
 	{
-		strncpy(g_lastError, "Error opening file", 512);
+		strncpy(g_lastError, "Error opening file", LASTERRMSGBUFSIZE);
+		outarr[0] = -1;
 		return 1;
 	}
 
@@ -126,9 +129,10 @@ XXInteger Table2D_Table2DInit(XXDouble* inarr, XXInteger inputs, XXDouble* outar
 	int rows, cols;
 	if (!count_data_dimensions(fStream, &rows, &cols))
 	{
-		strncpy(g_lastError, "Invalid data file", 512);
+		strncpy(g_lastError, "Invalid data file", LASTERRMSGBUFSIZE);
 		/* Clean up */
 		fclose(fStream);
+		outarr[0] = -1;
 		return 1;
 	}
 
@@ -137,7 +141,7 @@ XXInteger Table2D_Table2DInit(XXDouble* inarr, XXInteger inputs, XXDouble* outar
 	/* before updating the table count, first try to populate the table */
 	if (!LookupTable_populate(g_table2dFiles[g_table_count], fStream))
 	{
-		strncpy(g_lastError, "Error reading file", 512);
+		strncpy(g_lastError, "Error reading file", LASTERRMSGBUFSIZE);
 
 		/* clean this entry */
 		LookupTable_destroy(g_table2dFiles[g_table_count]);
@@ -145,6 +149,7 @@ XXInteger Table2D_Table2DInit(XXDouble* inarr, XXInteger inputs, XXDouble* outar
 
 		/* Clean up */
 		fclose(fStream);
+		outarr[0] = -1;
 		return 1;
 	}
 
@@ -183,24 +188,29 @@ XXInteger Table2D_TableRead(XXDouble* inarr, XXInteger inputs, XXDouble* outarr,
 
 	if (inputs != 3)
 	{
-		strncpy(g_lastError, "Wrong input values for reading 2D table", 512);
+		strncpy(g_lastError, "Wrong input values for reading 2D table", LASTERRMSGBUFSIZE);
 		return 1;
 	}
 	if (outputs != 1)
 	{
-		strncpy(g_lastError, "Wrong output values for reading 2D table", 512);
+		strncpy(g_lastError, "Wrong output values for reading 2D table", LASTERRMSGBUFSIZE);
 		return 1;
 	}
 	id = (int)inarr[0];
 	if (id < 0 || id > 1) // check for correct id.
 	{
-		strncpy(g_lastError, "Incorrect id passed", 512);
+		strncpy(g_lastError, "Incorrect id passed", LASTERRMSGBUFSIZE);
 		return 1;
 	}
 	theTable = g_table2dFiles[id];
 	if (theTable == NULL)
 	{
-		strncpy(g_lastError, "No table allocated yet", 512);
+		strncpy(g_lastError, "No table allocated yet", LASTERRMSGBUFSIZE);
+		return 1;
+	}
+	if ((theTable->xValues == NULL) || (theTable->yValues == NULL))
+	{
+		strncpy(g_lastError, "Values table not allocated yet", LASTERRMSGBUFSIZE);
 		return 1;
 	}
 
@@ -315,25 +325,45 @@ XXInteger Table2D_TableRead(XXDouble* inarr, XXInteger inputs, XXDouble* outarr,
 
 LookupTable* LookupTable_create(XXInteger rows, XXInteger columns)
 {
-    LookupTable* table = (LookupTable*)malloc(sizeof(LookupTable));
-    table->nRows = rows;
-    table->nColumns = columns;
-    table->xValues = (XXDouble*) malloc(columns * sizeof(XXDouble));
-    table->yValues = (XXDouble*) malloc(rows * sizeof(XXDouble));
-    table->data = (XXDouble*) malloc(columns * rows * sizeof(XXDouble));
+	LookupTable* table;
 
-    return table;
+	if ((rows <= 0) || (columns <= 0))
+	{
+		return NULL;
+	}
+
+	table = (LookupTable*)malloc(sizeof(LookupTable));
+	if (table == NULL)
+	{
+		return NULL;
+	}
+
+	table->nRows = rows;
+	table->nColumns = columns;
+	table->xValues = (XXDouble*) malloc(columns * sizeof(XXDouble));
+	table->yValues = (XXDouble*) malloc(rows * sizeof(XXDouble));
+	table->data = (XXDouble*) malloc(columns * rows * sizeof(XXDouble));
+
+	if ((table->xValues == NULL) || (table->yValues == NULL) || (table->data == NULL))
+	{
+		LookupTable_destroy(table);
+		table = NULL;
+	}
+
+	return table;
 }
 
 void LookupTable_destroy(LookupTable* table)
 {
 	if (table == NULL)
+	{
 		return;
+	}
 
 	if (table->data != NULL ) free(table->data);
 	if (table->yValues != NULL) free(table->yValues);
 	if (table->xValues != NULL) free(table->xValues);
-    free(table);
+	free(table);
 }
 
 /*
