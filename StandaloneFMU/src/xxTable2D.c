@@ -61,7 +61,8 @@ void Table2D_Initialize()
 void Table2D_Terminate()
 {
     /* Free allocated memory */
-	for (int i = 0; i < %NUMBEROF_DLL_Table2D_Table2DInit%; ++i)
+	int i = 0;
+	for (i = 0; i < %NUMBEROF_DLL_Table2D_Table2DInit%; ++i)
 	{
 		LookupTable_destroy(g_table2dFiles[i]);
 		g_table2dFiles[i] = NULL;
@@ -81,10 +82,15 @@ extern const char* g_fmuResourceLocation;
 
 XXInteger Table2D_Table2DInit(XXDouble* inarr, XXInteger inputs, XXDouble* outarr, XXInteger outputs, XXInteger major)
 {
+	const char* filePath = NULL;
+	char* pch = NULL;
+	FILE* fStream = NULL;
+	int rows, cols;
 %IF%%OR(FMI1,FMI2)%
 	char fileName[MAX_FILENAME_LEN];
 	fileName[MAX_FILENAME_LEN - 1] = '\0';
 %ENDIF%
+
 	/* is it possible to allocate more tables */
 	if (g_table_count > %NUMBEROF_DLL_Table2D_Table2DInit%)
 	{
@@ -93,7 +99,7 @@ XXInteger Table2D_Table2DInit(XXDouble* inarr, XXInteger inputs, XXDouble* outar
 	}
 
 	/* Get the input file name */
-	const char* filePath = XXDouble2String(inarr[0]);
+	filePath = XXDouble2String(inarr[0]);
 
 	/* Try to open data file */
 %IF%%OR(FMI1,FMI2)%
@@ -107,16 +113,16 @@ XXInteger Table2D_Table2DInit(XXDouble* inarr, XXInteger inputs, XXDouble* outar
 	 * 20-sim will always store a Windows oriented path, so we need to check
 	 * for the backslash here
 	 */
-	char* pch = strrchr(filePath, '\\');
+	pch = strrchr(filePath, '\\');
 	if (pch != NULL)
 		filePath = ++pch;
 
 	/* Add the filename */
 	strncat(fileName, filePath, MAX_FILENAME_LEN - 1);
 	/* and open the file */
-	FILE* fStream = fopen(fileName, "r");
+	fStream = fopen(fileName, "r");
 %ELSE%
-	FILE* fStream = fopen(filePath, "r");
+	fStream = fopen(filePath, "r");
 %ENDIF%
 	if (fStream == NULL)
 	{
@@ -126,7 +132,6 @@ XXInteger Table2D_Table2DInit(XXDouble* inarr, XXInteger inputs, XXDouble* outar
 	}
 
 	/* TODO Add to global variable of lookup tables */
-	int rows, cols;
 	if (!count_data_dimensions(fStream, &rows, &cols))
 	{
 		strncpy(g_lastError, "Invalid data file", LASTERRMSGBUFSIZE);
@@ -397,11 +402,11 @@ XXDouble LookupTable_element(LookupTable* table, XXInteger row, XXInteger column
 */
 XXBoolean count_data_dimensions(FILE* fp, XXInteger* rows, XXInteger* columns)
 {
-    *rows = 0;
-    *columns = 0;
     XXInteger tmpCols = 0;
     XXBoolean readingVal = XXFALSE;
     XXInteger c;
+    *rows = 0;
+    *columns = 0;
 
     do
     {
@@ -486,12 +491,15 @@ XXBoolean count_data_dimensions(FILE* fp, XXInteger* rows, XXInteger* columns)
 XXBoolean LookupTable_populate(LookupTable* table, FILE* fp)
 {
     /* Go to beginning of/first position in file */
-    rewind(fp);
     double tmp;
 	XXDouble *dataEntry = table->data;
-    for (XXInteger row = 0; row < table->nRows + 1; ++row)
+	XXInteger row = 0;
+	XXInteger col = 0;
+
+    rewind(fp);
+    for (row = 0; row < table->nRows + 1; ++row)
     {
-        for (XXInteger col = 0; col < table->nColumns + 1; ++col)
+        for (col = 0; col < table->nColumns + 1; ++col)
         {
             while (fscanf(fp, "%lf", &tmp) == 0)
 			{
@@ -537,6 +545,8 @@ XXBoolean LookupTable_populate(LookupTable* table, FILE* fp)
  */
 XXInteger findPosition(XXDouble value, XXDouble* array, XXInteger size)
 {
+	XXInteger pos = 1;
+
 	/* first some error handling */
 	if (array == NULL)
 		return -1;
@@ -552,7 +562,6 @@ XXInteger findPosition(XXDouble value, XXDouble* array, XXInteger size)
 	/* and loop through the data until we find the position
 	 * start at element 1, 'cause the check on the first value has been done already
 	 */
-	XXInteger pos = 1;
 	while (pos < size)
 	{
 		if (array[pos] > value)
@@ -573,6 +582,8 @@ XXInteger findPosition(XXDouble value, XXDouble* array, XXInteger size)
  */
 XXDouble calcDistance(XXDouble value, XXInteger pos, XXDouble* array, XXInteger size)
 {
+	XXDouble lowerDistance = 0, previousVal = 0, nextVal = 0;
+
 	if (array == NULL)
 	{
 		return 0.0;
@@ -611,10 +622,10 @@ XXDouble calcDistance(XXDouble value, XXInteger pos, XXDouble* array, XXInteger 
 	}
 
 	/* nicely in the range */
-    XXDouble lowerDistance = 0;
+    lowerDistance = 0;
 
-    XXDouble previousVal = array[pos];
-    XXDouble nextVal = array[pos+1];
+    previousVal = array[pos];
+    nextVal = array[pos+1];
 	/* prevent division by zero */
 	if (nextVal == previousVal)
 		return 0.0;
