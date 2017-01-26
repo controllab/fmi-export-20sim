@@ -117,7 +117,7 @@
 				<xsl:element name="File"><xsl:attribute name="name">xxsubmod.c</xsl:attribute></xsl:element>
 				<xsl:element name="File"><xsl:attribute name="name">xxTable2D.c</xsl:attribute></xsl:element>
 %IF%%EQ(INTEGRATION_METHOD_NAME,VodeAdams)%
-				<xsl:element name="File"><xsl:attribute name="name">cvode/covde.c</xsl:attribute></xsl:element>
+				<xsl:element name="File"><xsl:attribute name="name">cvode/cvode.c</xsl:attribute></xsl:element>
 				<xsl:element name="File"><xsl:attribute name="name">cvode/cvode_dense.c</xsl:attribute></xsl:element>
 				<xsl:element name="File"><xsl:attribute name="name">cvode/cvode_direct.c</xsl:attribute></xsl:element>
 				<xsl:element name="File"><xsl:attribute name="name">cvode/cvode_io.c</xsl:attribute></xsl:element>
