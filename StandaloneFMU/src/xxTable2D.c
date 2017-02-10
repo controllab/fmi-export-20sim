@@ -22,7 +22,9 @@
 #include "xxfuncs.h"
 #include "xxTable2D.h"
 
-static char g_lastError[512];
+#define LASTERRMSGBUFSIZE 512
+
+static char g_lastError[LASTERRMSGBUFSIZE];
 
 /*
 * \brief A type definition for a 2D lookup table.
@@ -59,7 +61,8 @@ void Table2D_Initialize()
 void Table2D_Terminate()
 {
     /* Free allocated memory */
-	for (int i = 0; i < %NUMBEROF_DLL_Table2D_Table2DInit%; ++i)
+	int i = 0;
+	for (i = 0; i < %NUMBEROF_DLL_Table2D_Table2DInit%; ++i)
 	{
 		LookupTable_destroy(g_table2dFiles[i]);
 		g_table2dFiles[i] = NULL;
@@ -79,19 +82,24 @@ extern const char* g_fmuResourceLocation;
 
 XXInteger Table2D_Table2DInit(XXDouble* inarr, XXInteger inputs, XXDouble* outarr, XXInteger outputs, XXInteger major)
 {
+	const char* filePath = NULL;
+	char* pch = NULL;
+	FILE* fStream = NULL;
+	int rows, cols;
 %IF%%OR(FMI1,FMI2)%
 	char fileName[MAX_FILENAME_LEN];
 	fileName[MAX_FILENAME_LEN - 1] = '\0';
 %ENDIF%
+
 	/* is it possible to allocate more tables */
 	if (g_table_count > %NUMBEROF_DLL_Table2D_Table2DInit%)
 	{
-		strncpy(g_lastError, "All tables already allocated", 512);
+		strncpy(g_lastError, "All tables already allocated", LASTERRMSGBUFSIZE);
 		return 1;
 	}
 
 	/* Get the input file name */
-	const char* filePath = XXDouble2String(inarr[0]);
+	filePath = XXDouble2String(inarr[0]);
 
 	/* Try to open data file */
 %IF%%OR(FMI1,FMI2)%
@@ -105,30 +113,31 @@ XXInteger Table2D_Table2DInit(XXDouble* inarr, XXInteger inputs, XXDouble* outar
 	 * 20-sim will always store a Windows oriented path, so we need to check
 	 * for the backslash here
 	 */
-	char* pch = strrchr(filePath, '\\');
+	pch = strrchr(filePath, '\\');
 	if (pch != NULL)
 		filePath = ++pch;
 
 	/* Add the filename */
 	strncat(fileName, filePath, MAX_FILENAME_LEN - 1);
 	/* and open the file */
-	FILE* fStream = fopen(fileName, "r");
+	fStream = fopen(fileName, "r");
 %ELSE%
-	FILE* fStream = fopen(filePath, "r");
+	fStream = fopen(filePath, "r");
 %ENDIF%
 	if (fStream == NULL)
 	{
-		strncpy(g_lastError, "Error opening file", 512);
+		strncpy(g_lastError, "Error opening file", LASTERRMSGBUFSIZE);
+		outarr[0] = -1;
 		return 1;
 	}
 
 	/* TODO Add to global variable of lookup tables */
-	int rows, cols;
 	if (!count_data_dimensions(fStream, &rows, &cols))
 	{
-		strncpy(g_lastError, "Invalid data file", 512);
+		strncpy(g_lastError, "Invalid data file", LASTERRMSGBUFSIZE);
 		/* Clean up */
 		fclose(fStream);
+		outarr[0] = -1;
 		return 1;
 	}
 
@@ -137,7 +146,7 @@ XXInteger Table2D_Table2DInit(XXDouble* inarr, XXInteger inputs, XXDouble* outar
 	/* before updating the table count, first try to populate the table */
 	if (!LookupTable_populate(g_table2dFiles[g_table_count], fStream))
 	{
-		strncpy(g_lastError, "Error reading file", 512);
+		strncpy(g_lastError, "Error reading file", LASTERRMSGBUFSIZE);
 
 		/* clean this entry */
 		LookupTable_destroy(g_table2dFiles[g_table_count]);
@@ -145,6 +154,7 @@ XXInteger Table2D_Table2DInit(XXDouble* inarr, XXInteger inputs, XXDouble* outar
 
 		/* Clean up */
 		fclose(fStream);
+		outarr[0] = -1;
 		return 1;
 	}
 
@@ -183,24 +193,29 @@ XXInteger Table2D_TableRead(XXDouble* inarr, XXInteger inputs, XXDouble* outarr,
 
 	if (inputs != 3)
 	{
-		strncpy(g_lastError, "Wrong input values for reading 2D table", 512);
+		strncpy(g_lastError, "Wrong input values for reading 2D table", LASTERRMSGBUFSIZE);
 		return 1;
 	}
 	if (outputs != 1)
 	{
-		strncpy(g_lastError, "Wrong output values for reading 2D table", 512);
+		strncpy(g_lastError, "Wrong output values for reading 2D table", LASTERRMSGBUFSIZE);
 		return 1;
 	}
 	id = (int)inarr[0];
 	if (id < 0 || id > 1) // check for correct id.
 	{
-		strncpy(g_lastError, "Incorrect id passed", 512);
+		strncpy(g_lastError, "Incorrect id passed", LASTERRMSGBUFSIZE);
 		return 1;
 	}
 	theTable = g_table2dFiles[id];
 	if (theTable == NULL)
 	{
-		strncpy(g_lastError, "No table allocated yet", 512);
+		strncpy(g_lastError, "No table allocated yet", LASTERRMSGBUFSIZE);
+		return 1;
+	}
+	if ((theTable->xValues == NULL) || (theTable->yValues == NULL))
+	{
+		strncpy(g_lastError, "Values table not allocated yet", LASTERRMSGBUFSIZE);
 		return 1;
 	}
 
@@ -315,25 +330,45 @@ XXInteger Table2D_TableRead(XXDouble* inarr, XXInteger inputs, XXDouble* outarr,
 
 LookupTable* LookupTable_create(XXInteger rows, XXInteger columns)
 {
-    LookupTable* table = (LookupTable*)malloc(sizeof(LookupTable));
-    table->nRows = rows;
-    table->nColumns = columns;
-    table->xValues = (XXDouble*) malloc(columns * sizeof(XXDouble));
-    table->yValues = (XXDouble*) malloc(rows * sizeof(XXDouble));
-    table->data = (XXDouble*) malloc(columns * rows * sizeof(XXDouble));
+	LookupTable* table;
 
-    return table;
+	if ((rows <= 0) || (columns <= 0))
+	{
+		return NULL;
+	}
+
+	table = (LookupTable*)malloc(sizeof(LookupTable));
+	if (table == NULL)
+	{
+		return NULL;
+	}
+
+	table->nRows = rows;
+	table->nColumns = columns;
+	table->xValues = (XXDouble*) malloc(columns * sizeof(XXDouble));
+	table->yValues = (XXDouble*) malloc(rows * sizeof(XXDouble));
+	table->data = (XXDouble*) malloc(columns * rows * sizeof(XXDouble));
+
+	if ((table->xValues == NULL) || (table->yValues == NULL) || (table->data == NULL))
+	{
+		LookupTable_destroy(table);
+		table = NULL;
+	}
+
+	return table;
 }
 
 void LookupTable_destroy(LookupTable* table)
 {
 	if (table == NULL)
+	{
 		return;
+	}
 
 	if (table->data != NULL ) free(table->data);
 	if (table->yValues != NULL) free(table->yValues);
 	if (table->xValues != NULL) free(table->xValues);
-    free(table);
+	free(table);
 }
 
 /*
@@ -367,11 +402,11 @@ XXDouble LookupTable_element(LookupTable* table, XXInteger row, XXInteger column
 */
 XXBoolean count_data_dimensions(FILE* fp, XXInteger* rows, XXInteger* columns)
 {
-    *rows = 0;
-    *columns = 0;
     XXInteger tmpCols = 0;
     XXBoolean readingVal = XXFALSE;
     XXInteger c;
+    *rows = 0;
+    *columns = 0;
 
     do
     {
@@ -456,12 +491,15 @@ XXBoolean count_data_dimensions(FILE* fp, XXInteger* rows, XXInteger* columns)
 XXBoolean LookupTable_populate(LookupTable* table, FILE* fp)
 {
     /* Go to beginning of/first position in file */
-    rewind(fp);
     double tmp;
 	XXDouble *dataEntry = table->data;
-    for (XXInteger row = 0; row < table->nRows + 1; ++row)
+	XXInteger row = 0;
+	XXInteger col = 0;
+
+    rewind(fp);
+    for (row = 0; row < table->nRows + 1; ++row)
     {
-        for (XXInteger col = 0; col < table->nColumns + 1; ++col)
+        for (col = 0; col < table->nColumns + 1; ++col)
         {
             while (fscanf(fp, "%lf", &tmp) == 0)
 			{
@@ -507,6 +545,8 @@ XXBoolean LookupTable_populate(LookupTable* table, FILE* fp)
  */
 XXInteger findPosition(XXDouble value, XXDouble* array, XXInteger size)
 {
+	XXInteger pos = 1;
+
 	/* first some error handling */
 	if (array == NULL)
 		return -1;
@@ -522,7 +562,6 @@ XXInteger findPosition(XXDouble value, XXDouble* array, XXInteger size)
 	/* and loop through the data until we find the position
 	 * start at element 1, 'cause the check on the first value has been done already
 	 */
-	XXInteger pos = 1;
 	while (pos < size)
 	{
 		if (array[pos] > value)
@@ -543,6 +582,8 @@ XXInteger findPosition(XXDouble value, XXDouble* array, XXInteger size)
  */
 XXDouble calcDistance(XXDouble value, XXInteger pos, XXDouble* array, XXInteger size)
 {
+	XXDouble lowerDistance = 0, previousVal = 0, nextVal = 0;
+
 	if (array == NULL)
 	{
 		return 0.0;
@@ -581,10 +622,10 @@ XXDouble calcDistance(XXDouble value, XXInteger pos, XXDouble* array, XXInteger 
 	}
 
 	/* nicely in the range */
-    XXDouble lowerDistance = 0;
+    lowerDistance = 0;
 
-    XXDouble previousVal = array[pos];
-    XXDouble nextVal = array[pos+1];
+    previousVal = array[pos];
+    nextVal = array[pos+1];
 	/* prevent division by zero */
 	if (nextVal == previousVal)
 		return 0.0;

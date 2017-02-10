@@ -84,8 +84,8 @@ XXBoolean %FUNCTIONPREFIX%DiscreteStep (%VARPREFIX%ModelInstance* model_instance
 %IF%%NUMBER_STATES%
 	XXInteger index;
 
-	/* check if the outputTime is beyond our discrete time + step size */
-	if( model_instance->m_discrete_time + model_instance->step_size < outputTime )
+	/* check if the next discrete time point is beyond the outputTime */
+	if( model_instance->m_discrete_time + model_instance->step_size > outputTime )
 	{
 		/* no need to take a discrete step yet
 		 * we just update the internal time, but leave the discrete time as is

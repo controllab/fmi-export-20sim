@@ -116,6 +116,17 @@
 				<xsl:element name="File"><xsl:attribute name="name">xxmodel.c</xsl:attribute></xsl:element>
 				<xsl:element name="File"><xsl:attribute name="name">xxsubmod.c</xsl:attribute></xsl:element>
 				<xsl:element name="File"><xsl:attribute name="name">xxTable2D.c</xsl:attribute></xsl:element>
+%IF%%EQ(INTEGRATION_METHOD_NAME,VodeAdams)%
+				<xsl:element name="File"><xsl:attribute name="name">cvode/cvode.c</xsl:attribute></xsl:element>
+				<xsl:element name="File"><xsl:attribute name="name">cvode/cvode_dense.c</xsl:attribute></xsl:element>
+				<xsl:element name="File"><xsl:attribute name="name">cvode/cvode_direct.c</xsl:attribute></xsl:element>
+				<xsl:element name="File"><xsl:attribute name="name">cvode/cvode_io.c</xsl:attribute></xsl:element>
+				<xsl:element name="File"><xsl:attribute name="name">nvector/nvector_serial.c</xsl:attribute></xsl:element>
+				<xsl:element name="File"><xsl:attribute name="name">sundials/sundials_dense.c</xsl:attribute></xsl:element>
+				<xsl:element name="File"><xsl:attribute name="name">sundials/sundials_direct.c</xsl:attribute></xsl:element>
+				<xsl:element name="File"><xsl:attribute name="name">sundials/sundials_math.c</xsl:attribute></xsl:element>
+				<xsl:element name="File"><xsl:attribute name="name">sundials/sundials_nvector.c</xsl:attribute></xsl:element>
+%ENDIF%
 			</xsl:element>
 		</xsl:element>
 %ENDIF%

@@ -183,8 +183,6 @@ typedef struct %VARPREFIX%ModelInstance
 	XXDouble delay_update_array[%VARPREFIX%NUMBEROF_DELAYFUNCTION];
 	XXDouble delay_last_values[%VARPREFIX%NUMBEROF_DELAYFUNCTION];
 %ENDIF%
-%IF%%NUMBER_STATES%
-	/* Integration method intermediate variables */
 %IF%%EQ(INTEGRATION_METHOD_NAME,Discrete)%
 
 	/* discrete time can be behind of continuous time
@@ -192,6 +190,8 @@ typedef struct %VARPREFIX%ModelInstance
 	 */
 	XXDouble m_discrete_time;
 %ENDIF%
+%IF%%NUMBER_STATES%
+	/* Integration method intermediate variables */
 %IF%%EQ(INTEGRATION_METHOD_NAME,RungeKutta2)%
 	XXDouble q0[%VARPREFIX%state_count];
 %ENDIF%
