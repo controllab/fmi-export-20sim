@@ -108,6 +108,7 @@
 			<xsl:attribute name="providesDirectionalDerivative">false</xsl:attribute>
 			<xsl:element name="SourceFiles">
 				<xsl:element name="File"><xsl:attribute name="name">EulerAngles.c</xsl:attribute></xsl:element>
+				<xsl:element name="File"><xsl:attribute name="name">fmi2Functions.c</xsl:attribute></xsl:element>
 				<xsl:element name="File"><xsl:attribute name="name">MotionProfiles.c</xsl:attribute></xsl:element>
 				<xsl:element name="File"><xsl:attribute name="name">xxfuncs.c</xsl:attribute></xsl:element>
 				<xsl:element name="File"><xsl:attribute name="name">xxinteg.c</xsl:attribute></xsl:element>
