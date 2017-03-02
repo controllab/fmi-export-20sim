@@ -81,7 +81,7 @@ ifeq ($(WINDOWS),1)
 	FMU_BIN32_DIR = $(FMU_DIR)/binaries/win32
 	FMU_BIN64_DIR = $(FMU_DIR)/binaries/win64
 	TEMPLATE_DIR=$(subst :,,$(subst \,/,/%TEMPLATE_DIR%))
-	ZIP_COMMAND=$(TEMPLATE_DIR)/bin/7z.exe a -tzip -xr!.svn "$(FMU)" *
+	ZIP_COMMAND="$(TEMPLATE_DIR)/bin/7z.exe" a -tzip -xr!.svn "$(FMU)" *
 	POS_INDEP_CODE=
 endif
 ifeq ($(LINUX),1)
