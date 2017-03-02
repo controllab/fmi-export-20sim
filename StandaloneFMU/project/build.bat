@@ -251,6 +251,11 @@ IF DEFINED VSVARS32 (
   copy "%ROOTPATH%\src\cvode\include\sundials\sundials_types.h" "%SRC_DIR%\sundials"
 %ENDIF%
 
+%IF%%FMI2%
+  REM Copy als the compiler defines to support the INTO-CPS FMU Builder
+  copy "%ROOTPATH%\src\defines.def" "%SRC_DIR%"
+%ENDIF%
+  
   ECHO Generate the FMU
   cd "%FMU_DIR%"
   if exist "%FMU%" del /Q "%FMU%"

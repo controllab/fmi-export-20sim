@@ -45,28 +45,30 @@ CXX?=g++
 CC?=gcc
 
 current_dir = $(shell pwd)
+DEFINES=-DNO_FUNCTION_PREFIX
 
 # OS detection
 ifeq ($(OS),Windows_NT)
 	# Windows
 	WINDOWS=1
-	DEFINES=-DWIN32
+	DEFINES+= -DWIN32
 	# For now, assume 32-bit
 	# TODO detect MinGW 64
 	OS_BITS=32
 	DLL_EXT=dll
-	BUILD_DLL=-shared
+	# -shared to build a DLL, -static to prevent a dependency on libgcc_s_*.dll (gcc runtime library)
+	BUILD_DLL=-shared -static
 else
 	# Other OS (Linux/MacOSX)
 	ifeq ($(shell uname), Linux)
 		LINUX=1
-		DEFINES=-DLINUX
+		DEFINES+= -DLINUX
 		DLL_EXT=so
 		BUILD_DLL=-shared
 	endif
 	ifeq ($(shell uname), Darwin)
 		MACOSX=1
-		DEFINES=-DMACOSX
+		DEFINES+= -DMACOSX
 		DLL_EXT=so
 		BUILD_DLL=-dynamiclib
 	endif
@@ -185,6 +187,9 @@ fmu: dll createfmudir
 	@cp $(SRC)/cvode/include/sundials/sundials_dense.h $(FMU_SRC_DIR)/sundials/
 	@cp $(SRC)/cvode/include/sundials/sundials_direct.h $(FMU_SRC_DIR)/sundials/
 	@cp $(SRC)/cvode/include/sundials/sundials_types.h $(FMU_SRC_DIR)/sundials/
+%ENDIF%
+%IF%%FMI2%
+	@cp $(SRC)/defines.def $(FMU_SRC_DIR)
 %ENDIF%
 
 	@echo Create the FMU: $(FMU)

@@ -15,6 +15,12 @@
    Please check the fmiSunctions.h file for more details
 */
 
+%IF%%FMI2%
+#if !defined FMI2_FUNCTION_PREFIX && !defined NO_FUNCTION_PREFIX
+#define FMI2_FUNCTION_PREFIX %SUBMODEL_NAME%_
+#endif
+%ENDIF%
+
 /* The FMI related headers */
 #include "%FMI_PREFIX%Functions.h"
 #include "fmiGUID.h"
