@@ -144,6 +144,9 @@ XXBoolean %FUNCTIONPREFIX%EulerStep (%VARPREFIX%ModelInstance* model_instance, X
 {
 	XXDouble stepSize = model_instance->step_size;
 	%VARPREFIX%ModelInstance *mi = model_instance;
+%IF%%NUMBER_STATES%
+	XXInteger index;
+%ENDIF%
 	XXDouble output_time = mi->m_use_finish_time ? (mi->finish_time > outputTime ? outputTime : mi->finish_time) : outputTime;
 
 	if( output_time - model_instance->time < stepSize )
@@ -153,8 +156,6 @@ XXBoolean %FUNCTIONPREFIX%EulerStep (%VARPREFIX%ModelInstance* model_instance, X
 	}
 
 %IF%%NUMBER_STATES%
-	XXInteger index;
-
 	/* for each of the supplied states */
 	for (index = 0; index < %VARPREFIX%STATE_SIZE; index++)
 	{
@@ -199,6 +200,11 @@ XXBoolean %FUNCTIONPREFIX%RungeKutta2Terminate (%VARPREFIX%ModelInstance* model_
 /* the Runge-Kutta-2 integration method itself */
 XXBoolean %FUNCTIONPREFIX%RungeKutta2Step (%VARPREFIX%ModelInstance* model_instance, XXDouble outputTime)
 {
+%IF%%NUMBER_STATES%
+	XXInteger index;
+	XXDouble rktime;
+%ENDIF%
+
 	%VARPREFIX%ModelInstance *mi = model_instance;
 	XXDouble output_time = mi->m_use_finish_time ? (mi->finish_time > outputTime ? outputTime : mi->finish_time) : outputTime;
 	/* check if we have to limit our stepsize to get exactly at the outpuTime */
@@ -210,9 +216,6 @@ XXBoolean %FUNCTIONPREFIX%RungeKutta2Step (%VARPREFIX%ModelInstance* model_insta
 	}
 
 %IF%%NUMBER_STATES%
-	XXInteger index;
-	XXDouble rktime;
-
 	/* This model has %NUMBER_STATES% states */
 	/*********************************************************************************/
 	/*          calculate intermediate result                                        */
@@ -294,6 +297,10 @@ XXBoolean %FUNCTIONPREFIX%RungeKutta4Terminate (%VARPREFIX%ModelInstance* model_
 /* the Runge-Kutta-4 integration method itself */
 XXBoolean %FUNCTIONPREFIX%RungeKutta4Step (%VARPREFIX%ModelInstance* model_instance, XXDouble outputTime)
 {
+%IF%%NUMBER_STATES%
+	XXInteger index;
+	XXDouble rktime;
+%ENDIF%
 	%VARPREFIX%ModelInstance *mi = model_instance;
 	XXDouble output_time = mi->m_use_finish_time ? (mi->finish_time > outputTime ? outputTime : mi->finish_time) : outputTime;
 
