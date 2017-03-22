@@ -313,9 +313,6 @@ XXBoolean %FUNCTIONPREFIX%RungeKutta4Step (%VARPREFIX%ModelInstance* model_insta
 	}
 
 %IF%%NUMBER_STATES%
-	XXInteger index;
-	XXDouble rktime;
-
 	/* This model has %NUMBER_STATES% states */
 	/*********************************************************************************/
 	/*          calculate intermediate state results q1, q2, q3 and q4               */
