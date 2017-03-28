@@ -358,6 +358,7 @@ fmiComponent fmiInstantiateSlave(fmiString instanceName,
 								fmiBoolean loggingOn) 
 {
 	%VARPREFIX%ModelInstance* model_instance;
+	int offset = 0;
 	
  	/* we should remember the functions pointer in order to make callback functions */
 	if (!functions.logger) 
@@ -376,11 +377,11 @@ fmiComponent fmiInstantiateSlave(fmiString instanceName,
 			"Wrong GUID %s. Expected %s.", GUID, FMI_GUID);
 		return NULL;
 	}
-    if (!functions.allocateMemory || !functions.freeMemory){
-        functions.logger(NULL, instanceName, fmiError, "error",
-                "Missing memory callback function.");
-        return NULL;
-    }
+	if (!functions.allocateMemory || !functions.freeMemory){
+		functions.logger(NULL, instanceName, fmiError, "error",
+				"Missing memory callback function.");
+		return NULL;
+	}
 
 	model_instance = (%VARPREFIX%ModelInstance *)functions.allocateMemory(1, sizeof(%VARPREFIX%ModelInstance));
 
@@ -398,16 +399,54 @@ fmiComponent fmiInstantiateSlave(fmiString instanceName,
 	if (!model_instance->instanceName)
 	{
 		functions.logger(NULL, instanceName, fmiError, "error",
-			"Out of memory while allocating instance name");
+			"fmiInstantiateSlave: Out of memory while allocating instance name");
 		return NULL;
 	}
 	strcpy((char *)model_instance->instanceName, (char *)instanceName);
+
+	/* Prepare the model instance struct */
+	model_instance->start_time = %START_TIME%;
+	model_instance->finish_time = 0.0;
+	model_instance->m_use_finish_time = XXFALSE;
+	model_instance->step_size = %TIME_STEP_SIZE%;
+	model_instance->time = 0.0;
+	model_instance->steps = 0;
+	model_instance->%XX_INITIALIZE% = XXTRUE;
+	model_instance->major = XXTRUE;
+	model_instance->stop_simulation = XXFALSE;
+
+	/* Set the offsets within the model_instance->MEMORY array */
+%IF%%NUMBER_CONSTANTS%
+	model_instance->%XX_CONSTANT_ARRAY_NAME% = &model_instance->MEMORY[offset]; /* constants offset */
+	offset = offset + %VARPREFIX%constants_count;
+%ENDIF%
+%IF%%NUMBER_PARAMETERS%
+	model_instance->%XX_PARAMETER_ARRAY_NAME% = &model_instance->MEMORY[offset];	/* parameters offset */
+	offset = offset + %VARPREFIX%parameter_count;
+%ENDIF%
+%IF%%NUMBER_INITIAL_VALUES%
+	model_instance->%XX_INITIAL_VALUE_ARRAY_NAME% = &model_instance->MEMORY[offset];		/* initial values offset */
+	offset = offset + %VARPREFIX%initialvalue_count;
+%ENDIF%
+%IF%%NUMBER_VARIABLES%
+	model_instance->%XX_VARIABLE_ARRAY_NAME% = &model_instance->MEMORY[offset];		/* variables offset */
+	offset = offset + %VARPREFIX%variable_count;
+%ENDIF%
+%IF%%NUMBER_STATES%
+	model_instance->%XX_STATE_ARRAY_NAME% = &model_instance->MEMORY[offset];		/* states offset */
+	offset = offset + %VARPREFIX%state_count;
+	model_instance->%XX_RATE_ARRAY_NAME% = &model_instance->MEMORY[offset];		/* rates offset */
+	offset = offset + %VARPREFIX%state_count;
+%ENDIF%
 
 	/* Register the callback */
 	model_instance->fmiCallbackFunctions = functions;
 
 	/* Remember the resource folder location */
 	model_instance->resourceLocation = URIToNativePath(model_instance, fmuLocation);
+
+	/* Initialize our data arrays */
+	%FUNCTIONPREFIX%ModelInitialize(model_instance);
 
 	return (fmiComponent) model_instance;
 }
