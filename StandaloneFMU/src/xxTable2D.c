@@ -422,8 +422,8 @@ XXBoolean count_data_dimensions(FILE* fp, XXInteger* rows, XXInteger* columns)
 
 		switch (c)
 		{
-						case '\r':
-							continue;
+			case '\r':
+				continue;
 			case ' ':
 			case '\t':
 				if (readingVal){
