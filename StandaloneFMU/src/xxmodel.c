@@ -128,6 +128,12 @@ void %FUNCTIONPREFIX%CalculateInitial (%VARPREFIX%ModelInstance* model_instance)
 
 %ENDIF%
 %INITIAL_EQUATIONS%
+
+%IF%%NUMBER_STATES%
+	/* set the states */
+%INITIALIZE_STATES%
+
+%ENDIF%
 }
 
 /* This function calculates the static equations of the model.
