@@ -289,8 +289,10 @@ IF DEFINED VSVARS32 (
 
 :END
   IF %promptlevel% NEQ noprompt (
-  ECHO Press any key to exit...
-  pause > NUL
+    IF NOT [%XXSIM_SCRIPT_MODE%] == [] goto END_NO_PROMPT
+    ECHO Press any key to exit...
+    pause > NUL
   )
+:END_NO_PROMPT
   IF %exitcode% NEQ 0 EXIT /B %exitcode%
   EXIT
