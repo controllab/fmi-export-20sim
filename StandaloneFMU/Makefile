@@ -54,7 +54,7 @@ else
 	ifeq ($(shell uname), Darwin)
 		MACOSX=1
 		DEFINES+= -DMACOSX
-		DLL_EXT=so
+		DLL_EXT=dylib
 		BUILD_DLL=-dynamiclib
 	endif
 	# Detect 32-bit / 64-bit OS
@@ -68,18 +68,21 @@ ifeq ($(WINDOWS),1)
 	TEMPLATE_DIR=$(subst :,,$(subst \,/,/%TEMPLATE_DIR%))
 	ZIP_COMMAND="$(TEMPLATE_DIR)/bin/7z.exe" a -tzip -xr!.svn "$(FMU)" *
 	POS_INDEP_CODE=
+	STRIP=strip
 endif
 ifeq ($(LINUX),1)
 	FMU_BIN32_DIR = $(FMU_DIR)/binaries/linux32
 	FMU_BIN64_DIR = $(FMU_DIR)/binaries/linux64
 	ZIP_COMMAND=zip -r $(FMU) *
 	POS_INDEP_CODE=-fPIC
+	STRIP=strip
 endif
 ifeq ($(MACOSX),1)
 	FMU_BIN32_DIR = $(FMU_DIR)/binaries/darwin32
 	FMU_BIN64_DIR = $(FMU_DIR)/binaries/darwin64
 	ZIP_COMMAND=zip -r $(FMU) *
 	POS_INDEP_CODE=-fPIC
+	STRIP=strip -x
 endif
 
 ifeq ($(MAKECMDGOALS),debug)
@@ -119,7 +122,7 @@ $(BUILD)/%.o: $(SRC)/%.c Makefile $(BUILD)
 
 dll: welcome $(OBJS)
 	@$(CC) $(CFLAGS) -o $(BUILD)/$(FMU_NAME).$(DLL_EXT) $(BUILD_DLL) $(OBJS) -lm
-	@[ $(DEBUG)==0 ] && strip $(BUILD)/$(FMU_NAME).$(DLL_EXT)
+	@[ $(DEBUG)==0 ] && $(STRIP) $(BUILD)/$(FMU_NAME).$(DLL_EXT)
 
 createfmudir:
 	@echo Creating an empty FMU
