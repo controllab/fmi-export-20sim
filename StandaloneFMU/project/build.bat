@@ -14,7 +14,8 @@ rem If you get an error that Visual studio was not found, SET your path for VSNE
 rem -------------------------------------------------------------
 rem	CONFIG START
 SET CURPATH=%~dp0
-SET comp=vs2015
+rem Start searching for the newest compiler
+SET comp=vs2017
 SET promptlevel=prompt
 SET exitcode=0
 SET buildmode=clean
@@ -73,6 +74,7 @@ FOR %%b in (%1, %2, %3, %4, %5) DO (
 	IF %%b==vs2010 SET comp=vs2010
 	IF %%b==vs2013 SET comp=vs2013
 	IF %%b==vs2015 SET comp=vs2015
+	IF %%b==vs2017 SET comp=vs2017
 	IF %%b==clean SET buildmode=clean
 	IF %%b==noclean SET buildmode=noclean
 	IF %%b==noprompt SET promptlevel=noprompt
@@ -83,7 +85,44 @@ SET DEVENV=""
 SET VSVARS32=""
 SET BUILD_X64=1
 
-rem Seach for VS 2015 / VS 2015 Express
+rem Search for VS 2017
+:VS2017
+IF NOT %comp%==vs2017 goto VS2015
+setlocal
+rem Search for VSWhere first
+set "InstallerPath=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer"
+if not exist "%InstallerPath%" set "InstallerPath=%ProgramFiles%\Microsoft Visual Studio\Installer"
+if not exist "%InstallerPath%" goto :no-vswhere
+
+SET VSWHERE_ARGS=-latest -products * %VSWHERE_REQ% %VSWHERE_PRP% %VSWHERE_LMT%
+set VSWHERE_REQ=-requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64
+set VSWHERE_PRP=-property installationPath
+set VSWHERE_LMT=-version "[15.0,16.0)"
+SET VSWHERE_ARGS=-latest -products * %VSWHERE_REQ% %VSWHERE_PRP% %VSWHERE_LMT%
+
+for /f "usebackq tokens=*" %%i in (`"%InstallerPath%\vswhere" %VSWHERE_ARGS%`) do (
+    endlocal
+    set "VCINSTALLDIR=%%i\VC\"
+    set "VS150COMNTOOLS=%%i\Common7\Tools\"
+)
+endlocal
+:no-vswhere:
+	IF EXIST "%VS150COMNTOOLS%\VsDevCmd.bat" (
+		set VSVARS32="%VS150COMNTOOLS%\VsDevCmd.bat"
+		ECHO Found Visual C++ 2017
+		set PROJ_DIR=VS2017
+	) ELSE IF EXIST "%ProgramFiles%\Microsoft Visual Studio\2017\Community\Common7\Tools\VsDevCmd.bat" (
+		set VSVARS32="%ProgramFiles%\Microsoft Visual Studio\2017\Community\Common7\Tools\VsDevCmd.bat"
+		ECHO Found Visual C++ 2017
+		set PROJ_DIR=VS2017
+	) ELSE (
+		rem Try an older compiler
+		set comp=vs2015
+	)
+)
+
+rem Search for VS 2015
+:VS2015
 IF %comp%==vs2015 (
 	set PROJ_DIR=VS2015
 	IF EXIST "%VS140COMNTOOLS%\vsvars32.bat" (
@@ -98,7 +137,7 @@ IF %comp%==vs2015 (
 	)
 )
 
-rem Seach for VS 2013 / VS 2013 Express / VS 2013 Community edition
+rem Search for VS 2013 / VS 2013 Express / VS 2013 Community edition
 IF %comp%==vs2013 (
 	set PROJ_DIR=VS2013
 	IF EXIST "%VS120COMNTOOLS%\vsvars32.bat" (
@@ -113,7 +152,7 @@ IF %comp%==vs2013 (
 	)
 )
 
-rem Seach for VS 2010 / VS 2010 Express
+rem Search for VS 2010 / VS 2010 Express
 IF %comp%==vs2010 (
 	set PROJ_DIR=VS2010
 	IF EXIST "%VS100COMNTOOLS%\vsvars32.bat" (
