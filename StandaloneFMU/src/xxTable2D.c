@@ -43,8 +43,11 @@ typedef struct
 } LookupTable;
 
 /* Create a global variable to hold lookup tables */
-LookupTable *g_table2dFiles[%NUMBEROF_DLL_Table2D_Table2DInit%]; 
+static LookupTable **g_table2dFiles=0;
+
+
 static int g_table_count = 0;
+static int g_table_size =0;
 
 LookupTable* LookupTable_create(XXInteger rows, XXInteger columns);
 void LookupTable_destroy(LookupTable* table);
@@ -56,17 +59,29 @@ XXDouble calcDistance(XXDouble value, XXInteger pos, XXDouble* array, XXInteger 
 
 void Table2D_Initialize()
 {
+	g_table_size++;
+
+	if(!g_table2dFiles)
+		g_table2dFiles = malloc(	g_table_size * sizeof(LookupTable *));
+	else
+		g_table2dFiles =realloc(g_table2dFiles, 	g_table_size * sizeof(LookupTable *));
+
 }
 
 void Table2D_Terminate()
 {
+	if(!g_table2dFiles)
+		return;
 	/* Free allocated memory */
 	int i = 0;
-	for (i = 0; i < %NUMBEROF_DLL_Table2D_Table2DInit%; ++i)
+	for (i = 0; i < g_table_size; ++i)
 	{
 		LookupTable_destroy(g_table2dFiles[i]);
 		g_table2dFiles[i] = NULL;
 	}
+
+	free(g_table2dFiles);
+	g_table2dFiles = NULL;
 }
 
 XXString Table2D_LastErrorMessage()
@@ -92,10 +107,10 @@ XXInteger Table2D_Table2DInit(XXDouble* inarr, XXInteger inputs, XXDouble* outar
 %ENDIF%
 
 	/* is it possible to allocate more tables */
-	if (g_table_count > %NUMBEROF_DLL_Table2D_Table2DInit%)
+	if (g_table_count >= g_table_size)
 	{
-		strncpy(g_lastError, "All tables already allocated", LASTERRMSGBUFSIZE);
-		return 1;
+		//Make room for one additional table
+		Table2D_Initialize();
 	}
 
 	/* Get the input file name */
