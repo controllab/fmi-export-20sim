@@ -165,6 +165,11 @@ const char* URIToNativePath(%VARPREFIX%ModelInstance* model_instance, const char
 					path[j] = (unsigned char)strtol(buf, NULL, 16);
 					i += 2;
 					path_len -= 2;
+					if (path[j] == foreign_path_separator)
+					{
+						/* Translate slashes to backslashes on Windows and backslashes to slashes on other OSses */
+						path[j] = native_path_separator;
+					}
 				}
 				else
 				{
