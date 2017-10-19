@@ -34,6 +34,8 @@
 /* Model size constants */
 #define %VARPREFIX%constants_count %NUMBER_CONSTANTS%
 #define %VARPREFIX%parameter_count %NUMBER_PARAMETERS%
+#define %VARPREFIX%parameter_index_start %NUMBER_CONSTANTS%
+#define %VARPREFIX%parameter_index_end (%NUMBER_CONSTANTS% + %NUMBER_PARAMETERS% - 1)
 #define %VARPREFIX%initialvalue_count %NUMBER_INITIAL_VALUES%
 #define %VARPREFIX%variable_count %NUMBER_VARIABLES%
 #define %VARPREFIX%state_count %NUMBER_STATES%
@@ -107,6 +109,7 @@ typedef struct %VARPREFIX%ModelInstance
 	XXBoolean %XX_INITIALIZE%;
 	XXBoolean major;
 	XXBoolean stop_simulation;
+	XXBoolean parameters_updated;
 
 	/* Model state */
 	XXDouble MEMORY[

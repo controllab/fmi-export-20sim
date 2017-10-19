@@ -307,6 +307,10 @@ FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%SetReal(%FMI_PREFIX%Component c,
 	for (i = 0; i < nvr; i++)
 	{
 		model_instance->MEMORY[ vr[i] ] = value [i];
+		if ((vr[i] >= %VARPREFIX%parameter_index_start) && (vr[i] <= %VARPREFIX%parameter_index_end))
+		{
+			model_instance->parameters_updated = XXTRUE;
+		}
 	}
 	return %FMI_PREFIX%OK;
 }
@@ -326,6 +330,10 @@ FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%SetInteger (%FMI_PREFIX%Component 
 	for (i = 0; i < nvr; i++)
 	{
 		model_instance->MEMORY[ vr[i] ] = (XXDouble) value [i];
+		if ((vr[i] >= %VARPREFIX%parameter_index_start) && (vr[i] <= %VARPREFIX%parameter_index_end))
+		{
+			model_instance->parameters_updated = XXTRUE;
+		}
 	}
 	return %FMI_PREFIX%OK;
 }
@@ -340,6 +348,10 @@ FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%SetBoolean(%FMI_PREFIX%Component c
 	for (i = 0; i < nvr; i++)
 	{
 		model_instance->MEMORY[vr[i]] = value[i] ? 1.0 : 0.0;
+		if ((vr[i] >= %VARPREFIX%parameter_index_start) && (vr[i] <= %VARPREFIX%parameter_index_end))
+		{
+			model_instance->parameters_updated = XXTRUE;
+		}
 	}
 	return %FMI_PREFIX%OK;    
 }
@@ -419,6 +431,7 @@ fmiComponent fmiInstantiateSlave(fmiString instanceName,
 	model_instance->%XX_INITIALIZE% = XXTRUE;
 	model_instance->major = XXTRUE;
 	model_instance->stop_simulation = XXFALSE;
+	model_instance->parameters_updated = XXFALSE;
 
 	/* Set the offsets within the model_instance->MEMORY array */
 %IF%%NUMBER_CONSTANTS%
@@ -764,6 +777,13 @@ fmi2Status fmi2DoStep(fmi2Component c,
 	if (communicationStepSize == 0)
 	{
 		return %FMI_PREFIX%OK;
+	}
+
+	/* Check if our parameters are updated */
+	if (model_instance->parameters_updated == XXTRUE)
+	{
+		%FUNCTIONPREFIX%CalculateStatic(model_instance);
+		model_instance->parameters_updated = XXFALSE;
 	}
 
 	/* as long as we are not passed our communication point */
