@@ -19,7 +19,7 @@
    the alias variables by adding them to the end of the array:
 
    XXDouble %VARPREFIX%variables[NUMBER_VARIABLES + NUMBER_ALIAS_VARIABLES + 1];
-   XXCharacter *%VARPREFIX%variable_names[] = {
+   XXString %VARPREFIX%variable_names[] = {
      VARIABLE_NAMES, ALIAS_VARIABLE_NAMES, NULL
    };
 

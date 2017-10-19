@@ -74,17 +74,17 @@ XXInteger MotionProfileGenevaMechanism(XXDouble u,
 
 
 
-void MotionProfiles_Initialize ()
+void MotionProfiles_Initialize (void)
 {
 
 }
 
-void MotionProfiles_Terminate ()
+void MotionProfiles_Terminate (void)
 {
 
 }
 
-XXString LastErrorMessage()
+XXString LastErrorMessage(void)
 {
 	return g_lastError;
 }

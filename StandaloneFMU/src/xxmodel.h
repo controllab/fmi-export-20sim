@@ -282,10 +282,12 @@ void %FUNCTIONPREFIX%CalculateFinal (%VARPREFIX%ModelInstance* model_instance);
 void %FUNCTIONPREFIX%DelayUpdate (%VARPREFIX%ModelInstance* model_instance);
 XXDouble %FUNCTIONPREFIX%ModelDelay (%VARPREFIX%ModelInstance* model_instance, XXDouble argument1, XXDouble argument2, XXInteger id);
 #define XXDelay(arg1, arg2, id) %FUNCTIONPREFIX%ModelDelay(model_instance, arg1, arg2, id)
+
 %ENDIF%
 %IF%%NUMBEROF_INITIALFUNCTION%
 XXDouble %FUNCTIONPREFIX%ModelInitialValue (%VARPREFIX%ModelInstance* model_instance, XXDouble argument, XXInteger identifier);
 #define XXInitialValue(arg, id) %FUNCTIONPREFIX%ModelInitialValue(model_instance, arg, id)
+
 %ENDIF%
 %IF%%NUMBEROF_WARNSTATEMENT%
 XXBoolean %FUNCTIONPREFIX%ModelWarning (%VARPREFIX%ModelInstance* model_instance, XXString message, XXInteger id);
