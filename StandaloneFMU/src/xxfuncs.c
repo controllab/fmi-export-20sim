@@ -393,18 +393,6 @@ XXBoolean XXFrequencyEvent1 (XXDouble argument1, XXDouble argument2, XXInteger i
 }
 
 %ENDIF%
-%IF%%NUMBEROF_TIMEEVENTFUNCTION%
-XXBoolean XXTimeEvent (XXDouble argument, XXInteger id)
-{
-#if defined _MSC_VER
-#pragma message("warning: The 20-sim 'timeevent' function is not yet implemented in this code generation template")
-#elif defined __GNUC__
-#warning The 20-sim 'timeevent' function is not yet implemented in this code generation template
-#endif
-	return 0;
-}
-
-%ENDIF%
 %IF%%NUMBEROF_TDELAYFUNCTION%
 XXDouble XXTimeDelay (XXDouble argument, XXDouble time, XXInteger id)
 {

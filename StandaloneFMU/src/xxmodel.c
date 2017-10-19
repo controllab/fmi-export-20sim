@@ -350,3 +350,14 @@ XXBoolean %FUNCTIONPREFIX%ModelEventDown (%VARPREFIX%ModelInstance* model_instan
 }
 
 %ENDIF%
+%IF%%NUMBEROF_TIMEEVENTFUNCTION%
+XXBoolean %FUNCTIONPREFIX%ModelTimeEvent (%VARPREFIX%ModelInstance* model_instance, XXDouble argument, XXInteger id)
+{
+	if ((argument > model_instance->time) && (argument <= model_instance->time + %EVENT_DELTA%))
+	{
+		return XXTRUE;
+	}
+	return XXFALSE;
+}
+
+%ENDIF%

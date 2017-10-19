@@ -324,4 +324,8 @@ XXBoolean %FUNCTIONPREFIX%ModelEventUp (%VARPREFIX%ModelInstance* model_instance
 XXBoolean %FUNCTIONPREFIX%ModelEventDown (%VARPREFIX%ModelInstance* model_instance, XXDouble argument, XXInteger id);
 #define XXEventDown(argument, id) %FUNCTIONPREFIX%ModelEventDown(model_instance, argument, id)
 %ENDIF%
+%IF%%NUMBEROF_TIMEEVENTFUNCTION%
+XXBoolean %FUNCTIONPREFIX%ModelTimeEvent (%VARPREFIX%ModelInstance* model_instance, XXDouble argument, XXInteger id);
+#define XXTimeEvent(argument, id) %FUNCTIONPREFIX%ModelTimeEvent(model_instance, argument, id)
+%ENDIF%
 #endif
