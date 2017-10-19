@@ -9,30 +9,30 @@ CLS
 COLOR 1B
 TITLE 20-sim FMU %FMUVERSION% export - Build script
 rem -------------------------------------------------------------
-rem Config
-rem If you get an error that Visual studio was not found, SET your path for VSNET main executable.
-rem -------------------------------------------------------------
-rem	CONFIG START
-SET CURPATH=%~dp0
+set CURPATH=%~dp0
 rem Start searching for the newest compiler
-SET comp=vs2017
-SET promptlevel=prompt
-SET exitcode=0
-SET buildmode=clean
+set comp=vs2017
+set promptlevel=prompt
+set exitcode=0
+set buildmode=clean
 
 cd ..\
-SET ROOTPATH=%CD%
+set ROOTPATH=%CD%
 cd %CURPATH%
 
-SET FMU=%ROOTPATH%\%SUBMODEL_NAME%.fmu
-SET DLL=%SUBMODEL_NAME%.dll
-SET ZIPTOOL=%TEMPLATE_DIR%\bin\7z.exe
+set FMU=%ROOTPATH%\%SUBMODEL_NAME%.fmu
+set DLL=%SUBMODEL_NAME%.dll
+set ZIPTOOL=%TEMPLATE_DIR%\bin\7z.exe
 rem The Github hosted template includes these two tools in order to support older 20-sim versions
-SET XSLTTOOL=%TEMPLATE_DIR%\bin\msxsl.exe
-SET GUIDTOOL=%TEMPLATE_DIR%\bin\GenerateGuid.exe
+set XSLTTOOL=%TEMPLATE_DIR%\bin\msxsl.exe
+set GUIDTOOL=%TEMPLATE_DIR%\bin\GenerateGuid.exe
 
-SET PYTHON="C:\ProgramData\Controllab Products B.V\Python34\python.exe"
-SET RESOURCES_SCRIPT="%TEMPLATE_DIR%\bin\include_resources.py"
+if exist "%ProgramData%\Controllab Products B.V\Python34\python.exe" (
+	set PYTHON="%ProgramData%\Controllab Products B.V\Python34\python.exe"
+) else if exist "C:\ProgramData\Controllab Products B.V\Python34\python.exe" (
+	set PYTHON="C:\ProgramData\Controllab Products B.V\Python34\python.exe"
+)
+set RESOURCES_SCRIPT="%TEMPLATE_DIR%\bin\include_resources.py"
 
 set FMU_DIR=%CURPATH%fmu
 set BIN32_DIR=%FMU_DIR%\binaries\win32
@@ -71,19 +71,19 @@ ECHO ------------------------------------------------------------
 ECHO Searching for Visual C++ compiler...
 
 FOR %%b in (%1, %2, %3, %4, %5) DO (
-	IF %%b==vs2010 SET comp=vs2010
-	IF %%b==vs2013 SET comp=vs2013
-	IF %%b==vs2015 SET comp=vs2015
-	IF %%b==vs2017 SET comp=vs2017
-	IF %%b==clean SET buildmode=clean
-	IF %%b==noclean SET buildmode=noclean
-	IF %%b==noprompt SET promptlevel=noprompt
+	IF %%b==vs2010 set comp=vs2010
+	IF %%b==vs2013 set comp=vs2013
+	IF %%b==vs2015 set comp=vs2015
+	IF %%b==vs2017 set comp=vs2017
+	IF %%b==clean set buildmode=clean
+	IF %%b==noclean set buildmode=noclean
+	IF %%b==noprompt set promptlevel=noprompt
 )
 
-SET buildconfig=Release
-SET DEVENV=""
-SET VSVARS32=""
-SET BUILD_X64=1
+set buildconfig=Release
+set DEVENV=""
+set VSVARS32=""
+set BUILD_X64=1
 
 rem Search for VS 2017
 :VS2017
@@ -94,16 +94,16 @@ set "InstallerPath=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer"
 if not exist "%InstallerPath%" set "InstallerPath=%ProgramFiles%\Microsoft Visual Studio\Installer"
 if not exist "%InstallerPath%" goto :no-vswhere
 
-SET VSWHERE_ARGS=-latest -products * %VSWHERE_REQ% %VSWHERE_PRP% %VSWHERE_LMT%
+set VSWHERE_ARGS=-latest -products * %VSWHERE_REQ% %VSWHERE_PRP% %VSWHERE_LMT%
 set VSWHERE_REQ=-requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64
 set VSWHERE_PRP=-property installationPath
 set VSWHERE_LMT=-version "[15.0,16.0)"
-SET VSWHERE_ARGS=-latest -products * %VSWHERE_REQ% %VSWHERE_PRP% %VSWHERE_LMT%
-
-for /f "usebackq tokens=*" %%i in (`"%InstallerPath%\vswhere" %VSWHERE_ARGS%`) do (
-    endlocal
-    set "VCINSTALLDIR=%%i\VC\"
-    set "VS150COMNTOOLS=%%i\Common7\Tools\"
+set VSWHERE_ARGS=-latest -products * %VSWHERE_REQ% %VSWHERE_PRP% %VSWHERE_LMT%
+set PATH=%PATH%;%InstallerPath%
+for /f "usebackq tokens=*" %%i in (`vswhere %VSWHERE_ARGS%`) do (
+	endlocal
+	set "VCINSTALLDIR=%%i\VC\"
+	set "VS150COMNTOOLS=%%i\Common7\Tools\"
 )
 endlocal
 :no-vswhere:
@@ -299,8 +299,10 @@ IF DEFINED VSVARS32 (
 
 :END
   IF %promptlevel% NEQ noprompt (
-  ECHO Press any key to exit...
-  pause > NUL
+    IF NOT [%XXSIM_SCRIPT_MODE%] == [] goto END_NO_PROMPT
+    ECHO Press any key to exit...
+    pause > NUL
   )
+:END_NO_PROMPT
   IF %exitcode% NEQ 0 EXIT /B %exitcode%
   EXIT
