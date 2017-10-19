@@ -310,3 +310,43 @@ XXBoolean %FUNCTIONPREFIX%ModelStopSimulation (%VARPREFIX%ModelInstance* model_i
 }
 
 %ENDIF%
+%IF%%NUMBEROF_EVENTFUNCTION%
+XXBoolean %FUNCTIONPREFIX%ModelEvent (%VARPREFIX%ModelInstance* model_instance, XXDouble argument, XXInteger id)
+{
+	XXDouble prevValue = model_instance->event[id];
+	model_instance->event[id] = argument;
+	if ( ((argument <= 0.0) && (prevValue > 0.0)) ||
+	     ((argument >= 0.0) && (prevValue < 0.0)) )
+	{
+		return XXTRUE;
+	}
+	return XXFALSE;
+}
+
+%ENDIF%
+%IF%%NUMBEROF_EVENTUPFUNCTION%
+XXBoolean %FUNCTIONPREFIX%ModelEventUp (%VARPREFIX%ModelInstance* model_instance, XXDouble argument, XXInteger id)
+{
+	XXDouble prevValue = model_instance->event_up[id];
+	model_instance->event_up[id] = argument;
+	if ((argument >= 0.0) && (prevValue < 0.0))
+	{
+		return XXTRUE;
+	}
+	return XXFALSE;
+}
+
+%ENDIF%
+%IF%%NUMBEROF_EVENTDOWNFUNCTION%
+XXBoolean %FUNCTIONPREFIX%ModelEventDown (%VARPREFIX%ModelInstance* model_instance, XXDouble argument, XXInteger id)
+{
+	XXDouble prevValue = model_instance->event_down[id];
+	model_instance->event_down[id] = argument;
+	if ((argument <= 0.0) && (prevValue > 0.0))
+	{
+		return XXTRUE;
+	}
+	return XXFALSE;
+}
+
+%ENDIF%

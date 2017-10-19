@@ -123,15 +123,6 @@ XXDouble XXData (XXString name, XXInteger column, XXInteger id);
 %IF%%NUMBEROF_TABLEFUNCTION%
 XXDouble XXTable (XXString name, XXDouble argument, XXInteger id);
 %ENDIF%
-%IF%%NUMBEROF_EVENTFUNCTION%
-XXBoolean XXEvent (XXDouble argument, XXInteger id);
-%ENDIF%
-%IF%%NUMBEROF_EVENTUPFUNCTION%
-XXBoolean XXEventUp (XXDouble argument, XXInteger id);
-%ENDIF%
-%IF%%NUMBEROF_EVENTDOWNFUNCTION%
-XXBoolean XXEventDown (XXDouble argument, XXInteger id);
-%ENDIF%
 %IF%%NUMBEROF_FREQUENCYEVENTFUNCTION%
 XXBoolean XXFrequencyEvent (XXDouble argument, XXInteger id);
 XXBoolean XXFrequencyEvent1 (XXDouble argument1, XXDouble argument2, XXInteger id);

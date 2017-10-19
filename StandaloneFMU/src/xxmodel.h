@@ -75,10 +75,16 @@
 %ENDIF%
 %IF%%NUMBEROF_DELAYFUNCTION%
 #define %VARPREFIX%NUMBEROF_DELAYFUNCTION %NUMBEROF_DELAYFUNCTION%
-%ENDIF%
-
-%IF%%NUMBEROF_DELAYFUNCTION%
 #define %VARPREFIX%delay_count %NUMBEROF_DELAYFUNCTION%
+%ENDIF%
+%IF%%NUMBEROF_EVENTFUNCTION%
+#define %VARPREFIX%event_count %NUMBEROF_EVENTFUNCTION%
+%ENDIF%
+%IF%%NUMBEROF_EVENTUPFUNCTION%
+#define %VARPREFIX%eventup_count %NUMBEROF_EVENTUPFUNCTION%
+%ENDIF%
+%IF%%NUMBEROF_EVENTDOWNFUNCTION%
+#define %VARPREFIX%eventdown_count %NUMBEROF_EVENTDOWNFUNCTION%
 %ENDIF%
 
 typedef struct %VARPREFIX%ModelInstance
@@ -209,6 +215,15 @@ typedef struct %VARPREFIX%ModelInstance
 	XXDouble* %XX_ALG_IN_ARRAY_NAME%;	/* algebraic loop + constraint in */
 	XXDouble* %XX_ALG_OUT_ARRAY_NAME%;	/* algebraic loop + constraint out */
 %ENDIF%
+%IF%%NUMBEROF_EVENTFUNCTION%
+	XXDouble event[%VARPREFIX%event_count];
+%ENDIF%
+%IF%%NUMBEROF_EVENTUPFUNCTION%
+	XXDouble event_up[%VARPREFIX%eventup_count];
+%ENDIF%
+%IF%%NUMBEROF_EVENTDOWNFUNCTION%
+	XXDouble event_down[%VARPREFIX%eventdown_count];
+%ENDIF%
 } %VARPREFIX%ModelInstance;
 
 /* Variable arrays */
@@ -297,5 +312,16 @@ XXBoolean %FUNCTIONPREFIX%ModelWarning (%VARPREFIX%ModelInstance* model_instance
 XXBoolean %FUNCTIONPREFIX%ModelStopSimulation (%VARPREFIX%ModelInstance* model_instance, XXString message, XXInteger id);
 #define XXStopSimulation(message, id) %FUNCTIONPREFIX%ModelStopSimulation(model_instance, message, id)
 %ENDIF%
-
+%IF%%NUMBEROF_EVENTFUNCTION%
+XXBoolean %FUNCTIONPREFIX%ModelEvent (%VARPREFIX%ModelInstance* model_instance, XXDouble argument, XXInteger id);
+#define XXEvent(argument, id) %FUNCTIONPREFIX%ModelEvent(model_instance, argument, id)
+%ENDIF%
+%IF%%NUMBEROF_EVENTUPFUNCTION%
+XXBoolean %FUNCTIONPREFIX%ModelEventUp (%VARPREFIX%ModelInstance* model_instance, XXDouble argument, XXInteger id);
+#define XXEventUp(argument, id) %FUNCTIONPREFIX%ModelEventUp(model_instance, argument, id)
+%ENDIF%
+%IF%%NUMBEROF_EVENTDOWNFUNCTION%
+XXBoolean %FUNCTIONPREFIX%ModelEventDown (%VARPREFIX%ModelInstance* model_instance, XXDouble argument, XXInteger id);
+#define XXEventDown(argument, id) %FUNCTIONPREFIX%ModelEventDown(model_instance, argument, id)
+%ENDIF%
 #endif
