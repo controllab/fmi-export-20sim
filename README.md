@@ -1,6 +1,9 @@
 # fmi-export-20sim
 FMI export code generation template for 20-sim
 
+## Requirements
+This template requires at least 20-sim version 4.6.0.
+
 ## Installation
 Download the code generation template using the "Download ZIP" button on Github or using a "git clone"
 

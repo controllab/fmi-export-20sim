@@ -28,9 +28,12 @@
 %ENDIF%
 #include "%FMI_PREFIX%Functions.h"
 
-/* the chosen integration method */
-#define %INTEGRATION_METHOD_NAME%_METHOD
+%IF%%EQ(INTEGRATION_METHOD_NAME,VodeAdams)%
+#include "cvode/cvode.h"            /* main CVODE header file                       */
+#include "cvode/cvode_dense.h"      /* use CVDENSE linear solver each internal step */
+#include <nvector/nvector_serial.h> /* serial N_Vector types, fct. and macros       */
 
+%ENDIF%
 /* Model size constants */
 #define %VARPREFIX%constants_count %NUMBER_CONSTANTS%
 #define %VARPREFIX%parameter_count %NUMBER_PARAMETERS%
@@ -177,18 +180,51 @@ typedef struct %VARPREFIX%ModelInstance
 	XXDouble delay_update_array[%VARPREFIX%NUMBEROF_DELAYFUNCTION];
 	XXDouble delay_last_values[%VARPREFIX%NUMBEROF_DELAYFUNCTION];
 %ENDIF%
+%IF%%EQ(INTEGRATION_METHOD_NAME,Discrete)%
+
+	/* discrete time can be behind of continuous time
+	 * dependent on the step size 
+	 */
+	XXDouble m_discrete_time;
+%ENDIF%
 %IF%%NUMBER_STATES%
 	/* Integration method intermediate variables */
-#ifdef RungeKutta2_METHOD
+%IF%%EQ(INTEGRATION_METHOD_NAME,RungeKutta2)%
 	XXDouble q0[%VARPREFIX%state_count];
-#endif
-#ifdef RungeKutta4_METHOD
+%ENDIF%
+%IF%%EQ(INTEGRATION_METHOD_NAME,RungeKutta4)%
 	XXDouble q0[%VARPREFIX%state_count];
 	XXDouble q1[%VARPREFIX%state_count];
 	XXDouble q2[%VARPREFIX%state_count];
 	XXDouble q3[%VARPREFIX%state_count];
 	XXDouble q4[%VARPREFIX%state_count];
-#endif
+%ENDIF%
+%IF%%EQ(INTEGRATION_METHOD_NAME,VodeAdams)%
+	double m_initial_step_size;
+	double m_maximum_step_size;
+	double m_absolute_tolerance;
+	double m_relative_tolerance;
+	XXBoolean m_use_initial_step;
+	XXBoolean m_use_maximum_step;
+	double m_last_step_size;
+
+	int m_flag;
+
+	/* 
+	  now we should know how big it is
+	void *m_prev_memory;
+	void *m_prev_cvdense_mem;
+	*/
+	
+	N_Vector m_cvode_y;
+	N_Vector m_cvode_y0;
+	void *m_cvode_mem;
+
+	XXBoolean m_use_bdf;
+	XXBoolean m_use_newton;
+
+	XXBoolean m_dense_performed;
+%ENDIF%
 %ENDIF%
 	/* Memory offset pointers */
 %IF%%NUMBER_CONSTANTS%

@@ -615,8 +615,10 @@ fmiStatus fmiInitializeSlave(fmiComponent c,
 	}
 
 	/* initialize the submodel itself */
-	%FUNCTIONPREFIX%InitializeSubmodel (model_instance);
-
+	if( %FUNCTIONPREFIX%InitializeSubmodel (model_instance) == XXFALSE)
+	{
+		return fmiError;
+	}
 	/* all done */
 	return fmiOK;
 }
@@ -674,7 +676,10 @@ fmi2Status fmi2Terminate(fmi2Component c)
 	%VARPREFIX%ModelInstance* model_instance = (%VARPREFIX%ModelInstance*) c;
 
 	/* Perform the final calculations */
-	%FUNCTIONPREFIX%TerminateSubmodel (model_instance, model_instance->time);
+	if( %FUNCTIONPREFIX%TerminateSubmodel (model_instance, model_instance->time) == XXFALSE )
+	{
+		return %FMI_PREFIX%Error;
+	}
 
 	/* all done */
 	return %FMI_PREFIX%OK;
@@ -690,8 +695,10 @@ fmi2Status fmi2Reset(fmi2Component c)
 	%VARPREFIX%ModelInstance* model_instance = (%VARPREFIX%ModelInstance*) c;
 
 	/* initialize the submodel itself */
-	%FUNCTIONPREFIX%InitializeSubmodel (model_instance);
-
+	if( %FUNCTIONPREFIX%InitializeSubmodel (model_instance) == XXFALSE )
+	{
+		return %FMI_PREFIX%Error;
+	}
 	/* all done */
 	return %FMI_PREFIX%OK;
 }
@@ -806,7 +813,7 @@ fmi2Status fmi2DoStep(fmi2Component c,
 	while (model_instance->time < (currentCommunicationPoint + communicationStepSize))
 	{
 		/* check for termination first */
-		if ( model_instance->m_use_finish_time && (model_instance->time > model_instance->finish_time) )
+		if ( model_instance->m_use_finish_time && (model_instance->time >= model_instance->finish_time) )
 		{
 %IF%%FMI2%
 			if(model_instance->fmiCallbackFunctions != NULL && model_instance->fmiCallbackFunctions->logger != NULL)
@@ -826,7 +833,10 @@ fmi2Status fmi2DoStep(fmi2Component c,
 		}
 
 		/* Call the submodel to calculate the output, and increase the time as well */
-		%FUNCTIONPREFIX%CalculateSubmodel (model_instance, model_instance->time);
+		if( %FUNCTIONPREFIX%CalculateSubmodel (model_instance, model_instance->time, currentCommunicationPoint + communicationStepSize) == XXFALSE)
+		{
+			return %FMI_PREFIX%Error;
+		}
 	}
 
 	/* for now */

@@ -14,7 +14,11 @@
 /* This file describes the integration methods
 that are supplied for computation.
 
-   Currently only Euler, RungeKutta2 and RungeKutta4 are supplied,
+   Currently the following methods are supported:
+   * Euler
+   * RungeKutta2
+   * RungeKutta4
+   * Vode Adams
    but it is easy for the user to add their own
    integration methods with these two as an example.
 */
@@ -24,31 +28,33 @@ that are supplied for computation.
 
 /* 20-sim include files */
 #include "xxtypes.h"
-#include "xxmodel.h" /* For the XXModelInstance typedef */
+#include "xxmodel.h" /* For the %VARPREFIX%ModelInstance typedef */
 
 /* the integration methods */
-#ifdef Discrete_METHOD
-void %FUNCTIONPREFIX%DiscreteInitialize (%VARPREFIX%ModelInstance* model_instance);
-void %FUNCTIONPREFIX%DiscreteTerminate (%VARPREFIX%ModelInstance* model_instance);
-void %FUNCTIONPREFIX%DiscreteStep (%VARPREFIX%ModelInstance* model_instance);
-#endif 
-
-#ifdef Euler_METHOD
-void %FUNCTIONPREFIX%EulerInitialize (%VARPREFIX%ModelInstance* model_instance);
-void %FUNCTIONPREFIX%EulerTerminate (%VARPREFIX%ModelInstance* model_instance);
-void %FUNCTIONPREFIX%EulerStep (%VARPREFIX%ModelInstance* model_instance);
-#endif 
-
-#ifdef RungeKutta2_METHOD
-void %FUNCTIONPREFIX%RungeKutta2Initialize (%VARPREFIX%ModelInstance* model_instance);
-void %FUNCTIONPREFIX%RungeKutta2Terminate (%VARPREFIX%ModelInstance* model_instance);
-void %FUNCTIONPREFIX%RungeKutta2Step (%VARPREFIX%ModelInstance* model_instance);
-#endif
-
-#ifdef RungeKutta4_METHOD
-void %FUNCTIONPREFIX%RungeKutta4Initialize (%VARPREFIX%ModelInstance* model_instance);
-void %FUNCTIONPREFIX%RungeKutta4Terminate (%VARPREFIX%ModelInstance* model_instance);
-void %FUNCTIONPREFIX%RungeKutta4Step (%VARPREFIX%ModelInstance* model_instance);
-#endif
+%IF%%EQ(INTEGRATION_METHOD_NAME,Discrete)%
+XXBoolean %FUNCTIONPREFIX%DiscreteInitialize (%VARPREFIX%ModelInstance* model_instance);
+XXBoolean %FUNCTIONPREFIX%DiscreteTerminate (%VARPREFIX%ModelInstance* model_instance);
+XXBoolean %FUNCTIONPREFIX%DiscreteStep (%VARPREFIX%ModelInstance* model_instance, XXDouble outputTime);
+%ENDIF%
+%IF%%EQ(INTEGRATION_METHOD_NAME,Euler)%
+XXBoolean %FUNCTIONPREFIX%EulerInitialize (%VARPREFIX%ModelInstance* model_instance);
+XXBoolean %FUNCTIONPREFIX%EulerTerminate (%VARPREFIX%ModelInstance* model_instance);
+XXBoolean %FUNCTIONPREFIX%EulerStep (%VARPREFIX%ModelInstance* model_instance, XXDouble outputTime);
+%ENDIF%
+%IF%%EQ(INTEGRATION_METHOD_NAME,RungeKutta2)%
+XXBoolean %FUNCTIONPREFIX%RungeKutta2Initialize (%VARPREFIX%ModelInstance* model_instance);
+XXBoolean %FUNCTIONPREFIX%RungeKutta2Terminate (%VARPREFIX%ModelInstance* model_instance);
+XXBoolean %FUNCTIONPREFIX%RungeKutta2Step (%VARPREFIX%ModelInstance* model_instance, XXDouble outputTime);
+%ENDIF%
+%IF%%EQ(INTEGRATION_METHOD_NAME,RungeKutta4)%
+XXBoolean %FUNCTIONPREFIX%RungeKutta4Initialize (%VARPREFIX%ModelInstance* model_instance);
+XXBoolean %FUNCTIONPREFIX%RungeKutta4Terminate (%VARPREFIX%ModelInstance* model_instance);
+XXBoolean %FUNCTIONPREFIX%RungeKutta4Step (%VARPREFIX%ModelInstance* model_instance, XXDouble outputTime);
+%ENDIF%
+%IF%%EQ(INTEGRATION_METHOD_NAME,VodeAdams)%
+XXBoolean %FUNCTIONPREFIX%VodeAdamsInitialize (%VARPREFIX%ModelInstance* model_instance);
+XXBoolean %FUNCTIONPREFIX%VodeAdamsTerminate (%VARPREFIX%ModelInstance* model_instance);
+XXBoolean %FUNCTIONPREFIX%VodeAdamsStep (%VARPREFIX%ModelInstance* model_instance, XXDouble outputTime);
+%ENDIF%
 
 #endif

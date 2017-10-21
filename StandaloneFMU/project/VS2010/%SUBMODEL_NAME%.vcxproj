@@ -92,6 +92,7 @@
       <WarningLevel>Level3</WarningLevel>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <AdditionalIncludeDirectories>..\..\src\cvode\include</AdditionalIncludeDirectories>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -130,6 +131,7 @@
       <WarningLevel>Level3</WarningLevel>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <AdditionalIncludeDirectories>..\..\src\cvode\include</AdditionalIncludeDirectories>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -168,6 +170,7 @@
       <ProgramDataBaseFileName>.\Release/</ProgramDataBaseFileName>
       <WarningLevel>Level3</WarningLevel>
       <SuppressStartupBanner>true</SuppressStartupBanner>
+      <AdditionalIncludeDirectories>..\..\src\cvode\include</AdditionalIncludeDirectories>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -243,6 +246,20 @@
 %ENDIF%
     <ClInclude Include="..\..\src\fmiGUID.h" />
     <ClInclude Include="..\..\src\xxTable2D.h" />
+%IF%%EQ(INTEGRATION_METHOD_NAME,VodeAdams)%
+	<ClInclude Include="..\..\src\cvode\include\cvode\cvode.h" />
+	<ClInclude Include="..\..\src\cvode\include\cvode\cvode_dense.h" />
+	<ClInclude Include="..\..\src\cvode\include\cvode\cvode_direct.h" />
+	<ClInclude Include="..\..\src\cvode\include\cvode\cvode_direct_impl.h" />
+	<ClInclude Include="..\..\src\cvode\include\nvector\nvector_serial.h" />
+	<ClInclude Include="..\..\src\cvode\src\cvode\cvode_direct_impl.h" />
+	<ClInclude Include="..\..\src\cvode\src\cvode\cvode_impl.h" />
+	<ClInclude Include="..\..\src\cvode\include\sundials\sundials_config.h" />
+	<ClInclude Include="..\..\src\cvode\include\sundials\sundials_math.h" />
+	<ClInclude Include="..\..\src\cvode\include\sundials\sundials_nvector.h" />
+	<ClInclude Include="..\..\src\cvode\include\sundials\sundials_dense.h" />
+	<ClInclude Include="..\..\src\cvode\include\sundials\sundials_direct.h" />
+%ENDIF%
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\EulerAngles.c" />
@@ -255,6 +272,17 @@
     <ClCompile Include="..\..\src\%FMI_PREFIX%Functions.c" />
     <ClCompile Include="..\..\src\xxsubmod.c" />
     <ClCompile Include="..\..\src\xxTable2D.c" />
+%IF%%EQ(INTEGRATION_METHOD_NAME,VodeAdams)%
+	<ClCompile Include="..\..\src\cvode\src\cvode\cvode.c" />
+	<ClCompile Include="..\..\src\cvode\src\cvode\cvode_dense.c" />
+	<ClCompile Include="..\..\src\cvode\src\cvode\cvode_direct.c" />
+	<ClCompile Include="..\..\src\cvode\src\cvode\cvode_io.c" />
+	<ClCompile Include="..\..\src\cvode\src\nvec_ser\nvector_serial.c" />
+	<ClCompile Include="..\..\src\cvode\src\sundials\sundials_dense.c" />
+	<ClCompile Include="..\..\src\cvode\src\sundials\sundials_direct.c" />
+	<ClCompile Include="..\..\src\cvode\src\sundials\sundials_math.c" />
+	<ClCompile Include="..\..\src\cvode\src\sundials\sundials_nvector.c" />
+%ENDIF%
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
