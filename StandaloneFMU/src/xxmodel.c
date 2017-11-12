@@ -313,12 +313,15 @@ XXBoolean %FUNCTIONPREFIX%ModelStopSimulation (%VARPREFIX%ModelInstance* model_i
 %IF%%NUMBEROF_EVENTFUNCTION%
 XXBoolean %FUNCTIONPREFIX%ModelEvent (%VARPREFIX%ModelInstance* model_instance, XXDouble argument, XXInteger id)
 {
-	XXDouble prevValue = model_instance->event[id];
-	model_instance->event[id] = argument;
-	if ( ((argument <= 0.0) && (prevValue > 0.0)) ||
-	     ((argument >= 0.0) && (prevValue < 0.0)) )
+	if (model_instance->major)
 	{
-		return XXTRUE;
+		XXDouble prevValue = model_instance->event[id];
+		model_instance->event[id] = argument;
+		if ( ((argument <= 0.0) && (prevValue > 0.0)) ||
+			 ((argument >= 0.0) && (prevValue < 0.0)) )
+		{
+			return XXTRUE;
+		}
 	}
 	return XXFALSE;
 }
@@ -327,11 +330,14 @@ XXBoolean %FUNCTIONPREFIX%ModelEvent (%VARPREFIX%ModelInstance* model_instance, 
 %IF%%NUMBEROF_EVENTUPFUNCTION%
 XXBoolean %FUNCTIONPREFIX%ModelEventUp (%VARPREFIX%ModelInstance* model_instance, XXDouble argument, XXInteger id)
 {
-	XXDouble prevValue = model_instance->event_up[id];
-	model_instance->event_up[id] = argument;
-	if ((argument >= 0.0) && (prevValue < 0.0))
+	if (model_instance->major)
 	{
-		return XXTRUE;
+		XXDouble prevValue = model_instance->event_up[id];
+		model_instance->event_up[id] = argument;
+		if ((argument >= 0.0) && (prevValue < 0.0))
+		{
+			return XXTRUE;
+		}
 	}
 	return XXFALSE;
 }
@@ -340,11 +346,14 @@ XXBoolean %FUNCTIONPREFIX%ModelEventUp (%VARPREFIX%ModelInstance* model_instance
 %IF%%NUMBEROF_EVENTDOWNFUNCTION%
 XXBoolean %FUNCTIONPREFIX%ModelEventDown (%VARPREFIX%ModelInstance* model_instance, XXDouble argument, XXInteger id)
 {
-	XXDouble prevValue = model_instance->event_down[id];
-	model_instance->event_down[id] = argument;
-	if ((argument <= 0.0) && (prevValue > 0.0))
+	if (model_instance->major)
 	{
-		return XXTRUE;
+		XXDouble prevValue = model_instance->event_down[id];
+		model_instance->event_down[id] = argument;
+		if ((argument <= 0.0) && (prevValue > 0.0))
+		{
+			return XXTRUE;
+		}
 	}
 	return XXFALSE;
 }
@@ -353,9 +362,14 @@ XXBoolean %FUNCTIONPREFIX%ModelEventDown (%VARPREFIX%ModelInstance* model_instan
 %IF%%NUMBEROF_TIMEEVENTFUNCTION%
 XXBoolean %FUNCTIONPREFIX%ModelTimeEvent (%VARPREFIX%ModelInstance* model_instance, XXDouble argument, XXInteger id)
 {
-	if ((argument > model_instance->time) && (argument <= model_instance->time + %EVENT_DELTA%))
+	if (model_instance->major)
 	{
-		return XXTRUE;
+		XXDouble prevValue = model_instance->time_event[id];
+		model_instance->time_event[id] = model_instance->time;
+		if ((model_instance->time >= argument) && (prevValue < argument))
+		{
+			return XXTRUE;
+		}
 	}
 	return XXFALSE;
 }
