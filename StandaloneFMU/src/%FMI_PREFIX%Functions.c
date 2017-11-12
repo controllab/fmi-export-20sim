@@ -891,20 +891,77 @@ fmi2Status fmi2GetContinuousStates(fmi2Component c, fmi2Real x[], size_t nx)
 %IF%%FMI2%
 fmi2Status fmi2GetFMUstate (fmi2Component c, fmi2FMUstate* FMUstate)
 {
-	/* not yet */
-	return fmi2Discard;
+	%VARPREFIX%ModelInstance* model_instance = (%VARPREFIX%ModelInstance*) c;
+	if (FMUstate == NULL)
+		// We cannot store our memory pointer
+		return fmi2Discard;
+
+	if (*FMUstate == NULL)
+	{
+		// Allocate a new FMUstate block
+		*FMUstate = (fmi2FMUstate) model_instance->fmiCallbackFunctions->allocateMemory(sizeof(%VARPREFIX%ModelInstance), sizeof(char));
+	}
+	if (*FMUstate == NULL)
+	{
+		// We have no destination memory
+		model_instance->fmiCallbackFunctions->logger(c, model_instance->instanceName, fmi2Error, "error", "Could not allocate memory for fmi2GetFMUstate.");
+		return fmi2Error;
+	}
+
+	// There is no way to check that the passed FMUstate (void*) refers to a valid memory block of the correct size
+	// The assumption here is that it is valid and correctly sized when non-NULL
+	memcpy(*FMUstate, (const void*) model_instance, sizeof(%VARPREFIX%ModelInstance));
+
+	return fmi2OK;
 }
 
 fmi2Status fmi2SetFMUstate (fmi2Component c, fmi2FMUstate FMUstate)
 {
-	/* not yet */
-	return fmi2Discard;
+	%VARPREFIX%ModelInstance* model_instance = (%VARPREFIX%ModelInstance*) c;
+	%VARPREFIX%ModelInstance* stored_state = (%VARPREFIX%ModelInstance*) FMUstate;
+
+	if (FMUstate == NULL)
+	{
+		// We have no stored state
+		model_instance->fmiCallbackFunctions->logger(c, model_instance->instanceName, fmi2Error, "error", "Could not restore the FMU state.");
+		return fmi2Error;
+	}
+
+	/* Selective restore of the state items */
+	/* Restore our arrays */
+	memcpy(&model_instance->MEMORY, &stored_state->MEMORY, sizeof(model_instance->MEMORY));
+	/* Restore the time */
+	model_instance->start_time = stored_state->start_time;
+	model_instance->finish_time = stored_state->finish_time;
+	model_instance->m_use_finish_time = stored_state->m_use_finish_time;
+	model_instance->step_size = stored_state->step_size;
+	model_instance->time = stored_state->time;
+	model_instance->steps = stored_state->steps;
+	model_instance->%XX_INITIALIZE% = stored_state->%XX_INITIALIZE%;
+	model_instance->major = stored_state->major;
+	model_instance->stop_simulation = stored_state->stop_simulation;
+%IF%%NUMBEROF_INITIALFUNCTION%
+	/* Restore the initial array */
+	memcpy(&model_instance->initial_value_array, &stored_state->initial_value_array, sizeof(model_instance->initial_value_array));
+%ENDIF%
+%IF%%NUMBEROF_DELAYFUNCTION%
+	/* Restore the delay arrays */
+	memcpy(&model_instance->delay_update_array, &stored_state->delay_update_array, sizeof(model_instance->delay_update_array));	
+	memcpy(&model_instance->delay_last_values, &stored_state->delay_last_values, sizeof(model_instance->delay_last_values));
+%ENDIF%
+
+	return fmi2OK;
 }
 
 fmi2Status fmi2FreeFMUstate(fmi2Component c, fmi2FMUstate* FMUstate)
 {
-	/* not yet */
-	return fmi2Discard;
+	%VARPREFIX%ModelInstance* model_instance = (%VARPREFIX%ModelInstance*) c;
+	if ((FMUstate != NULL) && (*FMUstate != NULL))
+	{
+		model_instance->fmiCallbackFunctions->freeMemory(*FMUstate);
+		*FMUstate = NULL;
+	}
+	return fmi2OK;
 }
 
 fmi2Status fmi2SerializedFMUstateSize(fmi2Component c, fmi2FMUstate FMUstate, size_t *size)
