@@ -15,12 +15,15 @@
    functions
 */
 %IF%%NUMBEROF_DLL_MotionProfiles%
+
 #ifndef __MOTION_PROFILES_H
 #define __MOTION_PROFILES_H
 
-void MotionProfiles_Initialize ();
-void MotionProfiles_Terminate ();
+/* 20-sim include files */
+#include "xxtypes.h"
 
+void MotionProfiles_Initialize (void);
+void MotionProfiles_Terminate (void);
 
 XXInteger MotionProfiles_ProfileFlat(XXDouble *inarr, XXInteger inputs, XXDouble *outarr, XXInteger outputs, XXInteger major);
 XXInteger MotionProfiles_ProfileRamp(XXDouble *inarr, XXInteger inputs, XXDouble *outarr, XXInteger outputs, XXInteger major);

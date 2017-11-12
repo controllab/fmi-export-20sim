@@ -165,6 +165,11 @@ const char* URIToNativePath(%VARPREFIX%ModelInstance* model_instance, const char
 					path[j] = (unsigned char)strtol(buf, NULL, 16);
 					i += 2;
 					path_len -= 2;
+					if (path[j] == foreign_path_separator)
+					{
+						/* Translate slashes to backslashes on Windows and backslashes to slashes on other OSses */
+						path[j] = native_path_separator;
+					}
 				}
 				else
 				{
@@ -215,15 +220,18 @@ FMI_Dll_Export const char* %FMI_PREFIX%GetTypesPlatform()
 	return fmi2TypesPlatform;
 %ENDIF%
 }
+
 FMI_Dll_Export const char* %FMI_PREFIX%GetVersion()
 {
 	return %FMI_PREFIX%Version;
 }
+
 %IF%%FMI1%
 FMI_Dll_Export fmiStatus fmiSetDebugLogging  (fmiComponent c, fmiBoolean loggingOn)
 {
 	return fmiOK;       /* not yet */
 }
+
 %ENDIF%
 %IF%%FMI2%
 FMI_Dll_Export fmi2Status fmi2SetDebugLogging  (fmi2Component c, fmi2Boolean loggingOn,
@@ -232,6 +240,7 @@ FMI_Dll_Export fmi2Status fmi2SetDebugLogging  (fmi2Component c, fmi2Boolean log
 {
 	return fmi2OK;       /* not yet */
 }
+
 %ENDIF%
 /* Data Exchange Functions*/
 FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%GetReal(%FMI_PREFIX%Component c,
@@ -247,6 +256,7 @@ FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%GetReal(%FMI_PREFIX%Component c,
 	}
 	return %FMI_PREFIX%OK;
 }
+
 FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%GetInteger(%FMI_PREFIX%Component c,
 								const %FMI_PREFIX%ValueReference vr[],
 								size_t nvr,
@@ -265,6 +275,7 @@ FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%GetInteger(%FMI_PREFIX%Component c
 	}
 	return %FMI_PREFIX%OK;
 }
+
 FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%GetBoolean(%FMI_PREFIX%Component c,
 								const %FMI_PREFIX%ValueReference vr[],
 								size_t nvr,
@@ -284,6 +295,7 @@ FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%GetBoolean(%FMI_PREFIX%Component c
 	}
 	return %FMI_PREFIX%OK;
 }
+
 FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%GetString(%FMI_PREFIX%Component c,
 								const %FMI_PREFIX%ValueReference vr[],
 								size_t nvr,
@@ -302,6 +314,10 @@ FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%SetReal(%FMI_PREFIX%Component c,
 	for (i = 0; i < nvr; i++)
 	{
 		model_instance->MEMORY[ vr[i] ] = value [i];
+		if ((vr[i] >= %VARPREFIX%parameter_index_start) && (vr[i] <= %VARPREFIX%parameter_index_end))
+		{
+			model_instance->parameters_updated = XXTRUE;
+		}
 	}
 	return %FMI_PREFIX%OK;
 }
@@ -321,9 +337,14 @@ FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%SetInteger (%FMI_PREFIX%Component 
 	for (i = 0; i < nvr; i++)
 	{
 		model_instance->MEMORY[ vr[i] ] = (XXDouble) value [i];
+		if ((vr[i] >= %VARPREFIX%parameter_index_start) && (vr[i] <= %VARPREFIX%parameter_index_end))
+		{
+			model_instance->parameters_updated = XXTRUE;
+		}
 	}
 	return %FMI_PREFIX%OK;
 }
+
 FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%SetBoolean(%FMI_PREFIX%Component c,
 								const %FMI_PREFIX%ValueReference vr[],
 								size_t nvr,
@@ -335,9 +356,14 @@ FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%SetBoolean(%FMI_PREFIX%Component c
 	for (i = 0; i < nvr; i++)
 	{
 		model_instance->MEMORY[vr[i]] = value[i] ? 1.0 : 0.0;
+		if ((vr[i] >= %VARPREFIX%parameter_index_start) && (vr[i] <= %VARPREFIX%parameter_index_end))
+		{
+			model_instance->parameters_updated = XXTRUE;
+		}
 	}
 	return %FMI_PREFIX%OK;
 }
+
 FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%SetString(%FMI_PREFIX%Component c,
 								const %FMI_PREFIX%ValueReference vr[],
 								size_t nvr,
@@ -414,6 +440,7 @@ fmiComponent fmiInstantiateSlave(fmiString instanceName,
 	model_instance->%XX_INITIALIZE% = XXTRUE;
 	model_instance->major = XXTRUE;
 	model_instance->stop_simulation = XXFALSE;
+	model_instance->parameters_updated = XXFALSE;
 
 	/* Set the offsets within the model_instance->MEMORY array */
 %IF%%NUMBER_CONSTANTS%
@@ -569,6 +596,7 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 
 	return (fmi2Component) model_instance;
 }
+
 %ENDIF%
 %IF%%FMI1%
 fmiStatus fmiInitializeSlave(fmiComponent c,
@@ -594,6 +622,7 @@ fmiStatus fmiInitializeSlave(fmiComponent c,
 	/* all done */
 	return fmiOK;
 }
+
 %ENDIF%
 %IF%%FMI2%
 fmi2Status fmi2SetupExperiment(fmi2Component c,
@@ -619,11 +648,13 @@ fmi2Status fmi2SetupExperiment(fmi2Component c,
 	/* all done */
 	return fmi2OK;
 }
+
 fmi2Status fmi2EnterInitializationMode(fmi2Component c)
 {
 	/* nothing to do for now */
 	return fmi2OK;
 }
+
 fmi2Status fmi2ExitInitializationMode(fmi2Component c)
 {
 	%VARPREFIX%ModelInstance* model_instance = (%VARPREFIX%ModelInstance*) c;
@@ -633,6 +664,7 @@ fmi2Status fmi2ExitInitializationMode(fmi2Component c)
 
 	return fmi2OK;
 }
+
 %ENDIF%
 %IF%%FMI1%
 fmiStatus fmiTerminateSlave(fmiComponent c)
@@ -652,6 +684,7 @@ fmi2Status fmi2Terminate(fmi2Component c)
 	/* all done */
 	return %FMI_PREFIX%OK;
 }
+
 %IF%%FMI1%
 fmiStatus fmiResetSlave(fmiComponent c)
 %ENDIF%
@@ -692,6 +725,7 @@ void fmiFreeSlaveInstance(fmiComponent c)
 	fmiCallbackFunctions.freeMemory((void *) model_instance);
 	model_instance =  NULL;
 }
+
 %ENDIF%
 %IF%%FMI2%
 void fmi2FreeInstance(fmi2Component c)
@@ -715,8 +749,8 @@ void fmi2FreeInstance(fmi2Component c)
 	fmiCallbackFunctions->freeMemory((void *) model_instance);
 	model_instance =  NULL;
 }
-%ENDIF%
 
+%ENDIF%
 %FMI_PREFIX%Status %FMI_PREFIX%SetRealInputDerivatives(%FMI_PREFIX%Component c,
 									const %FMI_PREFIX%ValueReference vr[], size_t nvr,
 									const %FMI_PREFIX%Integer order[],
@@ -766,6 +800,13 @@ fmi2Status fmi2DoStep(fmi2Component c,
 	if (communicationStepSize == 0)
 	{
 		return %FMI_PREFIX%OK;
+	}
+
+	/* Check if our parameters are updated */
+	if (model_instance->parameters_updated == XXTRUE)
+	{
+		%FUNCTIONPREFIX%CalculateStatic(model_instance);
+		model_instance->parameters_updated = XXFALSE;
 	}
 
 	/* as long as we are not passed our communication point */

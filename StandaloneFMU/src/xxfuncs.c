@@ -376,42 +376,6 @@ XXDouble XXTable (XXString name, XXDouble argument, XXInteger id)
 }
 
 %ENDIF%
-%IF%%NUMBEROF_EVENTFUNCTION%
-XXBoolean XXEvent (XXDouble argument, XXInteger id)
-{
-#if defined _MSC_VER
-#pragma message("warning: The 20-sim 'event' function is not yet implemented in this code generation template")
-#elif defined __GNUC__
-#warning The 20-sim 'event' function is not yet implemented in this code generation template
-#endif
-	return 0;
-}
-
-%ENDIF%
-%IF%%NUMBEROF_EVENTUPFUNCTION%
-XXBoolean XXEventUp (XXDouble argument, XXInteger id)
-{
-#if defined _MSC_VER
-#pragma message("warning: The 20-sim 'eventup' function is not yet implemented in this code generation template")
-#elif defined __GNUC__
-#warning The 20-sim 'eventup' function is not yet implemented in this code generation template
-#endif
-	return 0;
-}
-
-%ENDIF%
-%IF%%NUMBEROF_EVENTDOWNFUNCTION%
-XXBoolean XXEventDown (XXDouble argument, XXInteger id)
-{
-#if defined _MSC_VER
-#pragma message("warning: The 20-sim 'eventdown' function is not yet implemented in this code generation template")
-#elif defined __GNUC__
-#warning The 20-sim 'eventdown' function is not yet implemented in this code generation template
-#endif
-	return 0;
-}
-
-%ENDIF%
 %IF%%NUMBEROF_FREQUENCYEVENTFUNCTION%
 #if defined _MSC_VER
 #pragma message("warning: The 20-sim 'frequencyevent' function is not yet implemented in this code generation template")
@@ -425,18 +389,6 @@ XXBoolean XXFrequencyEvent (XXDouble argument, XXInteger id)
 
 XXBoolean XXFrequencyEvent1 (XXDouble argument1, XXDouble argument2, XXInteger id)
 {
-	return 0;
-}
-
-%ENDIF%
-%IF%%NUMBEROF_TIMEEVENTFUNCTION%
-XXBoolean XXTimeEvent (XXDouble argument, XXInteger id)
-{
-#if defined _MSC_VER
-#pragma message("warning: The 20-sim 'timeevent' function is not yet implemented in this code generation template")
-#elif defined __GNUC__
-#warning The 20-sim 'timeevent' function is not yet implemented in this code generation template
-#endif
 	return 0;
 }
 

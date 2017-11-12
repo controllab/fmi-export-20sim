@@ -19,7 +19,7 @@
    the alias variables by adding them to the end of the array:
 
    XXDouble %VARPREFIX%variables[NUMBER_VARIABLES + NUMBER_ALIAS_VARIABLES + 1];
-   XXCharacter *%VARPREFIX%variable_names[] = {
+   XXString %VARPREFIX%variable_names[] = {
      VARIABLE_NAMES, ALIAS_VARIABLE_NAMES, NULL
    };
 
@@ -307,6 +307,57 @@ XXBoolean %FUNCTIONPREFIX%ModelStopSimulation (%VARPREFIX%ModelInstance* model_i
 		model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error", message);
 	}
 	return 0;
+}
+
+%ENDIF%
+%IF%%NUMBEROF_EVENTFUNCTION%
+XXBoolean %FUNCTIONPREFIX%ModelEvent (%VARPREFIX%ModelInstance* model_instance, XXDouble argument, XXInteger id)
+{
+	XXDouble prevValue = model_instance->event[id];
+	model_instance->event[id] = argument;
+	if ( ((argument <= 0.0) && (prevValue > 0.0)) ||
+	     ((argument >= 0.0) && (prevValue < 0.0)) )
+	{
+		return XXTRUE;
+	}
+	return XXFALSE;
+}
+
+%ENDIF%
+%IF%%NUMBEROF_EVENTUPFUNCTION%
+XXBoolean %FUNCTIONPREFIX%ModelEventUp (%VARPREFIX%ModelInstance* model_instance, XXDouble argument, XXInteger id)
+{
+	XXDouble prevValue = model_instance->event_up[id];
+	model_instance->event_up[id] = argument;
+	if ((argument >= 0.0) && (prevValue < 0.0))
+	{
+		return XXTRUE;
+	}
+	return XXFALSE;
+}
+
+%ENDIF%
+%IF%%NUMBEROF_EVENTDOWNFUNCTION%
+XXBoolean %FUNCTIONPREFIX%ModelEventDown (%VARPREFIX%ModelInstance* model_instance, XXDouble argument, XXInteger id)
+{
+	XXDouble prevValue = model_instance->event_down[id];
+	model_instance->event_down[id] = argument;
+	if ((argument <= 0.0) && (prevValue > 0.0))
+	{
+		return XXTRUE;
+	}
+	return XXFALSE;
+}
+
+%ENDIF%
+%IF%%NUMBEROF_TIMEEVENTFUNCTION%
+XXBoolean %FUNCTIONPREFIX%ModelTimeEvent (%VARPREFIX%ModelInstance* model_instance, XXDouble argument, XXInteger id)
+{
+	if ((argument > model_instance->time) && (argument <= model_instance->time + %EVENT_DELTA%))
+	{
+		return XXTRUE;
+	}
+	return XXFALSE;
 }
 
 %ENDIF%

@@ -36,6 +36,8 @@
 #ifndef _H_EulerAngles
 #define _H_EulerAngles
 
+/* 20-sim include files */
+#include "xxtypes.h"
 
 /*** Definitions ***/
 typedef struct
@@ -116,8 +118,8 @@ typedef XXDouble MyHMatrix[16]; /* now just linear space memory */
 #define EulOrdZYZr    23
 
 /* initialize and terminate function, which does nothing */
-void EulerAngles_Initialize();
-void EulerAngles_Terminate();
+void EulerAngles_Initialize(void);
+void EulerAngles_Terminate(void);
 
 /*
 void Eul_ToQuat(EulerAngles *ea, Quat *qu);
@@ -257,10 +259,5 @@ XXInteger EulerAngles_RotationMatrixFromQuaternion (XXDouble *inarr, XXInteger i
 /* RotationMatrix to Quaternion */
 XXInteger EulerAngles_QuaternionFromRotationMatrix (XXDouble *inarr, XXInteger inputs, XXDouble *outarr, XXInteger outputs, XXInteger major);
 
-
-
-
-
 #endif
-
 %ENDIF%

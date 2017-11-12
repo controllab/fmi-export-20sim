@@ -18,17 +18,7 @@
 /* 20-sim include files */
 #include "xxtypes.h"
 
-/* fill in a matrix struct with a given array, rows and columns */
-void XXCreateMatrixStruct (XXMatrix *mat_dest, XXInteger rows, XXInteger columns, XXDouble *values);
-
-/* allocate a matrix struct with rows and columns
-void XXAllocateMatrixStruct (XXMatrix *mat_dest, XXInteger rows, XXInteger columns);
-
-   free a matrix struct with rows and columns
-void XXFreeMatrixStruct (XXMatrix *mat_dest);
-*/
-
-/* and the function declarations */
+/* The function declarations */
 /* copy a matrix source to a matrix destination */
 void XXMatrixMov (XXMatrix *mat_dest, XXMatrix *mat_source);
 
