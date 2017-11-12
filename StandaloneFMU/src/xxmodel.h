@@ -89,6 +89,10 @@
 %IF%%NUMBEROF_EVENTDOWNFUNCTION%
 #define %VARPREFIX%eventdown_count %NUMBEROF_EVENTDOWNFUNCTION%
 %ENDIF%
+%IF%%NUMBEROF_TIMEEVENTFUNCTION%
+#define %VARPREFIX%timeevent_count %NUMBEROF_TIMEEVENTFUNCTION%
+%ENDIF%
+
 
 typedef struct %VARPREFIX%ModelInstance
 {
@@ -259,6 +263,9 @@ typedef struct %VARPREFIX%ModelInstance
 %ENDIF%
 %IF%%NUMBEROF_EVENTDOWNFUNCTION%
 	XXDouble event_down[%VARPREFIX%eventdown_count];
+%ENDIF%
+%IF%%NUMBEROF_TIMEEVENTFUNCTION%
+	XXDouble time_event[%VARPREFIX%timeevent_count];
 %ENDIF%
 } %VARPREFIX%ModelInstance;
 
