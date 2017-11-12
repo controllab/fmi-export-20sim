@@ -940,16 +940,29 @@ fmi2Status fmi2SetFMUstate (fmi2Component c, fmi2FMUstate FMUstate)
 	model_instance->%XX_INITIALIZE% = stored_state->%XX_INITIALIZE%;
 	model_instance->major = stored_state->major;
 	model_instance->stop_simulation = stored_state->stop_simulation;
+	model_instance->parameters_updated = stored_state->parameters_updated;
+
 %IF%%NUMBEROF_INITIALFUNCTION%
 	/* Restore the initial array */
 	memcpy(&model_instance->initial_value_array, &stored_state->initial_value_array, sizeof(model_instance->initial_value_array));
 %ENDIF%
 %IF%%NUMBEROF_DELAYFUNCTION%
 	/* Restore the delay arrays */
-	memcpy(&model_instance->delay_update_array, &stored_state->delay_update_array, sizeof(model_instance->delay_update_array));	
+	memcpy(&model_instance->delay_update_array, &stored_state->delay_update_array, sizeof(model_instance->delay_update_array));
 	memcpy(&model_instance->delay_last_values, &stored_state->delay_last_values, sizeof(model_instance->delay_last_values));
 %ENDIF%
-
+%IF%%NUMBEROF_EVENTFUNCTION%
+	memcpy(&model_instance->event, &stored_state->event, sizeof(model_instance->event));
+%ENDIF%
+%IF%%NUMBEROF_EVENTUPFUNCTION%
+	memcpy(&model_instance->event_up, &stored_state->event_up, sizeof(model_instance->event_up));
+%ENDIF%
+%IF%%NUMBEROF_EVENTDOWNFUNCTION%
+	memcpy(&model_instance->event_down, &stored_state->event_down, sizeof(model_instance->event_down));
+%ENDIF%
+%IF%%NUMBEROF_TIMEEVENTFUNCTION%
+	memcpy(&model_instance->time_event, &stored_state->time_event, sizeof(model_instance->time_event));
+%ENDIF%
 	return fmi2OK;
 }
 
