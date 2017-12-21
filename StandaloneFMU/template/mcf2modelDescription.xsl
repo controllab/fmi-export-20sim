@@ -199,7 +199,7 @@
 	<xsl:element name="ScalarVariable">
 		<xsl:attribute name="name">
 			<xsl:choose>
-				<xsl:when test="$isArray"><xsl:value-of select="concat(translate($modelvariable/name,'\','.'), '[', $index, ']')" /></xsl:when>
+				<xsl:when test="$isArray"><xsl:value-of select="concat(translate($modelvariable/name,'\','.'), '[', $index + 1, ']')" /></xsl:when>
 				<xsl:otherwise><xsl:value-of select="translate($modelvariable/name,'\','.')" /></xsl:otherwise>
 			</xsl:choose>
 		</xsl:attribute>
