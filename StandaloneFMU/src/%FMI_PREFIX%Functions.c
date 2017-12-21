@@ -12,7 +12,7 @@
  **********************************************************/
 
 /* This file contains the implementation of the FMI functions
-   Please check the fmiSunctions.h file for more details
+   Please check the %FMI_PREFIX%Functions.h file for more details
 */
 
 %IF%%FMI2%
@@ -892,6 +892,12 @@ fmi2Status fmi2GetContinuousStates(fmi2Component c, fmi2Real x[], size_t nx)
 fmi2Status fmi2GetFMUstate (fmi2Component c, fmi2FMUstate* FMUstate)
 {
 	%VARPREFIX%ModelInstance* model_instance = (%VARPREFIX%ModelInstance*) c;
+
+	if (model_instance == NULL)
+	{
+		return fmi2Error;
+	}
+
 	if (FMUstate == NULL)
 		// We cannot store our memory pointer
 		return fmi2Discard;
@@ -919,6 +925,11 @@ fmi2Status fmi2SetFMUstate (fmi2Component c, fmi2FMUstate FMUstate)
 {
 	%VARPREFIX%ModelInstance* model_instance = (%VARPREFIX%ModelInstance*) c;
 	%VARPREFIX%ModelInstance* stored_state = (%VARPREFIX%ModelInstance*) FMUstate;
+
+	if (model_instance == NULL)
+	{
+		return fmi2Error;
+	}
 
 	if (FMUstate == NULL)
 	{

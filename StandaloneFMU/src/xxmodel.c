@@ -289,10 +289,21 @@ XXDouble %FUNCTIONPREFIX%ModelInitialValue (%VARPREFIX%ModelInstance* model_inst
 %IF%%NUMBEROF_WARNSTATEMENT%
 XXBoolean %FUNCTIONPREFIX%ModelWarning (%VARPREFIX%ModelInstance* model_instance, XXString message, XXInteger id)
 {
+	if (model_instance == NULL)
+		return 0;
+
+%IF%%FMI1%
+	if(model_instance->fmiCallbackFunctions.logger != NULL)
+	{
+		model_instance->fmiCallbackFunctions.logger(NULL, "%SUBMODEL_NAME%", fmiWarning, "warning", message);
+	}
+%ENDIF%
+%IF%%FMI2%
 	if(model_instance->fmiCallbackFunctions != NULL && model_instance->fmiCallbackFunctions->logger != NULL)
 	{
 		model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Warning, "warning", message);
 	}
+%ENDIF%
 	return 0;
 }
 
@@ -300,12 +311,23 @@ XXBoolean %FUNCTIONPREFIX%ModelWarning (%VARPREFIX%ModelInstance* model_instance
 %IF%%NUMBEROF_STOPSTATEMENT%
 XXBoolean %FUNCTIONPREFIX%ModelStopSimulation (%VARPREFIX%ModelInstance* model_instance, XXString message, XXInteger id)
 {
+	if (model_instance == NULL)
+		return 0;
+
 	model_instance->stop_simulation = XXTRUE;
 
+%IF%%FMI1%
+	if(model_instance->fmiCallbackFunctions.logger != NULL)
+	{
+		model_instance->fmiCallbackFunctions.logger(NULL, "%SUBMODEL_NAME%", fmiError, "error", message);
+	}
+%ENDIF%
+%IF%%FMI2%
 	if(model_instance->fmiCallbackFunctions != NULL && model_instance->fmiCallbackFunctions->logger != NULL)
 	{
 		model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error", message);
 	}
+%ENDIF%
 	return 0;
 }
 
