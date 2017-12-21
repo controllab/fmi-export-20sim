@@ -77,7 +77,7 @@
 			<xsl:value-of select="document(concat($SOURCEDIRECTORY, '\GUID.xml'))/tokens/token[@name='GUID']" />
 			<xsl:text>}</xsl:text>
 		</xsl:attribute>
-		<xsl:attribute name="generationTool">20-sim</xsl:attribute>
+		<xsl:attribute name="generationTool">20-sim %MAJORVERSION%.%MINORVERSION%.%MAJORBUILD%</xsl:attribute>
 %IF%%FMI1%
 		<xsl:attribute name="numberOfContinuousStates">
 			<!-- Note: 20-sim doesn't distinguish between discrete and continuous states, so return the union of both sets -->
@@ -85,7 +85,7 @@
 		</xsl:attribute>
 %ENDIF%
 		<xsl:attribute name="numberOfEventIndicators">0</xsl:attribute>
-
+		<xsl:attribute name="variableNamingConvention">structured</xsl:attribute>
 %IF%%FMI2%
 		<xsl:attribute name="copyright">Controllab Products B.V.</xsl:attribute>
 		<xsl:attribute name="license">-</xsl:attribute>
@@ -210,7 +210,7 @@
 	<xsl:element name="ScalarVariable">
 		<xsl:attribute name="name">
 			<xsl:choose>
-				<xsl:when test="$isArray"><xsl:value-of select="concat(translate($modelvariable/name,'\','.'), '[', $index, ']')" /></xsl:when>
+				<xsl:when test="$isArray"><xsl:value-of select="concat(translate($modelvariable/name,'\','.'), '[', $index + 1, ']')" /></xsl:when>
 				<xsl:otherwise><xsl:value-of select="translate($modelvariable/name,'\','.')" /></xsl:otherwise>
 			</xsl:choose>
 		</xsl:attribute>
