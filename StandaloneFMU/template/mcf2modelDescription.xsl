@@ -85,7 +85,7 @@
 		</xsl:attribute>
 %ENDIF%
 		<xsl:attribute name="numberOfEventIndicators">0</xsl:attribute>
-
+		<xsl:attribute name="variableNamingConvention">structured</xsl:attribute>
 %IF%%FMI2%
 		<xsl:attribute name="copyright">Controllab Products B.V.</xsl:attribute>
 		<xsl:attribute name="license">-</xsl:attribute>
