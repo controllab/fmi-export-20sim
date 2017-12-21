@@ -9,7 +9,7 @@ CLS
 COLOR 1B
 TITLE 20-sim FMU %FMUVERSION% export - Build script
 rem -------------------------------------------------------------
-set CURPATH=%~dp0
+set "CURPATH=%~dp0"
 rem Start searching for the newest compiler
 set comp=vs2017
 set promptlevel=prompt
@@ -17,10 +17,10 @@ set exitcode=0
 set buildmode=clean
 
 cd ..\
-set ROOTPATH=%CD%
-cd %CURPATH%
+set "ROOTPATH=%CD%"
+cd "%CURPATH%"
 
-set FMU=%ROOTPATH%\%SUBMODEL_NAME%.fmu
+set "FMU=%ROOTPATH%\%SUBMODEL_NAME%.fmu"
 set DLL=%SUBMODEL_NAME%.dll
 set ZIPTOOL=%TEMPLATE_DIR%\bin\7z.exe
 rem The Github hosted template includes these two tools in order to support older 20-sim versions
@@ -34,12 +34,12 @@ if exist "%ProgramData%\Controllab Products B.V\Python34\python.exe" (
 )
 set RESOURCES_SCRIPT="%TEMPLATE_DIR%\bin\include_resources.py"
 
-set FMU_DIR=%CURPATH%fmu
-set BIN32_DIR=%FMU_DIR%\binaries\win32
-set BIN64_DIR=%FMU_DIR%\binaries\win64
-set SRC_DIR=%FMU_DIR%\sources
-set DOC_DIR=%FMU_DIR%\documentation
-set RES_DIR=%FMU_DIR%\resources
+set "FMU_DIR=%CURPATH%fmu"
+set "BIN32_DIR=%FMU_DIR%\binaries\win32"
+set "BIN64_DIR=%FMU_DIR%\binaries\win64"
+set "SRC_DIR=%FMU_DIR%\sources"
+set "DOC_DIR=%FMU_DIR%\documentation"
+set "RES_DIR=%FMU_DIR%\resources"
 
 ECHO ------------------------------------------------------------
 ECHO 20-sim standalone co-simulation FMU export for '%SUBMODEL_NAME%'
@@ -224,7 +224,7 @@ IF DEFINED VSVARS32 (
 
   REM Check whether the 32-bits dll has been generated.
   REM note: 64-bits will not for all visual studio installations be possible
-  IF NOT EXIST %PROJ_DIR%\win32\%buildconfig%\%DLL% (
+  IF NOT EXIST "%PROJ_DIR%\win32\%buildconfig%\%DLL%" (
     set DIETEXT="%DLL% failed to build!  See ..\%PROJ_DIR%\%buildconfig%\BuildLog.htm for details."
     goto DIE
   )
@@ -253,9 +253,13 @@ IF DEFINED VSVARS32 (
   ECHO Copy the compiled DLL %PROJ_DIR%\Win32\%buildconfig%\%DLL% to %BIN32_DIR%
   copy "%PROJ_DIR%\Win32\%buildconfig%\%DLL%" "%BIN32_DIR%"
   IF %BUILD_X64%==1 (
-    if not exist "%BIN64_DIR%" mkdir "%BIN64_DIR%"
-    ECHO Copy the compiled DLL %PROJ_DIR%\x64\%buildconfig%\%DLL% to %BIN64_DIR%
-    copy "%PROJ_DIR%\x64\%buildconfig%\%DLL%" "%BIN64_DIR%"
+    IF EXIST "%PROJ_DIR%\x64\%buildconfig%\%DLL%" (
+      if not exist "%BIN64_DIR%" mkdir "%BIN64_DIR%"
+      ECHO Copy the compiled DLL %PROJ_DIR%\x64\%buildconfig%\%DLL% to %BIN64_DIR%
+      copy "%PROJ_DIR%\x64\%buildconfig%\%DLL%" "%BIN64_DIR%"
+    ) ELSE (
+      echo Note: this FMU will not contain a Windows 64-bit DLL.
+    )
   )
 
   ECHO copy the generated sources to %SRC_DIR%
