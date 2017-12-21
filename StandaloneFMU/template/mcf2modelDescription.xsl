@@ -77,7 +77,7 @@
 			<xsl:value-of select="document(concat($SOURCEDIRECTORY, '\GUID.xml'))/tokens/token[@name='GUID']" />
 			<xsl:text>}</xsl:text>
 		</xsl:attribute>
-		<xsl:attribute name="generationTool">20-sim</xsl:attribute>
+		<xsl:attribute name="generationTool">20-sim %MAJORVERSION%.%MINORVERSION%.%MAJORBUILD%</xsl:attribute>
 %IF%%FMI1%
 		<xsl:attribute name="numberOfContinuousStates">
 			<!-- Note: 20-sim doesn't distinguish between discrete and continuous states, so return the union of both sets -->
