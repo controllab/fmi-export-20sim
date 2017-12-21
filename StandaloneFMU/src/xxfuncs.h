@@ -21,12 +21,6 @@
 %ENDIF%
 
 /* Global constants */
-%IF%%NUMBEROF_LOG2FUNCTION%
-extern XXDouble xx_logarithm_2;
-%ENDIF%
-%IF%%NUMBEROF_LOG10FUNCTION%
-extern XXDouble xx_logarithm_10;
-%ENDIF%
 extern XXBoolean %VARPREFIX%stop_simulation;
 
 /* Wrapper functions around strings */
