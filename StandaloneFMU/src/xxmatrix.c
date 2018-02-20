@@ -858,7 +858,7 @@ XXDouble XXMatrixTrace (XXMatrix *mat_source)
 
 %ENDIF%
 %IF%%NUMBEROF_SYMMETRICFUNCTION%
-/* take the symetric value of the source matrix.
+/* take the symmetric value of the source matrix.
    the result is placed in the destination matrix.
    the work array must have the same size as the source
 */
@@ -884,7 +884,7 @@ void XXMatrixSym (XXMatrix *mat_dest, XXMatrix *mat_source, XXDouble *workarray)
 
 %ENDIF%
 %IF%%NUMBEROF_ANTISYMMETRICFUNCTION%
-/* take the anti symetric value of the source matrix.
+/* take the anti symmetric value of the source matrix.
    the result is placed in the destination matrix.
    the work array must have the same size as the source
 */
@@ -901,7 +901,7 @@ void XXMatrixAsym (XXMatrix *mat_dest, XXMatrix *mat_source, XXDouble *workarray
 	/* first transpose the source to the destination */
 	XXMatrixTranspose(mat_dest, mat_source);
 
-	/* subtrace those two matrices to the work array */
+	/* subtract those two matrices to the work array */
 	XXMatrixSub(&workMatrix, mat_source, mat_dest);
 
 	/* and divide by a scalar two */
@@ -1015,7 +1015,7 @@ void XXMatrixInverseH (XXMatrix *mat_dest, XXMatrix *mat_source)
 }
 
 %ENDIF%
-%IF%%NUMBEROF_ADJOINTFUNCTION%
+%IF%%NUMBEROF_MAJORADJOINTFUNCTION%
 /* Create an Adjoint matrix.
    source matrix is 4x4, destination matrix is 6x6
 */
@@ -1137,8 +1137,8 @@ void XXMatrixAdjoint1 (XXMatrix *mat_dest, XXMatrix *mat_source1, XXMatrix *mat_
 	d[34] = s1[7];
 	d[35] = s1[8];
 }
-
-
+%ENDIF%
+%IF%%NUMBEROF_ADJOINTFUNCTION%
 /* Create an Adjoint matrix from a source matrix
    source1 matrix is 6x1
    destination matrix is 6x6
@@ -1264,7 +1264,7 @@ void XXMatrixadjoint1 (XXMatrix *mat_dest, XXMatrix *mat_source1, XXMatrix *mat_
 
 %ENDIF%
 %IF%%NUMBEROF_TILDEFUNCTION%
-/* calcalate the tilde matrix from a source matrix
+/* calculate the tilde matrix from a source matrix
    source1 matrix is 6x1
    destination matrix is 4x4
 */
@@ -1301,7 +1301,7 @@ void XXMatrixTilde (XXMatrix *mat_dest, XXMatrix *mat_source)
 }
 
 
-/* calcalate the tilde matrix from two source matrices
+/* calculate the tilde matrix from two source matrices
    source1 matrix is 3x1
    source2 matrix is 3x1
    destination matrix is 4x4
@@ -1360,5 +1360,5 @@ void XXLinearSolve (XXMatrix *mat_dest, XXMatrix *mat_source1, XXMatrix *mat_sou
 	XXMatrixMul (mat_dest, &workMatrix, mat_source2);
 }
 %ELSE%
-/* Empty file, no matix support functions are needed for this model */
+/* Empty file, no matrix support functions are needed for this model */
 %ENDIF%
