@@ -37,10 +37,18 @@
 
 /* Constants that are used in our functions below */
 %IF%%OR(NUMBEROF_LOG2FUNCTION, NUMBEROF_EXP2FUNCTION)%
-XXDouble xx_logarithm_2 =  0.6931471805599453;
+static const XXDouble xx_logarithm_2 =  0.6931471805599453;
+%IF%%NUMBEROF_LOG2FUNCTION%
+static const XXDouble xx_invLog2 = 1.4426950408889634;
+%ENDIF%
 %ENDIF%
 %IF%%OR(NUMBEROF_LOG10FUNCTION, NUMBEROF_EXP10FUNCTION)%
-XXDouble xx_logarithm_10 = 2.3025850929940457;
+static const XXDouble xx_logarithm_10 = 2.3025850929940457;
+%IF%%NUMBEROF_LOG10FUNCTION%
+#if __STDC_VERSION__ < 199901L
+static const XXDouble xx_invLog10 = 0.4342944819032518;
+#endif
+%ENDIF%
 %ENDIF%
 
 typedef union
@@ -130,14 +138,20 @@ XXDouble XXIntegerModulo (XXDouble argument1, XXDouble argument2)
 %IF%%NUMBEROF_LOG2FUNCTION%
 XXDouble XXLogarithm2 (XXDouble argument)
 {
-	return (XXDouble) log (argument) / xx_logarithm_2;
+	return (XXDouble) (log (argument) * xx_invLog2);
 }
 
 %ENDIF%
 %IF%%NUMBEROF_LOG10FUNCTION%
 XXDouble XXLogarithm10 (XXDouble argument)
 {
-	return (XXDouble) log (argument) / xx_logarithm_10;
+#if (__STDC_VERSION__ >= 199901L) || (__cplusplus)
+	/* C99 / C++ */
+	return (XXDouble) log10 (argument);
+#else
+	/* Not C99 */
+	return (XXDouble) (log (argument) * xx_invLog10);
+#endif
 }
 
 %ENDIF%
@@ -376,42 +390,6 @@ XXDouble XXTable (XXString name, XXDouble argument, XXInteger id)
 }
 
 %ENDIF%
-%IF%%NUMBEROF_EVENTFUNCTION%
-XXBoolean XXEvent (XXDouble argument, XXInteger id)
-{
-#if defined _MSC_VER
-#pragma message("warning: The 20-sim 'event' function is not yet implemented in this code generation template")
-#elif defined __GNUC__
-#warning The 20-sim 'event' function is not yet implemented in this code generation template
-#endif
-	return 0;
-}
-
-%ENDIF%
-%IF%%NUMBEROF_EVENTUPFUNCTION%
-XXBoolean XXEventUp (XXDouble argument, XXInteger id)
-{
-#if defined _MSC_VER
-#pragma message("warning: The 20-sim 'eventup' function is not yet implemented in this code generation template")
-#elif defined __GNUC__
-#warning The 20-sim 'eventup' function is not yet implemented in this code generation template
-#endif
-	return 0;
-}
-
-%ENDIF%
-%IF%%NUMBEROF_EVENTDOWNFUNCTION%
-XXBoolean XXEventDown (XXDouble argument, XXInteger id)
-{
-#if defined _MSC_VER
-#pragma message("warning: The 20-sim 'eventdown' function is not yet implemented in this code generation template")
-#elif defined __GNUC__
-#warning The 20-sim 'eventdown' function is not yet implemented in this code generation template
-#endif
-	return 0;
-}
-
-%ENDIF%
 %IF%%NUMBEROF_FREQUENCYEVENTFUNCTION%
 #if defined _MSC_VER
 #pragma message("warning: The 20-sim 'frequencyevent' function is not yet implemented in this code generation template")
@@ -425,18 +403,6 @@ XXBoolean XXFrequencyEvent (XXDouble argument, XXInteger id)
 
 XXBoolean XXFrequencyEvent1 (XXDouble argument1, XXDouble argument2, XXInteger id)
 {
-	return 0;
-}
-
-%ENDIF%
-%IF%%NUMBEROF_TIMEEVENTFUNCTION%
-XXBoolean XXTimeEvent (XXDouble argument, XXInteger id)
-{
-#if defined _MSC_VER
-#pragma message("warning: The 20-sim 'timeevent' function is not yet implemented in this code generation template")
-#elif defined __GNUC__
-#warning The 20-sim 'timeevent' function is not yet implemented in this code generation template
-#endif
 	return 0;
 }
 

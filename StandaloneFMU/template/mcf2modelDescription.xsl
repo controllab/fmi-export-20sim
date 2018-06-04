@@ -77,7 +77,7 @@
 			<xsl:value-of select="document(concat($SOURCEDIRECTORY, '\GUID.xml'))/tokens/token[@name='GUID']" />
 			<xsl:text>}</xsl:text>
 		</xsl:attribute>
-		<xsl:attribute name="generationTool">20-sim</xsl:attribute>
+		<xsl:attribute name="generationTool">20-sim %MAJORVERSION%.%MINORVERSION%.%MAJORBUILD%</xsl:attribute>
 %IF%%EQ(FMIVERSION,1.0)%
 		<xsl:attribute name="numberOfContinuousStates">
 			<!-- Note: 20-sim doesn't distinguish between discrete and continuous states, so return the union of both sets -->
@@ -85,7 +85,7 @@
 		</xsl:attribute>
 %ENDIF%
 		<xsl:attribute name="numberOfEventIndicators">0</xsl:attribute>
-
+		<xsl:attribute name="variableNamingConvention">structured</xsl:attribute>
 %IF%%EQ(FMIVERSION,2.0)%
 		<xsl:attribute name="copyright">Controllab Products B.V.</xsl:attribute>
 		<xsl:attribute name="license">-</xsl:attribute>
@@ -103,11 +103,12 @@
 			<xsl:attribute name="canRunAsynchronuously">false</xsl:attribute>
 			<xsl:attribute name="canBeInstantiatedOnlyOncePerProcess">false</xsl:attribute>
 			<xsl:attribute name="canNotUseMemoryManagementFunctions">true</xsl:attribute>
-			<xsl:attribute name="canGetAndSetFMUstate">false</xsl:attribute>
+			<xsl:attribute name="canGetAndSetFMUstate">true</xsl:attribute>
 			<xsl:attribute name="canSerializeFMUstate">false</xsl:attribute>
 			<xsl:attribute name="providesDirectionalDerivative">false</xsl:attribute>
 			<xsl:element name="SourceFiles">
 				<xsl:element name="File"><xsl:attribute name="name">EulerAngles.c</xsl:attribute></xsl:element>
+				<xsl:element name="File"><xsl:attribute name="name">fmi2Functions.c</xsl:attribute></xsl:element>
 				<xsl:element name="File"><xsl:attribute name="name">MotionProfiles.c</xsl:attribute></xsl:element>
 				<xsl:element name="File"><xsl:attribute name="name">xxfuncs.c</xsl:attribute></xsl:element>
 				<xsl:element name="File"><xsl:attribute name="name">xxinteg.c</xsl:attribute></xsl:element>
@@ -209,7 +210,7 @@
 	<xsl:element name="ScalarVariable">
 		<xsl:attribute name="name">
 			<xsl:choose>
-				<xsl:when test="$isArray"><xsl:value-of select="concat(translate($modelvariable/name,'\','.'), '[', $index, ']')" /></xsl:when>
+				<xsl:when test="$isArray"><xsl:value-of select="concat(translate($modelvariable/name,'\','.'), '[', $index + 1, ']')" /></xsl:when>
 				<xsl:otherwise><xsl:value-of select="translate($modelvariable/name,'\','.')" /></xsl:otherwise>
 			</xsl:choose>
 		</xsl:attribute>

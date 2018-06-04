@@ -18,17 +18,7 @@
 /* 20-sim include files */
 #include "xxtypes.h"
 
-/* fill in a matrix struct with a given array, rows and columns */
-void XXCreateMatrixStruct (XXMatrix *mat_dest, XXInteger rows, XXInteger columns, XXDouble *values);
-
-/* allocate a matrix struct with rows and columns
-void XXAllocateMatrixStruct (XXMatrix *mat_dest, XXInteger rows, XXInteger columns);
-
-   free a matrix struct with rows and columns
-void XXFreeMatrixStruct (XXMatrix *mat_dest);
-*/
-
-/* and the function declarations */
+/* The function declarations */
 /* copy a matrix source to a matrix destination */
 void XXMatrixMov (XXMatrix *mat_dest, XXMatrix *mat_source);
 
@@ -197,13 +187,13 @@ void XXMatrixNormInf (XXDouble *dest, XXMatrix *mat_source);
 XXDouble XXMatrixTrace (XXMatrix *mat_source);
 %ENDIF%
 %IF%%NUMBEROF_SYMMETRICFUNCTION%
-/* take the symetric value of the source matrix.
+/* take the symmetric value of the source matrix.
    the result is placed in the destination matrix.
    the work array must have the same size as the source */
 void XXMatrixSym (XXMatrix *mat_dest, XXMatrix *mat_source, XXDouble *workarray);
 %ENDIF%
 %IF%%NUMBEROF_ANTISYMMETRICFUNCTION%
-/* take the anti symetric value of the source matrix.
+/* take the anti symmetric value of the source matrix.
    the result is placed in the destination matrix.
    the work array must have the same size as the source */
 void XXMatrixAsym (XXMatrix *mat_dest, XXMatrix *mat_source, XXDouble *workarray);
@@ -224,7 +214,7 @@ void XXMatrixHomogeneous (XXMatrix *mat_dest, XXMatrix *mat_source1, XXMatrix *m
    the source is 4x4 and the destination matrix is 4x4 */
 void XXMatrixInverseH (XXMatrix *mat_dest, XXMatrix *mat_source);
 %ENDIF%
-%IF%%NUMBEROF_ADJOINTFUNCTION%
+%IF%%NUMBEROF_MAJORADJOINTFUNCTION%
 /* Create an Adjoint matrix.
    source matrix is 4x4, destination matrix is 6x6 */
 void XXMatrixAdjoint (XXMatrix *mat_dest, XXMatrix *mat_source);
@@ -234,7 +224,8 @@ void XXMatrixAdjoint (XXMatrix *mat_dest, XXMatrix *mat_source);
    source2 matrix is 3x1 (position),
    destination matrix is 6x6 */
 void XXMatrixAdjoint1 (XXMatrix *mat_dest, XXMatrix *mat_source1, XXMatrix *mat_source2);
-
+%ENDIF%
+%IF%%NUMBEROF_ADJOINTFUNCTION%
 /* Create an Adjoint matrix from a source matrix
    source1 matrix is 6x1
    destination matrix is 6x6 */
@@ -247,12 +238,12 @@ void XXMatrixadjoint (XXMatrix *mat_dest, XXMatrix *mat_source);
 void XXMatrixadjoint1 (XXMatrix *mat_dest, XXMatrix *mat_source1, XXMatrix *mat_source2);
 %ENDIF%
 %IF%%NUMBEROF_TILDEFUNCTION%
-/* calcalate the tilde matrix from a source matrix
+/* calculate the tilde matrix from a source matrix
    source1 matrix is 6x1
    destination matrix is 4x4 */
 void XXMatrixTilde (XXMatrix *mat_dest, XXMatrix *mat_source);
 
-/* calcalate the tilde matrix from two source matrices
+/* calculate the tilde matrix from two source matrices
    source1 matrix is 3x1
    source2 matrix is 3x1
    destination matrix is 4x4 */
@@ -265,6 +256,6 @@ void XXLinearSolve (XXMatrix *mat_dest, XXMatrix *mat_source1, XXMatrix *mat_sou
 #endif /* XX_MATRIX_H */
 
 %ELSE%
-/* Empty file, no matix support functions are needed for this model */
+/* Empty file, no matrix support functions are needed for this model */
 %ENDIF%
 

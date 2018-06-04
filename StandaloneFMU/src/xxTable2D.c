@@ -35,11 +35,11 @@ static char g_lastError[LASTERRMSGBUFSIZE];
 */
 typedef struct
 {
-    XXInteger nRows;
-    XXInteger nColumns;
-    XXDouble* xValues;
-    XXDouble* yValues;
-    XXDouble* data;
+	XXInteger nRows;
+	XXInteger nColumns;
+	XXDouble* xValues;
+	XXDouble* yValues;
+	XXDouble* data;
 } LookupTable;
 
 /* Create a global variable to hold lookup tables */
@@ -60,7 +60,7 @@ void Table2D_Initialize()
 
 void Table2D_Terminate()
 {
-    /* Free allocated memory */
+	/* Free allocated memory */
 	int i = 0;
 	for (i = 0; i < %NUMBEROF_DLL_Table2D_Table2DInit%; ++i)
 	{
@@ -71,7 +71,7 @@ void Table2D_Terminate()
 
 XXString Table2D_LastErrorMessage()
 {
-    return g_lastError;
+	return g_lastError;
 }
 
 %IF%%OR(FMI1,FMI2)%
@@ -264,68 +264,68 @@ XXInteger Table2D_TableRead(XXDouble* inarr, XXInteger inputs, XXDouble* outarr,
 	switch (tableCase)
 	{
 		case 1: /* left top */
-				/* return the left top value */
+			/* return the left top value */
 			outarr[0] = LookupTable_element(theTable, 0, 0);
-				break;
+			break;
 		case 2: /* mid top */
-				/* interpolate the top two column values*/
-				a = LookupTable_element(theTable, 0, posX);
-				b = LookupTable_element(theTable, 0, posX + 1);
-				c = calcDistance(xValue, posX, theTable->xValues, theTable->nColumns);
-				outarr[0] = (1.0 - c) * a + c * b;
-				break;
+			/* interpolate the top two column values*/
+			a = LookupTable_element(theTable, 0, posX);
+			b = LookupTable_element(theTable, 0, posX + 1);
+			c = calcDistance(xValue, posX, theTable->xValues, theTable->nColumns);
+			outarr[0] = (1.0 - c) * a + c * b;
+			break;
 		case 3: /* right top */
-				/* return the right top value */
+			/* return the right top value */
 			outarr[0] = LookupTable_element(theTable, 0, theTable->nColumns - 1);
-				break;
+			break;
 		case 4: /* left mid */
-				/* interpolate the left two rows values*/
-				a = LookupTable_element(theTable, posY, 0);
-				b = LookupTable_element(theTable, posY + 1, 0);
-				c = calcDistance(yValue, posY, theTable->yValues, theTable->nRows);
-				outarr[0] = (1.0 - c) * a + c * b;
-				break;
+			/* interpolate the left two rows values*/
+			a = LookupTable_element(theTable, posY, 0);
+			b = LookupTable_element(theTable, posY + 1, 0);
+			c = calcDistance(yValue, posY, theTable->yValues, theTable->nRows);
+			outarr[0] = (1.0 - c) * a + c * b;
+			break;
 		case 5: /* mid mid */
-				/* this is the normal case inside the table */
-				leftTop = LookupTable_element(theTable, posY, posX);
-				rightTop = LookupTable_element(theTable, posY, posX + 1);
-				leftBottom = LookupTable_element(theTable, posY + 1, posX);
-				rightBottom = LookupTable_element(theTable, posY + 1, posX + 1);
-				a = calcDistance(xValue, posX, theTable->xValues, theTable->nColumns);
-				b = calcDistance(yValue, posY, theTable->yValues, theTable->nRows);
-							
-				outarr[0] = (1.0 - a) * (1.0 - b) * leftTop +
-								   a  * (1.0 - b) * rightTop +
-							(1.0 - a) *        b  * leftBottom +
-								   a  *        b  * rightBottom;			
-				break;
+			/* this is the normal case inside the table */
+			leftTop = LookupTable_element(theTable, posY, posX);
+			rightTop = LookupTable_element(theTable, posY, posX + 1);
+			leftBottom = LookupTable_element(theTable, posY + 1, posX);
+			rightBottom = LookupTable_element(theTable, posY + 1, posX + 1);
+			a = calcDistance(xValue, posX, theTable->xValues, theTable->nColumns);
+			b = calcDistance(yValue, posY, theTable->yValues, theTable->nRows);
+
+			outarr[0] = (1.0 - a) * (1.0 - b) * leftTop +
+							   a  * (1.0 - b) * rightTop +
+						(1.0 - a) *        b  * leftBottom +
+							   a  *        b  * rightBottom;
+			break;
 		case 6: /* right mid */
-				/* interpolate the right two rows values*/
-				a = LookupTable_element(theTable, posY, theTable->nColumns - 1);
-				b = LookupTable_element(theTable, posY + 1, theTable->nColumns - 1);
-				c = calcDistance(yValue, posY, theTable->yValues, theTable->nRows);
-				outarr[0] = (1.0 - c) * a + c * b;
-				break;
+			/* interpolate the right two rows values*/
+			a = LookupTable_element(theTable, posY, theTable->nColumns - 1);
+			b = LookupTable_element(theTable, posY + 1, theTable->nColumns - 1);
+			c = calcDistance(yValue, posY, theTable->yValues, theTable->nRows);
+			outarr[0] = (1.0 - c) * a + c * b;
+			break;
 		case 7: /* left bottom */
-				/* return the left bottom value */
-				outarr[0] = LookupTable_element(theTable, theTable->nRows - 1, 0);
-				break;
+			/* return the left bottom value */
+			outarr[0] = LookupTable_element(theTable, theTable->nRows - 1, 0);
+			break;
 		case 8: /* mid bottom */
-				/* interpolate the top bottom column values*/
-				a = LookupTable_element(theTable, theTable->nRows - 1, posX);
-				b = LookupTable_element(theTable, theTable->nRows - 1, posX + 1);
-				c = calcDistance(xValue, posX, theTable->xValues, theTable->nColumns);
-				outarr[0] = (1.0 - c) * a + c * b;
-				break;
+			/* interpolate the top bottom column values*/
+			a = LookupTable_element(theTable, theTable->nRows - 1, posX);
+			b = LookupTable_element(theTable, theTable->nRows - 1, posX + 1);
+			c = calcDistance(xValue, posX, theTable->xValues, theTable->nColumns);
+			outarr[0] = (1.0 - c) * a + c * b;
+			break;
 		case 9: /* right bottom */
-				/* return the right bottom value */
-				outarr[0] = LookupTable_element(theTable, theTable->nRows - 1, theTable->nColumns - 1);
-				break;
+			/* return the right bottom value */
+			outarr[0] = LookupTable_element(theTable, theTable->nRows - 1, theTable->nColumns - 1);
+			break;
 		default:
 			outarr[0] = 0.0;
 			break;
 	}
-    return 0;
+	return 0;
 }
 
 LookupTable* LookupTable_create(XXInteger rows, XXInteger columns)
@@ -383,7 +383,7 @@ XXDouble LookupTable_element(LookupTable* table, XXInteger row, XXInteger column
 	if ( row >= table->nRows || column >= table->nColumns )
 		return 0.0;
 
-    return table->data[row * table->nColumns + column];
+	return table->data[row * table->nColumns + column];
 }
 
 /*
@@ -402,77 +402,79 @@ XXDouble LookupTable_element(LookupTable* table, XXInteger row, XXInteger column
 */
 XXBoolean count_data_dimensions(FILE* fp, XXInteger* rows, XXInteger* columns)
 {
-    XXInteger tmpCols = 0;
-    XXBoolean readingVal = XXFALSE;
-    XXInteger c;
-    *rows = 0;
-    *columns = 0;
+	XXInteger tmpCols = 0;
+	XXBoolean readingVal = XXFALSE;
+	XXInteger c;
+	*rows = 0;
+	*columns = 0;
 
-    do
-    {
-        c = fgetc(fp);
+	do
+	{
+		c = fgetc(fp);
 		if (c == EOF)
 		{
 			break;
 		}
-        if (ferror(fp))
+		if (ferror(fp))
 		{
-            return XXFALSE;
+			return XXFALSE;
 		}
 
-        switch (c)
-        {
-            case ' ':
-            case '\t':
-                if (readingVal){
-                    readingVal = XXFALSE;
-                }
-                break;
-            case '\n':
-            case EOF:
-                if (tmpCols < 2)
+		switch (c)
+		{
+			case '\r':
+				continue;
+			case ' ':
+			case '\t':
+				if (readingVal){
+					readingVal = XXFALSE;
+				}
+				break;
+			case '\n':
+			case EOF:
+				if (tmpCols < 2)
 				{
-                    /* Less than two columns found */
-                    return XXFALSE;
+					/* Less than two columns found */
+					return XXFALSE;
 				}
 
-                ++(*rows);
-                readingVal = XXFALSE;
+				++(*rows);
+				readingVal = XXFALSE;
 
-                if (*rows == 1)
+				if (*rows == 1)
 				{
-                    /* Set data columns found in first row */
-                    *columns = tmpCols;
+					/* Set data columns found in first row */
+					*columns = tmpCols;
 				}
 
-                if (tmpCols != *columns)
+				if (tmpCols != *columns)
 				{
-                    /* Number of columns is inconsistent */
-                    return XXFALSE;
+					/* Number of columns is inconsistent */
+					return XXFALSE;
 				}
 
-                tmpCols = 0;
-                break;
-            default:
-                if (!readingVal)
-                {
-                    ++tmpCols;
-                    readingVal = XXTRUE;
-                }
-        }
-    } while (c != EOF);
+				tmpCols = 0;
+				break;
+			default:
+				if (!readingVal)
+				{
+					++tmpCols;
+					readingVal = XXTRUE;
+				}
+		}
+	} while (c != EOF);
 
-    if (*rows < 2)
+	if (*rows < 2)
 	{
-        /* Less than two rows found */
-        return XXFALSE;
+		/* Less than two rows found */
+		return XXFALSE;
 	}
 
-    /* Ignore the first data point in file (i.e. element of the first row/column). */
-    --(*rows);
-    --(*columns);
+	/* Ignore the first data point in file (i.e. element of the first row/column). */
+	--(*rows);
+	--(*columns);
 
-    return XXTRUE;
+	return XXTRUE;
 }
 
 /*
@@ -490,25 +492,25 @@ XXBoolean count_data_dimensions(FILE* fp, XXInteger* rows, XXInteger* columns)
 */
 XXBoolean LookupTable_populate(LookupTable* table, FILE* fp)
 {
-    /* Go to beginning of/first position in file */
-    double tmp;
+	/* Go to beginning of/first position in file */
+	double tmp;
 	XXDouble *dataEntry = table->data;
 	XXInteger row = 0;
 	XXInteger col = 0;
 
-    rewind(fp);
-    for (row = 0; row < table->nRows + 1; ++row)
-    {
-        for (col = 0; col < table->nColumns + 1; ++col)
-        {
-            while (fscanf(fp, "%lf", &tmp) == 0)
+	rewind(fp);
+	for (row = 0; row < table->nRows + 1; ++row)
+	{
+		for (col = 0; col < table->nColumns + 1; ++col)
+		{
+			while (fscanf(fp, "%lf", &tmp) == 0)
 			{
-                /* Matching failure, so advance to next position */
-                fseek(fp, 1, SEEK_CUR);
+				/* Matching failure, so advance to next position */
+				fseek(fp, 1, SEEK_CUR);
 			}
 
-            if (ferror(fp))
-                return XXFALSE;
+			if (ferror(fp))
+				return XXFALSE;
 
 			if (row == 0)
 			{
@@ -524,20 +526,20 @@ XXBoolean LookupTable_populate(LookupTable* table, FILE* fp)
 			}
 
 			if (col == 0)
-            {
+			{
 				/* register this as a row value */
 				table->yValues[row - 1] = tmp;
 				continue;
-            }
+			}
 
 			/* just write at the current entry */
 			*dataEntry = (XXDouble) tmp;
 
 			/* and commence to the next value in the array */
 			dataEntry++;
-        }
-    }
-    return XXTRUE;
+		}
+	}
+	return XXTRUE;
 }
 
 /*
@@ -571,7 +573,7 @@ XXInteger findPosition(XXDouble value, XXDouble* array, XXInteger size)
 		pos++;
 	}
 
-    return pos - 1;
+	return pos - 1;
 }
 
 /*
@@ -622,16 +624,16 @@ XXDouble calcDistance(XXDouble value, XXInteger pos, XXDouble* array, XXInteger 
 	}
 
 	/* nicely in the range */
-    lowerDistance = 0;
+	lowerDistance = 0;
 
-    previousVal = array[pos];
-    nextVal = array[pos+1];
+	previousVal = array[pos];
+	nextVal = array[pos+1];
 	/* prevent division by zero */
 	if (nextVal == previousVal)
 		return 0.0;
 
 	/* return the fraction */
-    return  (value - previousVal) / (nextVal - previousVal);
+	return  (value - previousVal) / (nextVal - previousVal);
 }
 %ELSE%
 /* Empty file; no Table2D support needed for this model */

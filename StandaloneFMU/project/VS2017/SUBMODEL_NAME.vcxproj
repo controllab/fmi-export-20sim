@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -26,25 +26,25 @@
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -242,10 +242,10 @@
     <ClInclude Include="..\..\src\xxsubmod.h" />
     <ClInclude Include="..\..\src\xxtypes.h" />
     <ClInclude Include="..\..\src\%FMI_PREFIX%Functions.h" />
-%IF%%EQ(FMIVERSION,1.0)%
+%IF%%FMI1%
     <ClInclude Include="..\..\src\fmiPlatformTypes.h" />
 %ENDIF%
-%IF%%EQ(FMIVERSION,2.0)%
+%IF%%FMI2%
     <ClInclude Include="..\..\src\fmi2FunctionTypes.h" />
     <ClInclude Include="..\..\src\fmi2TypesPlatform.h" />
 %ENDIF%
@@ -264,15 +264,6 @@
 	<ClInclude Include="..\..\src\cvode\include\sundials\sundials_nvector.h" />
 	<ClInclude Include="..\..\src\cvode\include\sundials\sundials_dense.h" />
 	<ClInclude Include="..\..\src\cvode\include\sundials\sundials_direct.h" />
-%ENDIF%
-%IF%%EQ(INTEGRATION_METHOD_NAME,MeBDFi)%
-	<ClInclude Include="..\..\src\MeBDFi\MeBDFi.h" />
-	<ClInclude Include="..\..\src\MeBDFi\include\f2c.h" />
-	<ClInclude Include="..\..\src\MeBDFi\include\fio.h" />
-	<ClInclude Include="..\..\src\MeBDFi\include\fmt.h" />
-	<ClInclude Include="..\..\src\MeBDFi\include\fp.h" />
-	<ClInclude Include="..\..\src\MeBDFi\include\lio.h" />
-	<ClInclude Include="..\..\src\MeBDFi\include\sysdep1.h" />
 %ENDIF%
   </ItemGroup>
   <ItemGroup>
@@ -296,40 +287,6 @@
 	<ClCompile Include="..\..\src\cvode\src\sundials\sundials_direct.c" />
 	<ClCompile Include="..\..\src\cvode\src\sundials\sundials_math.c" />
 	<ClCompile Include="..\..\src\cvode\src\sundials\sundials_nvector.c" />
-%ENDIF%
-%IF%%EQ(INTEGRATION_METHOD_NAME,MeBDFi)%
-	<ClCompile Include="..\..\src\MeBDFi\MeBDFi.c" />
-	<ClCompile Include="..\..\src\MeBDFi\libf2c\close.c" />
-	<ClCompile Include="..\..\src\MeBDFi\libf2c\dolio.c" />
-	<ClCompile Include="..\..\src\MeBDFi\libf2c\endfile.c" />
-	<ClCompile Include="..\..\src\MeBDFi\libf2c\err.c" />
-	<ClCompile Include="..\..\src\MeBDFi\libf2c\fmt.c" />
-	<ClCompile Include="..\..\src\MeBDFi\libf2c\fmtlib.c" />
-	<ClCompile Include="..\..\src\MeBDFi\libf2c\lread.c" />
-	<ClCompile Include="..\..\src\MeBDFi\libf2c\lwrite.c" />
-	<ClCompile Include="..\..\src\MeBDFi\libf2c\open.c" />
-	<ClCompile Include="..\..\src\MeBDFi\libf2c\pow_dd.c" />
-	<ClCompile Include="..\..\src\MeBDFi\libf2c\pow_di.c" />
-	<ClCompile Include="..\..\src\MeBDFi\libf2c\rdfmt.c" />
-	<ClCompile Include="..\..\src\MeBDFi\libf2c\rsfe.c" />
-	<ClCompile Include="..\..\src\MeBDFi\libf2c\sfe.c" />
-	<ClCompile Include="..\..\src\MeBDFi\libf2c\sig_die.c" />
-	<ClCompile Include="..\..\src\MeBDFi\libf2c\util.c" />
-	<ClCompile Include="..\..\src\MeBDFi\libf2c\wref.c" />
-	<ClCompile Include="..\..\src\MeBDFi\libf2c\wrtfmt.c" />
-	<ClCompile Include="..\..\src\MeBDFi\libf2c\wsfe.c" />
-	<ClCompile Include="..\..\src\MeBDFi\libf2c\wsle.c" />
-	<ClCompile Include="..\..\src\MeBDFi\netlib\DOGLEG.c" />
-	<ClCompile Include="..\..\src\MeBDFi\netlib\DPMPAR.c" />
-	<ClCompile Include="..\..\src\MeBDFi\netlib\ENORM.c" />
-	<ClCompile Include="..\..\src\MeBDFi\netlib\FDJAC1.c" />
-	<ClCompile Include="..\..\src\MeBDFi\netlib\HYBRD.c" />
-	<ClCompile Include="..\..\src\MeBDFi\netlib\HYBRD1.c" />
-	<ClCompile Include="..\..\src\MeBDFi\netlib\mebdfiCore.c" />
-	<ClCompile Include="..\..\src\MeBDFi\netlib\QFORM.c" />
-	<ClCompile Include="..\..\src\MeBDFi\netlib\QRFAC.c" />
-	<ClCompile Include="..\..\src\MeBDFi\netlib\R1MPYQ.c" />
-	<ClCompile Include="..\..\src\MeBDFi\netlib\R1UPDT.c" />
 %ENDIF%
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

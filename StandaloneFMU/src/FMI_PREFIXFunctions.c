@@ -12,8 +12,14 @@
  **********************************************************/
 
 /* This file contains the implementation of the FMI functions
-   Please check the fmiSunctions.h file for more details
+   Please check the %FMI_PREFIX%Functions.h file for more details
 */
+
+%IF%%FMI2%
+#if !defined FMI2_FUNCTION_PREFIX && !defined NO_FUNCTION_PREFIX
+#define FMI2_FUNCTION_PREFIX %SUBMODEL_NAME%_
+#endif
+%ENDIF%
 
 /* The FMI related headers */
 #include "%FMI_PREFIX%Functions.h"
@@ -159,6 +165,11 @@ const char* URIToNativePath(%VARPREFIX%ModelInstance* model_instance, const char
 					path[j] = (unsigned char)strtol(buf, NULL, 16);
 					i += 2;
 					path_len -= 2;
+					if (path[j] == foreign_path_separator)
+					{
+						/* Translate slashes to backslashes on Windows and backslashes to slashes on other OSses */
+						path[j] = native_path_separator;
+					}
 				}
 				else
 				{
@@ -209,6 +220,7 @@ FMI_Dll_Export const char* %FMI_PREFIX%GetTypesPlatform()
 	return fmi2TypesPlatform;
 %ENDIF%
 }
+
 FMI_Dll_Export const char* %FMI_PREFIX%GetVersion()
 {
 	return %FMI_PREFIX%Version;
@@ -218,6 +230,7 @@ FMI_Dll_Export fmiStatus fmiSetDebugLogging  (fmiComponent c, fmiBoolean logging
 {
 	return fmiOK;       /* not yet */
 }
+
 %ENDIF%
 %IF%%EQ(FMIVERSION,2.0)%
 FMI_Dll_Export fmi2Status fmi2SetDebugLogging  (fmi2Component c, fmi2Boolean loggingOn,
@@ -226,6 +239,7 @@ FMI_Dll_Export fmi2Status fmi2SetDebugLogging  (fmi2Component c, fmi2Boolean log
 {
 	return fmi2OK;       /* not yet */
 }
+
 %ENDIF%
 /* Data Exchange Functions*/
 FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%GetReal(%FMI_PREFIX%Component c,
@@ -241,6 +255,7 @@ FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%GetReal(%FMI_PREFIX%Component c,
 	}
 	return %FMI_PREFIX%OK;
 }
+
 FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%GetInteger(%FMI_PREFIX%Component c,
 								const %FMI_PREFIX%ValueReference vr[],
 								size_t nvr,
@@ -259,6 +274,7 @@ FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%GetInteger(%FMI_PREFIX%Component c
 	}
 	return %FMI_PREFIX%OK;
 }
+
 FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%GetBoolean(%FMI_PREFIX%Component c,
 								const %FMI_PREFIX%ValueReference vr[],
 								size_t nvr,
@@ -278,6 +294,7 @@ FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%GetBoolean(%FMI_PREFIX%Component c
 	}
 	return %FMI_PREFIX%OK;
 }
+
 FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%GetString(%FMI_PREFIX%Component c,
 								const %FMI_PREFIX%ValueReference vr[],
 								size_t nvr,
@@ -296,6 +313,10 @@ FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%SetReal(%FMI_PREFIX%Component c,
 	for (i = 0; i < nvr; i++)
 	{
 		model_instance->MEMORY[ vr[i] ] = value [i];
+		if ((vr[i] >= %VARPREFIX%parameter_index_start) && (vr[i] <= %VARPREFIX%parameter_index_end))
+		{
+			model_instance->parameters_updated = XXTRUE;
+		}
 	}
 	return %FMI_PREFIX%OK;
 }
@@ -315,9 +336,14 @@ FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%SetInteger (%FMI_PREFIX%Component 
 	for (i = 0; i < nvr; i++)
 	{
 		model_instance->MEMORY[ vr[i] ] = (XXDouble) value [i];
+		if ((vr[i] >= %VARPREFIX%parameter_index_start) && (vr[i] <= %VARPREFIX%parameter_index_end))
+		{
+			model_instance->parameters_updated = XXTRUE;
+		}
 	}
 	return %FMI_PREFIX%OK;
 }
+
 FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%SetBoolean(%FMI_PREFIX%Component c,
 								const %FMI_PREFIX%ValueReference vr[],
 								size_t nvr,
@@ -329,9 +355,14 @@ FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%SetBoolean(%FMI_PREFIX%Component c
 	for (i = 0; i < nvr; i++)
 	{
 		model_instance->MEMORY[vr[i]] = value[i] ? 1.0 : 0.0;
+		if ((vr[i] >= %VARPREFIX%parameter_index_start) && (vr[i] <= %VARPREFIX%parameter_index_end))
+		{
+			model_instance->parameters_updated = XXTRUE;
+		}
 	}
 	return %FMI_PREFIX%OK;
 }
+
 FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%SetString(%FMI_PREFIX%Component c,
 								const %FMI_PREFIX%ValueReference vr[],
 								size_t nvr,
@@ -352,7 +383,8 @@ fmiComponent fmiInstantiateSlave(fmiString instanceName,
 								fmiBoolean loggingOn)
 {
 	%VARPREFIX%ModelInstance* model_instance;
-
+	int offset = 0;
+	
  	/* we should remember the functions pointer in order to make callback functions */
 	if (!functions.logger)
 		return NULL; // we cannot even log this problem
@@ -370,11 +402,11 @@ fmiComponent fmiInstantiateSlave(fmiString instanceName,
 			"Wrong GUID %s. Expected %s.", GUID, FMI_GUID);
 		return NULL;
 	}
-    if (!functions.allocateMemory || !functions.freeMemory){
-        functions.logger(NULL, instanceName, fmiError, "error",
-                "Missing memory callback function.");
-        return NULL;
-    }
+	if (!functions.allocateMemory || !functions.freeMemory){
+		functions.logger(NULL, instanceName, fmiError, "error",
+				"Missing memory callback function.");
+		return NULL;
+	}
 
 	model_instance = (%VARPREFIX%ModelInstance *)functions.allocateMemory(1, sizeof(%VARPREFIX%ModelInstance));
 
@@ -389,8 +421,55 @@ fmiComponent fmiInstantiateSlave(fmiString instanceName,
 
 	if( %FUNCTIONPREFIX%ModelInstance_Constructor(model_instance, instanceName, functions) == XXFALSE )
 	{
+		functions.logger(NULL, instanceName, fmiError, "error",
+			"fmiInstantiateSlave: Out of memory while allocating instance name");
 		return NULL;
 	}
+
+	/* Prepare the model instance struct */
+	model_instance->start_time = %START_TIME%;
+	model_instance->finish_time = 0.0;
+	model_instance->m_use_finish_time = XXFALSE;
+	model_instance->step_size = %TIME_STEP_SIZE%;
+	model_instance->time = 0.0;
+	model_instance->steps = 0;
+	model_instance->%XX_INITIALIZE% = XXTRUE;
+	model_instance->major = XXTRUE;
+	model_instance->stop_simulation = XXFALSE;
+	model_instance->parameters_updated = XXFALSE;
+
+	/* Set the offsets within the model_instance->MEMORY array */
+%IF%%NUMBER_CONSTANTS%
+	model_instance->%XX_CONSTANT_ARRAY_NAME% = &model_instance->MEMORY[offset]; /* constants offset */
+	offset = offset + %VARPREFIX%constants_count;
+%ENDIF%
+%IF%%NUMBER_PARAMETERS%
+	model_instance->%XX_PARAMETER_ARRAY_NAME% = &model_instance->MEMORY[offset];	/* parameters offset */
+	offset = offset + %VARPREFIX%parameter_count;
+%ENDIF%
+%IF%%NUMBER_INITIAL_VALUES%
+	model_instance->%XX_INITIAL_VALUE_ARRAY_NAME% = &model_instance->MEMORY[offset];		/* initial values offset */
+	offset = offset + %VARPREFIX%initialvalue_count;
+%ENDIF%
+%IF%%NUMBER_VARIABLES%
+	model_instance->%XX_VARIABLE_ARRAY_NAME% = &model_instance->MEMORY[offset];		/* variables offset */
+	offset = offset + %VARPREFIX%variable_count;
+%ENDIF%
+%IF%%NUMBER_STATES%
+	model_instance->%XX_STATE_ARRAY_NAME% = &model_instance->MEMORY[offset];		/* states offset */
+	offset = offset + %VARPREFIX%state_count;
+	model_instance->%XX_RATE_ARRAY_NAME% = &model_instance->MEMORY[offset];		/* rates offset */
+	offset = offset + %VARPREFIX%state_count;
+%ENDIF%
+
+	/* Register the callback */
+	model_instance->fmiCallbackFunctions = functions;
+
+	/* Remember the resource folder location */
+	model_instance->resourceLocation = URIToNativePath(model_instance, fmuLocation);
+
+	/* Initialize our data arrays */
+	%FUNCTIONPREFIX%ModelInitialize(model_instance);
 
 	return (fmiComponent) model_instance;
 }
@@ -459,6 +538,7 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 
 	return (fmi2Component) model_instance;
 }
+
 %ENDIF%
 %IF%%EQ(FMIVERSION,1.0)%
 fmiStatus fmiInitializeSlave(fmiComponent c,
@@ -484,6 +564,7 @@ fmiStatus fmiInitializeSlave(fmiComponent c,
 	/* all done */
 	return fmiOK;
 }
+
 %ENDIF%
 %IF%%EQ(FMIVERSION,2.0)%
 fmi2Status fmi2SetupExperiment(fmi2Component c,
@@ -509,11 +590,13 @@ fmi2Status fmi2SetupExperiment(fmi2Component c,
 	/* all done */
 	return fmi2OK;
 }
+
 fmi2Status fmi2EnterInitializationMode(fmi2Component c)
 {
 	/* nothing to do for now */
 	return fmi2OK;
 }
+
 fmi2Status fmi2ExitInitializationMode(fmi2Component c)
 {
 	%VARPREFIX%ModelInstance* model_instance = (%VARPREFIX%ModelInstance*) c;
@@ -523,6 +606,7 @@ fmi2Status fmi2ExitInitializationMode(fmi2Component c)
 
 	return fmi2OK;
 }
+
 %ENDIF%
 %IF%%EQ(FMIVERSION,1.0)%
 fmiStatus fmiTerminateSlave(fmiComponent c)
@@ -582,6 +666,7 @@ void fmiFreeSlaveInstance(fmiComponent c)
 	fmiCallbackFunctions.freeMemory((void *) model_instance);
 	model_instance =  NULL;
 }
+
 %ENDIF%
 %IF%%EQ(FMIVERSION,2.0)%
 void fmi2FreeInstance(fmi2Component c)
@@ -605,8 +690,8 @@ void fmi2FreeInstance(fmi2Component c)
 	fmiCallbackFunctions->freeMemory((void *) model_instance);
 	model_instance =  NULL;
 }
-%ENDIF%
 
+%ENDIF%
 %FMI_PREFIX%Status %FMI_PREFIX%SetRealInputDerivatives(%FMI_PREFIX%Component c,
 									const %FMI_PREFIX%ValueReference vr[], size_t nvr,
 									const %FMI_PREFIX%Integer order[],
@@ -656,6 +741,13 @@ fmi2Status fmi2DoStep(fmi2Component c,
 	if (communicationStepSize == 0)
 	{
 		return %FMI_PREFIX%OK;
+	}
+
+	/* Check if our parameters are updated */
+	if (model_instance->parameters_updated == XXTRUE)
+	{
+		%FUNCTIONPREFIX%CalculateStatic(model_instance);
+		model_instance->parameters_updated = XXFALSE;
 	}
 
 	/* as long as we are not passed our communication point */
@@ -750,20 +842,101 @@ fmi2Status fmi2GetContinuousStates(fmi2Component c, fmi2Real x[], size_t nx)
 %IF%%EQ(FMIVERSION,2.0)%
 fmi2Status fmi2GetFMUstate (fmi2Component c, fmi2FMUstate* FMUstate)
 {
-	/* not yet */
-	return fmi2Discard;
+	%VARPREFIX%ModelInstance* model_instance = (%VARPREFIX%ModelInstance*) c;
+
+	if (model_instance == NULL)
+	{
+		return fmi2Error;
+	}
+
+	if (FMUstate == NULL)
+		// We cannot store our memory pointer
+		return fmi2Discard;
+
+	if (*FMUstate == NULL)
+	{
+		// Allocate a new FMUstate block
+		*FMUstate = (fmi2FMUstate) model_instance->fmiCallbackFunctions->allocateMemory(sizeof(%VARPREFIX%ModelInstance), sizeof(char));
+	}
+	if (*FMUstate == NULL)
+	{
+		// We have no destination memory
+		model_instance->fmiCallbackFunctions->logger(c, model_instance->instanceName, fmi2Error, "error", "Could not allocate memory for fmi2GetFMUstate.");
+		return fmi2Error;
+	}
+
+	// There is no way to check that the passed FMUstate (void*) refers to a valid memory block of the correct size
+	// The assumption here is that it is valid and correctly sized when non-NULL
+	memcpy(*FMUstate, (const void*) model_instance, sizeof(%VARPREFIX%ModelInstance));
+
+	return fmi2OK;
 }
 
 fmi2Status fmi2SetFMUstate (fmi2Component c, fmi2FMUstate FMUstate)
 {
-	/* not yet */
-	return fmi2Discard;
+	%VARPREFIX%ModelInstance* model_instance = (%VARPREFIX%ModelInstance*) c;
+	%VARPREFIX%ModelInstance* stored_state = (%VARPREFIX%ModelInstance*) FMUstate;
+
+	if (model_instance == NULL)
+	{
+		return fmi2Error;
+	}
+
+	if (FMUstate == NULL)
+	{
+		// We have no stored state
+		model_instance->fmiCallbackFunctions->logger(c, model_instance->instanceName, fmi2Error, "error", "Could not restore the FMU state.");
+		return fmi2Error;
+	}
+
+	/* Selective restore of the state items */
+	/* Restore our arrays */
+	memcpy(&model_instance->MEMORY, &stored_state->MEMORY, sizeof(model_instance->MEMORY));
+	/* Restore the time */
+	model_instance->start_time = stored_state->start_time;
+	model_instance->finish_time = stored_state->finish_time;
+	model_instance->m_use_finish_time = stored_state->m_use_finish_time;
+	model_instance->step_size = stored_state->step_size;
+	model_instance->time = stored_state->time;
+	model_instance->steps = stored_state->steps;
+	model_instance->%XX_INITIALIZE% = stored_state->%XX_INITIALIZE%;
+	model_instance->major = stored_state->major;
+	model_instance->stop_simulation = stored_state->stop_simulation;
+	model_instance->parameters_updated = stored_state->parameters_updated;
+
+%IF%%NUMBEROF_INITIALFUNCTION%
+	/* Restore the initial array */
+	memcpy(&model_instance->initial_value_array, &stored_state->initial_value_array, sizeof(model_instance->initial_value_array));
+%ENDIF%
+%IF%%NUMBEROF_DELAYFUNCTION%
+	/* Restore the delay arrays */
+	memcpy(&model_instance->delay_update_array, &stored_state->delay_update_array, sizeof(model_instance->delay_update_array));
+	memcpy(&model_instance->delay_last_values, &stored_state->delay_last_values, sizeof(model_instance->delay_last_values));
+%ENDIF%
+%IF%%NUMBEROF_EVENTFUNCTION%
+	memcpy(&model_instance->event, &stored_state->event, sizeof(model_instance->event));
+%ENDIF%
+%IF%%NUMBEROF_EVENTUPFUNCTION%
+	memcpy(&model_instance->event_up, &stored_state->event_up, sizeof(model_instance->event_up));
+%ENDIF%
+%IF%%NUMBEROF_EVENTDOWNFUNCTION%
+	memcpy(&model_instance->event_down, &stored_state->event_down, sizeof(model_instance->event_down));
+%ENDIF%
+%IF%%NUMBEROF_TIMEEVENTFUNCTION%
+	memcpy(&model_instance->time_event, &stored_state->time_event, sizeof(model_instance->time_event));
+%ENDIF%
+	return fmi2OK;
 }
 
 fmi2Status fmi2FreeFMUstate(fmi2Component c, fmi2FMUstate* FMUstate)
 {
-	/* not yet */
-	return fmi2Discard;
+	%VARPREFIX%ModelInstance* model_instance = (%VARPREFIX%ModelInstance*) c;
+	if ((FMUstate != NULL) && (*FMUstate != NULL))
+	{
+		model_instance->fmiCallbackFunctions->freeMemory(*FMUstate);
+		*FMUstate = NULL;
+	}
+	return fmi2OK;
 }
 
 fmi2Status fmi2SerializedFMUstateSize(fmi2Component c, fmi2FMUstate FMUstate, size_t *size)

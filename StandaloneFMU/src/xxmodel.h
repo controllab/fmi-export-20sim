@@ -40,6 +40,8 @@
 /* Model size constants */
 #define %VARPREFIX%constants_count %NUMBER_CONSTANTS%
 #define %VARPREFIX%parameter_count %NUMBER_PARAMETERS%
+#define %VARPREFIX%parameter_index_start %NUMBER_CONSTANTS%
+#define %VARPREFIX%parameter_index_end (%NUMBER_CONSTANTS% + %NUMBER_PARAMETERS% - 1)
 #define %VARPREFIX%initialvalue_count %NUMBER_INITIAL_VALUES%
 #define %VARPREFIX%variable_count %NUMBER_VARIABLES%
 #define %VARPREFIX%state_count %NUMBER_STATES%
@@ -85,11 +87,21 @@
 %ENDIF%
 %IF%%NUMBEROF_DELAYFUNCTION%
 #define %VARPREFIX%NUMBEROF_DELAYFUNCTION %NUMBEROF_DELAYFUNCTION%
-%ENDIF%
-
-%IF%%NUMBEROF_DELAYFUNCTION%
 #define %VARPREFIX%delay_count %NUMBEROF_DELAYFUNCTION%
 %ENDIF%
+%IF%%NUMBEROF_EVENTFUNCTION%
+#define %VARPREFIX%event_count %NUMBEROF_EVENTFUNCTION%
+%ENDIF%
+%IF%%NUMBEROF_EVENTUPFUNCTION%
+#define %VARPREFIX%eventup_count %NUMBEROF_EVENTUPFUNCTION%
+%ENDIF%
+%IF%%NUMBEROF_EVENTDOWNFUNCTION%
+#define %VARPREFIX%eventdown_count %NUMBEROF_EVENTDOWNFUNCTION%
+%ENDIF%
+%IF%%NUMBEROF_TIMEEVENTFUNCTION%
+#define %VARPREFIX%timeevent_count %NUMBEROF_TIMEEVENTFUNCTION%
+%ENDIF%
+
 
 typedef struct %VARPREFIX%ModelInstance
 {
@@ -119,7 +131,8 @@ typedef struct %VARPREFIX%ModelInstance
 	XXBoolean %XX_INITIALIZE%;
 	XXBoolean major;
 	XXBoolean stop_simulation;
-	
+	XXBoolean parameters_updated;
+
 	XXBoolean m_reinitState;
 	XXBoolean m_initState;
 
@@ -241,14 +254,14 @@ typedef struct %VARPREFIX%ModelInstance
 	XXDouble* %XX_PARAMETER_ARRAY_NAME%;	/* parameters */
 %ENDIF%
 %IF%%NUMBER_INITIAL_VALUES%
-	XXDouble* %XX_INITIAL_VALUE_ARRAY_NAME%;	/* initial values */
+	XXDouble* %XX_INITIAL_VALUE_ARRAY_NAME%;		/* initial values */
 %ENDIF%
 %IF%%NUMBER_VARIABLES%
-	XXDouble* %XX_VARIABLE_ARRAY_NAME%;	/* variables */
+	XXDouble* %XX_VARIABLE_ARRAY_NAME%;		/* variables */
 %ENDIF%
 %IF%%NUMBER_STATES%
 	XXDouble* %XX_STATE_ARRAY_NAME%;	/* states */
-	XXDouble* %XX_RATE_ARRAY_NAME%;	/* rates (or new states) */
+	XXDouble* %XX_RATE_ARRAY_NAME%;		/* rates (or new states) */
 %ENDIF%
 %IF%%NUMBER_DEPSTATES%
 	XXDouble* %XX_DEP_STATE_ARRAY_NAME%;	/* dependent states */
@@ -257,6 +270,18 @@ typedef struct %VARPREFIX%ModelInstance
 %IF%%OR(NUMBER_ALGLOOPS,NUMBER_CONSTRAINTS)%
 	XXDouble* %XX_ALG_IN_ARRAY_NAME%;	/* algebraic loop + constraint in */
 	XXDouble* %XX_ALG_OUT_ARRAY_NAME%;	/* algebraic loop + constraint out */
+%ENDIF%
+%IF%%NUMBEROF_EVENTFUNCTION%
+	XXDouble event[%VARPREFIX%event_count];
+%ENDIF%
+%IF%%NUMBEROF_EVENTUPFUNCTION%
+	XXDouble event_up[%VARPREFIX%eventup_count];
+%ENDIF%
+%IF%%NUMBEROF_EVENTDOWNFUNCTION%
+	XXDouble event_down[%VARPREFIX%eventdown_count];
+%ENDIF%
+%IF%%NUMBEROF_TIMEEVENTFUNCTION%
+	XXDouble time_event[%VARPREFIX%timeevent_count];
 %ENDIF%
 } %VARPREFIX%ModelInstance;
 
@@ -358,5 +383,20 @@ XXBoolean %FUNCTIONPREFIX%ModelWarning (%VARPREFIX%ModelInstance* model_instance
 XXBoolean %FUNCTIONPREFIX%ModelStopSimulation (%VARPREFIX%ModelInstance* model_instance, XXString message, XXInteger id);
 #define XXStopSimulation(message, id) %FUNCTIONPREFIX%ModelStopSimulation(model_instance, message, id)
 %ENDIF%
-
+%IF%%NUMBEROF_EVENTFUNCTION%
+XXBoolean %FUNCTIONPREFIX%ModelEvent (%VARPREFIX%ModelInstance* model_instance, XXDouble argument, XXInteger id);
+#define XXEvent(argument, id) %FUNCTIONPREFIX%ModelEvent(model_instance, argument, id)
+%ENDIF%
+%IF%%NUMBEROF_EVENTUPFUNCTION%
+XXBoolean %FUNCTIONPREFIX%ModelEventUp (%VARPREFIX%ModelInstance* model_instance, XXDouble argument, XXInteger id);
+#define XXEventUp(argument, id) %FUNCTIONPREFIX%ModelEventUp(model_instance, argument, id)
+%ENDIF%
+%IF%%NUMBEROF_EVENTDOWNFUNCTION%
+XXBoolean %FUNCTIONPREFIX%ModelEventDown (%VARPREFIX%ModelInstance* model_instance, XXDouble argument, XXInteger id);
+#define XXEventDown(argument, id) %FUNCTIONPREFIX%ModelEventDown(model_instance, argument, id)
+%ENDIF%
+%IF%%NUMBEROF_TIMEEVENTFUNCTION%
+XXBoolean %FUNCTIONPREFIX%ModelTimeEvent (%VARPREFIX%ModelInstance* model_instance, XXDouble argument, XXInteger id);
+#define XXTimeEvent(argument, id) %FUNCTIONPREFIX%ModelTimeEvent(model_instance, argument, id)
+%ENDIF%
 #endif

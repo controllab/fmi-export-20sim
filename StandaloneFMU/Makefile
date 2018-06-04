@@ -90,29 +90,31 @@ CXX?=g++
 CC?=gcc
 
 current_dir = $(shell pwd)
+DEFINES=-DNO_FUNCTION_PREFIX
 
 # OS detection
 ifeq ($(OS),Windows_NT)
 	# Windows
 	WINDOWS=1
-	DEFINES=-DWIN32
+	DEFINES+= -DWIN32
 	# For now, assume 32-bit
 	# TODO detect MinGW 64
 	OS_BITS=32
 	DLL_EXT=dll
-	BUILD_DLL=-shared
+	# -shared to build a DLL, -static to prevent a dependency on libgcc_s_*.dll (gcc runtime library)
+	BUILD_DLL=-shared -static
 else
 	# Other OS (Linux/MacOSX)
 	ifeq ($(shell uname), Linux)
 		LINUX=1
-		DEFINES=-DLINUX
+		DEFINES+= -DLINUX
 		DLL_EXT=so
 		BUILD_DLL=-shared
 	endif
 	ifeq ($(shell uname), Darwin)
 		MACOSX=1
-		DEFINES=-DMACOSX
-		DLL_EXT=so
+		DEFINES+= -DMACOSX
+		DLL_EXT=dylib
 		BUILD_DLL=-dynamiclib
 	endif
 	# Detect 32-bit / 64-bit OS
@@ -124,20 +126,23 @@ ifeq ($(WINDOWS),1)
 	FMU_BIN32_DIR = $(FMU_DIR)/binaries/win32
 	FMU_BIN64_DIR = $(FMU_DIR)/binaries/win64
 	TEMPLATE_DIR=$(subst :,,$(subst \,/,/%TEMPLATE_DIR%))
-	ZIP_COMMAND=$(TEMPLATE_DIR)/bin/7z.exe a -tzip -xr!.svn "$(FMU)" *
+	ZIP_COMMAND="$(TEMPLATE_DIR)/bin/7z.exe" a -tzip -xr!.svn "$(FMU)" *
 	POS_INDEP_CODE=
+	STRIP=strip
 endif
 ifeq ($(LINUX),1)
 	FMU_BIN32_DIR = $(FMU_DIR)/binaries/linux32
 	FMU_BIN64_DIR = $(FMU_DIR)/binaries/linux64
 	ZIP_COMMAND=zip -r $(FMU) *
 	POS_INDEP_CODE=-fPIC
+	STRIP=strip
 endif
 ifeq ($(MACOSX),1)
 	FMU_BIN32_DIR = $(FMU_DIR)/binaries/darwin32
 	FMU_BIN64_DIR = $(FMU_DIR)/binaries/darwin64
 	ZIP_COMMAND=zip -r $(FMU) *
 	POS_INDEP_CODE=-fPIC
+	STRIP=strip -x
 endif
 
 ifeq ($(MAKECMDGOALS),debug)
@@ -187,7 +192,7 @@ $(BUILD)/%.o: $(SRC)/%.c Makefile $(BUILD)
 
 dll: welcome $(OBJS)
 	@$(CC) $(CFLAGS) -o $(BUILD)/$(FMU_NAME).$(DLL_EXT) $(BUILD_DLL) $(OBJS) -lm
-	@[ $(DEBUG)==0 ] && strip $(BUILD)/$(FMU_NAME).$(DLL_EXT)
+	@[ $(DEBUG)==0 ] && $(STRIP) $(BUILD)/$(FMU_NAME).$(DLL_EXT)
 
 createfmudir:
 	@echo Creating an empty FMU
@@ -277,6 +282,9 @@ fmu: dll createfmudir
 	@cp $(SRC)/MeBDFi/netlib/QRFAC.c $(FMU_SRC_DIR)
 	@cp $(SRC)/MeBDFi/netlib/R1MPYQ.c $(FMU_SRC_DIR)
 	@cp $(SRC)/MeBDFi/netlib/R1UPDT.c $(FMU_SRC_DIR)
+%ENDIF%
+%IF%%FMI2%
+	@cp $(SRC)/defines.def $(FMU_SRC_DIR)
 %ENDIF%
 	@echo Create the FMU: $(FMU)
 	@cd $(FMU_DIR) && $(ZIP_COMMAND) && mv $(FMU) $(current_dir) && echo Ready!

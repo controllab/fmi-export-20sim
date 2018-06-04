@@ -9,36 +9,37 @@ CLS
 COLOR 1B
 TITLE 20-sim FMU %FMUVERSION% export - Build script
 rem -------------------------------------------------------------
-rem Config
-rem If you get an error that Visual studio was not found, SET your path for VSNET main executable.
-rem -------------------------------------------------------------
-rem	CONFIG START
-SET CURPATH=%~dp0
-SET comp=vs2015
-SET promptlevel=prompt
-SET exitcode=0
-SET buildmode=clean
+set "CURPATH=%~dp0"
+rem Start searching for the newest compiler
+set comp=vs2017
+set promptlevel=prompt
+set exitcode=0
+set buildmode=clean
 
 cd ..\
-SET ROOTPATH=%CD%
-cd %CURPATH%
+set "ROOTPATH=%CD%"
+cd "%CURPATH%"
 
-SET FMU=%ROOTPATH%\%SUBMODEL_NAME%.fmu
-SET DLL=%SUBMODEL_NAME%.dll
-SET ZIPTOOL=%TEMPLATE_DIR%\bin\7z.exe
+set "FMU=%ROOTPATH%\%SUBMODEL_NAME%.fmu"
+set DLL=%SUBMODEL_NAME%.dll
+set ZIPTOOL=%TEMPLATE_DIR%\bin\7z.exe
 rem The Github hosted template includes these two tools in order to support older 20-sim versions
-SET XSLTTOOL=%TEMPLATE_DIR%\bin\msxsl.exe
-SET GUIDTOOL=%TEMPLATE_DIR%\bin\GenerateGuid.exe
+set XSLTTOOL=%TEMPLATE_DIR%\bin\msxsl.exe
+set GUIDTOOL=%TEMPLATE_DIR%\bin\GenerateGuid.exe
 
-SET PYTHON="C:\ProgramData\Controllab Products B.V\Python34\python.exe"
-SET RESOURCES_SCRIPT="%TEMPLATE_DIR%\bin\include_resources.py"
+if exist "%ProgramData%\Controllab Products B.V\Python34\python.exe" (
+	set PYTHON="%ProgramData%\Controllab Products B.V\Python34\python.exe"
+) else if exist "C:\ProgramData\Controllab Products B.V\Python34\python.exe" (
+	set PYTHON="C:\ProgramData\Controllab Products B.V\Python34\python.exe"
+)
+set RESOURCES_SCRIPT="%TEMPLATE_DIR%\bin\include_resources.py"
 
-set FMU_DIR=%CURPATH%fmu
-set BIN32_DIR=%FMU_DIR%\binaries\win32
-set BIN64_DIR=%FMU_DIR%\binaries\win64
-set SRC_DIR=%FMU_DIR%\sources
-set DOC_DIR=%FMU_DIR%\documentation
-set RES_DIR=%FMU_DIR%\resources
+set "FMU_DIR=%CURPATH%fmu"
+set "BIN32_DIR=%FMU_DIR%\binaries\win32"
+set "BIN64_DIR=%FMU_DIR%\binaries\win64"
+set "SRC_DIR=%FMU_DIR%\sources"
+set "DOC_DIR=%FMU_DIR%\documentation"
+set "RES_DIR=%FMU_DIR%\resources"
 
 ECHO ------------------------------------------------------------
 ECHO 20-sim standalone co-simulation FMU export for '%SUBMODEL_NAME%'
@@ -70,20 +71,58 @@ ECHO ------------------------------------------------------------
 ECHO Searching for Visual C++ compiler...
 
 FOR %%b in (%1, %2, %3, %4, %5) DO (
-	IF %%b==vs2010 SET comp=vs2010
-	IF %%b==vs2013 SET comp=vs2013
-	IF %%b==vs2015 SET comp=vs2015
-	IF %%b==clean SET buildmode=clean
-	IF %%b==noclean SET buildmode=noclean
-	IF %%b==noprompt SET promptlevel=noprompt
+	IF %%b==vs2010 set comp=vs2010
+	IF %%b==vs2013 set comp=vs2013
+	IF %%b==vs2015 set comp=vs2015
+	IF %%b==vs2017 set comp=vs2017
+	IF %%b==clean set buildmode=clean
+	IF %%b==noclean set buildmode=noclean
+	IF %%b==noprompt set promptlevel=noprompt
 )
 
-SET buildconfig=Release
-SET DEVENV=""
-SET VSVARS32=""
-SET BUILD_X64=1
+set buildconfig=Release
+set DEVENV=""
+set VSVARS32=""
+set BUILD_X64=1
 
-rem Seach for VS 2015 / VS 2015 Express
+rem Search for VS 2017
+:VS2017
+IF NOT %comp%==vs2017 goto VS2015
+setlocal
+rem Search for VSWhere first
+set "InstallerPath=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer"
+if not exist "%InstallerPath%" set "InstallerPath=%ProgramFiles%\Microsoft Visual Studio\Installer"
+if not exist "%InstallerPath%" goto :no-vswhere
+
+set VSWHERE_ARGS=-latest -products * %VSWHERE_REQ% %VSWHERE_PRP% %VSWHERE_LMT%
+set VSWHERE_REQ=-requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64
+set VSWHERE_PRP=-property installationPath
+set VSWHERE_LMT=-version "[15.0,16.0)"
+set VSWHERE_ARGS=-latest -products * %VSWHERE_REQ% %VSWHERE_PRP% %VSWHERE_LMT%
+set PATH=%PATH%;%InstallerPath%
+for /f "usebackq tokens=*" %%i in (`vswhere %VSWHERE_ARGS%`) do (
+	endlocal
+	set "VCINSTALLDIR=%%i\VC\"
+	set "VS150COMNTOOLS=%%i\Common7\Tools\"
+)
+endlocal
+:no-vswhere:
+	IF EXIST "%VS150COMNTOOLS%\VsDevCmd.bat" (
+		set VSVARS32="%VS150COMNTOOLS%\VsDevCmd.bat"
+		ECHO Found Visual C++ 2017
+		set PROJ_DIR=VS2017
+	) ELSE IF EXIST "%ProgramFiles%\Microsoft Visual Studio\2017\Community\Common7\Tools\VsDevCmd.bat" (
+		set VSVARS32="%ProgramFiles%\Microsoft Visual Studio\2017\Community\Common7\Tools\VsDevCmd.bat"
+		ECHO Found Visual C++ 2017
+		set PROJ_DIR=VS2017
+	) ELSE (
+		rem Try an older compiler
+		set comp=vs2015
+	)
+)
+
+rem Search for VS 2015
+:VS2015
 IF %comp%==vs2015 (
 	set PROJ_DIR=VS2015
 	IF EXIST "%VS140COMNTOOLS%\vsvars32.bat" (
@@ -98,7 +137,7 @@ IF %comp%==vs2015 (
 	)
 )
 
-rem Seach for VS 2013 / VS 2013 Express / VS 2013 Community edition
+rem Search for VS 2013 / VS 2013 Express / VS 2013 Community edition
 IF %comp%==vs2013 (
 	set PROJ_DIR=VS2013
 	IF EXIST "%VS120COMNTOOLS%\vsvars32.bat" (
@@ -113,7 +152,7 @@ IF %comp%==vs2013 (
 	)
 )
 
-rem Seach for VS 2010 / VS 2010 Express
+rem Search for VS 2010 / VS 2010 Express
 IF %comp%==vs2010 (
 	set PROJ_DIR=VS2010
 	IF EXIST "%VS100COMNTOOLS%\vsvars32.bat" (
@@ -185,7 +224,7 @@ IF DEFINED VSVARS32 (
 
   REM Check whether the 32-bits dll has been generated.
   REM note: 64-bits will not for all visual studio installations be possible
-  IF NOT EXIST %PROJ_DIR%\win32\%buildconfig%\%DLL% (
+  IF NOT EXIST "%PROJ_DIR%\win32\%buildconfig%\%DLL%" (
     set DIETEXT="%DLL% failed to build!  See ..\%PROJ_DIR%\%buildconfig%\BuildLog.htm for details."
     goto DIE
   )
@@ -214,9 +253,13 @@ IF DEFINED VSVARS32 (
   ECHO Copy the compiled DLL %PROJ_DIR%\Win32\%buildconfig%\%DLL% to %BIN32_DIR%
   copy "%PROJ_DIR%\Win32\%buildconfig%\%DLL%" "%BIN32_DIR%"
   IF %BUILD_X64%==1 (
-    if not exist "%BIN64_DIR%" mkdir "%BIN64_DIR%"
-    ECHO Copy the compiled DLL %PROJ_DIR%\x64\%buildconfig%\%DLL% to %BIN64_DIR%
-    copy "%PROJ_DIR%\x64\%buildconfig%\%DLL%" "%BIN64_DIR%"
+    IF EXIST "%PROJ_DIR%\x64\%buildconfig%\%DLL%" (
+      if not exist "%BIN64_DIR%" mkdir "%BIN64_DIR%"
+      ECHO Copy the compiled DLL %PROJ_DIR%\x64\%buildconfig%\%DLL% to %BIN64_DIR%
+      copy "%PROJ_DIR%\x64\%buildconfig%\%DLL%" "%BIN64_DIR%"
+    ) ELSE (
+      echo Note: this FMU will not contain a Windows 64-bit DLL.
+    )
   )
 
   ECHO copy the generated sources to %SRC_DIR%
@@ -295,6 +338,11 @@ IF DEFINED VSVARS32 (
   copy "%ROOTPATH%\src\MeBDFi\netlib\R1UPDT.c" "%SRC_DIR%"
 %ENDIF%
 
+%IF%%FMI2%
+  REM Copy als the compiler defines to support the INTO-CPS FMU Builder
+  copy "%ROOTPATH%\src\defines.def" "%SRC_DIR%"
+%ENDIF%
+  
   ECHO Generate the FMU
   cd "%FMU_DIR%"
   if exist "%FMU%" del /Q "%FMU%"
@@ -328,9 +376,11 @@ IF DEFINED VSVARS32 (
 
 :END
   IF %promptlevel% NEQ noprompt (
-  ECHO Press any key to exit...
-  pause > NUL
+    IF NOT [%XXSIM_SCRIPT_MODE%] == [] goto END_NO_PROMPT
+    ECHO Press any key to exit...
+    pause > NUL
   )
+:END_NO_PROMPT
   IF %exitcode% NEQ 0 EXIT /B %exitcode%
   EXIT
 

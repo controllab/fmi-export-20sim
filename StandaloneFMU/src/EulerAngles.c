@@ -77,10 +77,11 @@ EulOrderStruct g_EulerOrderStruct[24] = {
 
 /* initialize and terminate function, which does nothing */
 
-void EulerAngles_Initialize()
+void EulerAngles_Initialize(void)
 {
 }
-void EulerAngles_Terminate()
+
+void EulerAngles_Terminate(void)
 {
 }
 

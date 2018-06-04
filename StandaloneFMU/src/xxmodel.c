@@ -19,7 +19,7 @@
    the alias variables by adding them to the end of the array:
 
    XXDouble %VARPREFIX%variables[NUMBER_VARIABLES + NUMBER_ALIAS_VARIABLES + 1];
-   XXCharacter *%VARPREFIX%variable_names[] = {
+   XXString %VARPREFIX%variable_names[] = {
      VARIABLE_NAMES, ALIAS_VARIABLE_NAMES, NULL
    };
 
@@ -266,6 +266,12 @@ void %FUNCTIONPREFIX%CalculateInitial (%VARPREFIX%ModelInstance* model_instance)
 
 %ENDIF%
 %INITIAL_EQUATIONS%
+
+%IF%%NUMBER_STATES%
+	/* set the states */
+%INITIALIZE_STATES%
+
+%ENDIF%
 }
 
 /* This function calculates the static equations of the model.
@@ -421,10 +427,21 @@ XXDouble %FUNCTIONPREFIX%ModelInitialValue (%VARPREFIX%ModelInstance* model_inst
 %IF%%NUMBEROF_WARNSTATEMENT%
 XXBoolean %FUNCTIONPREFIX%ModelWarning (%VARPREFIX%ModelInstance* model_instance, XXString message, XXInteger id)
 {
+	if (model_instance == NULL)
+		return 0;
+
+%IF%%FMI1%
+	if(model_instance->fmiCallbackFunctions.logger != NULL)
+	{
+		model_instance->fmiCallbackFunctions.logger(NULL, "%SUBMODEL_NAME%", fmiWarning, "warning", message);
+	}
+%ENDIF%
+%IF%%FMI2%
 	if(model_instance->fmiCallbackFunctions != NULL && model_instance->fmiCallbackFunctions->logger != NULL)
 	{
 		model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", %FMI_PREFIX%Warning, "warning", message);
 	}
+%ENDIF%
 	return 0;
 }
 
@@ -432,13 +449,89 @@ XXBoolean %FUNCTIONPREFIX%ModelWarning (%VARPREFIX%ModelInstance* model_instance
 %IF%%NUMBEROF_STOPSTATEMENT%
 XXBoolean %FUNCTIONPREFIX%ModelStopSimulation (%VARPREFIX%ModelInstance* model_instance, XXString message, XXInteger id)
 {
+	if (model_instance == NULL)
+		return 0;
+
 	model_instance->stop_simulation = XXTRUE;
 
+%IF%%FMI1%
+	if(model_instance->fmiCallbackFunctions.logger != NULL)
+	{
+		model_instance->fmiCallbackFunctions.logger(NULL, "%SUBMODEL_NAME%", fmiError, "error", message);
+	}
+%ENDIF%
+%IF%%FMI2%
 	if(model_instance->fmiCallbackFunctions != NULL && model_instance->fmiCallbackFunctions->logger != NULL)
 	{
 		model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", %FMI_PREFIX%Error, "error", message);
 	}
+%ENDIF%
 	return 0;
+}
+
+%ENDIF%
+%IF%%NUMBEROF_EVENTFUNCTION%
+XXBoolean %FUNCTIONPREFIX%ModelEvent (%VARPREFIX%ModelInstance* model_instance, XXDouble argument, XXInteger id)
+{
+	if (model_instance->major)
+	{
+		XXDouble prevValue = model_instance->event[id];
+		model_instance->event[id] = argument;
+		if ( ((argument <= 0.0) && (prevValue > 0.0)) ||
+			 ((argument >= 0.0) && (prevValue < 0.0)) )
+		{
+			return XXTRUE;
+		}
+	}
+	return XXFALSE;
+}
+
+%ENDIF%
+%IF%%NUMBEROF_EVENTUPFUNCTION%
+XXBoolean %FUNCTIONPREFIX%ModelEventUp (%VARPREFIX%ModelInstance* model_instance, XXDouble argument, XXInteger id)
+{
+	if (model_instance->major)
+	{
+		XXDouble prevValue = model_instance->event_up[id];
+		model_instance->event_up[id] = argument;
+		if ((argument >= 0.0) && (prevValue < 0.0))
+		{
+			return XXTRUE;
+		}
+	}
+	return XXFALSE;
+}
+
+%ENDIF%
+%IF%%NUMBEROF_EVENTDOWNFUNCTION%
+XXBoolean %FUNCTIONPREFIX%ModelEventDown (%VARPREFIX%ModelInstance* model_instance, XXDouble argument, XXInteger id)
+{
+	if (model_instance->major)
+	{
+		XXDouble prevValue = model_instance->event_down[id];
+		model_instance->event_down[id] = argument;
+		if ((argument <= 0.0) && (prevValue > 0.0))
+		{
+			return XXTRUE;
+		}
+	}
+	return XXFALSE;
+}
+
+%ENDIF%
+%IF%%NUMBEROF_TIMEEVENTFUNCTION%
+XXBoolean %FUNCTIONPREFIX%ModelTimeEvent (%VARPREFIX%ModelInstance* model_instance, XXDouble argument, XXInteger id)
+{
+	if (model_instance->major)
+	{
+		XXDouble prevValue = model_instance->time_event[id];
+		model_instance->time_event[id] = model_instance->time;
+		if ((model_instance->time >= argument) && (prevValue < argument))
+		{
+			return XXTRUE;
+		}
+	}
+	return XXFALSE;
 }
 
 %ENDIF%
