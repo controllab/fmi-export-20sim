@@ -34,6 +34,7 @@
 				<file copyOnly="true"><source>fmi2Functions.h</source></file>
 				<file copyOnly="true"><source>fmi2TypesPlatform.h</source></file>
 				<file copyOnly="true"><source>fmi2FunctionTypes.h</source></file>
+				<file copyOnly="true"><source>defines.def</source></file>
 %ENDIF%
 			</files>
 %IF%%EQ(INTEGRATION_METHOD_NAME,VodeAdams)%
@@ -139,6 +140,11 @@
 				<file><source>SUBMODEL_NAME.vcxproj.filters</source><destination>%SUBMODEL_NAME%.vcxproj.filters</destination></file>
 			</files>
 			<files sourcePath="%TEMPLATE_DIR%\project\VS2015" destinationPath="%GENERATION_DIR%\project\VS2015">
+				<file><source>SUBMODEL_NAME.sln</source><destination>%SUBMODEL_NAME%.sln</destination></file>
+				<file><source>SUBMODEL_NAME.vcxproj</source><destination>%SUBMODEL_NAME%.vcxproj</destination></file>
+				<file><source>SUBMODEL_NAME.vcxproj.filters</source><destination>%SUBMODEL_NAME%.vcxproj.filters</destination></file>
+			</files>
+			<files sourcePath="%TEMPLATE_DIR%\project\VS2017" destinationPath="%GENERATION_DIR%\project\VS2017">
 				<file><source>SUBMODEL_NAME.sln</source><destination>%SUBMODEL_NAME%.sln</destination></file>
 				<file><source>SUBMODEL_NAME.vcxproj</source><destination>%SUBMODEL_NAME%.vcxproj</destination></file>
 				<file><source>SUBMODEL_NAME.vcxproj.filters</source><destination>%SUBMODEL_NAME%.vcxproj.filters</destination></file>
