@@ -119,15 +119,15 @@ void XXMatrixSetColumn (XXMatrix *mat_dest, XXMatrix *mat_source, XXInteger colu
 */
 void XXMatrixDiag (XXMatrix *mat_dest, XXMatrix *mat_source)
 {
-	XXInteger i, size;
+	XXInteger i;
+	const XXInteger rows = mat_dest->rows;
+	const XXInteger cols = mat_dest->cols;
 
-	size = mat_dest->rows;
-
-	/* first everything zero */
-	memset(mat_dest->mat, 0, size * size * sizeof(XXDouble));
+	/* first set everything zero */
+	memset(mat_dest->mat, 0, rows * cols * sizeof(XXDouble));
 
 	/* and loop to set the diagonal values */
-	for( i = 0; i < size; i++)
+	for( i = 0; i < rows; i++)
 	{
 		/* set the diagonal value */
 		mat_dest->mat[size*i+i] = mat_source->mat[i];
@@ -309,7 +309,6 @@ void XXMatrixMul (XXMatrix *mat_dest, XXMatrix *mat_source1, XXMatrix *mat_sourc
 	XXDouble *d2, *s11, *s22;
 	XXInteger i, j, k;
 	XXInteger cMatSource1m;
-	//XXInteger cMatSource1n
 	XXInteger cMatSource2m;
 	XXInteger cMatSource2n;
 	XXInteger cMatDestn, cMatDestm;
@@ -318,7 +317,6 @@ void XXMatrixMul (XXMatrix *mat_dest, XXMatrix *mat_source1, XXMatrix *mat_sourc
 	s1 = mat_source1->mat;
 	s2 = mat_source2->mat;
 	cMatSource1m = mat_source1->columns;
-	//cMatSource1n = mat_source1->rows;
 	cMatSource2m = mat_source2->columns;
 	cMatSource2n = mat_source2->rows;
 	cMatDestn = mat_dest->rows;

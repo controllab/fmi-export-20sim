@@ -121,6 +121,9 @@ typedef struct %VARPREFIX%ModelInstance
 	XXBoolean stop_simulation;
 	XXBoolean parameters_updated;
 
+	XXBoolean m_reinitState;
+	XXBoolean m_initState;
+
 	/* Model state */
 	XXDouble MEMORY[
 %IF%%NUMBER_CONSTANTS%
@@ -181,6 +184,13 @@ typedef struct %VARPREFIX%ModelInstance
 	XXDouble delay_update_array[%VARPREFIX%NUMBEROF_DELAYFUNCTION];
 	XXDouble delay_last_values[%VARPREFIX%NUMBEROF_DELAYFUNCTION];
 %ENDIF%
+#ifdef Discrete_METHOD
+
+	/* discrete time can be behind of continuous time
+	 * dependent on the step size 
+	 */
+	XXDouble m_discrete_time;
+#endif
 %IF%%NUMBER_STATES%
 	/* Integration method intermediate variables */
 #ifdef RungeKutta2_METHOD
@@ -202,18 +212,18 @@ typedef struct %VARPREFIX%ModelInstance
 	XXDouble* %XX_PARAMETER_ARRAY_NAME%;	/* parameters */
 %ENDIF%
 %IF%%NUMBER_INITIAL_VALUES%
-	XXDouble* %XX_INITIAL_VALUE_ARRAY_NAME%;		/* initial values */
+	XXDouble* %XX_INITIAL_VALUE_ARRAY_NAME%;	/* initial values */
 %ENDIF%
 %IF%%NUMBER_VARIABLES%
-	XXDouble* %XX_VARIABLE_ARRAY_NAME%;		/* variables */
+	XXDouble* %XX_VARIABLE_ARRAY_NAME%;	/* variables */
 %ENDIF%
 %IF%%NUMBER_STATES%
 	XXDouble* %XX_STATE_ARRAY_NAME%;	/* states */
-	XXDouble* %XX_RATE_ARRAY_NAME%;		/* rates (or new states) */
+	XXDouble* %XX_RATE_ARRAY_NAME%;	/* rates (or new states) */
 %ENDIF%
 %IF%%NUMBER_DEPSTATES%
 	XXDouble* %XX_DEP_STATE_ARRAY_NAME%;	/* dependent states */
-	XXDouble* %XX_DEP_RATE_ARRAY_NAME%;		/* dependent rates */
+	XXDouble* %XX_DEP_RATE_ARRAY_NAME%;	/* dependent rates */
 %ENDIF%
 %IF%%OR(NUMBER_ALGLOOPS,NUMBER_CONSTRAINTS)%
 	XXDouble* %XX_ALG_IN_ARRAY_NAME%;	/* algebraic loop + constraint in */

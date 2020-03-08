@@ -31,7 +31,6 @@
 %IF%%NUMBEROF_REALTIME%
 #include <time.h>
 %ENDIF%
-
 /* Our own include files */
 #include "xxfuncs.h"
 
@@ -297,24 +296,39 @@ XXInteger XXBitXor(XXInteger argument1, XXInteger argument2)
 %IF%%NUMBEROF_BITCMP%
 XXInteger XXBitCmp(XXInteger argument, XXInteger nrBits)
 {
-	XXInteger bits = (XXInteger)(pow(2.0, (double)nrBits)) - 1;
+	XXInteger maxBits = (XXInteger) sizeof(XXInteger) << 3;
 
-	/* only do the last number of asked bits (the and operator) and invert */
-	return (bits - argument);
+	/* calculate the maximum unsigned value for nrBits */
+	if (nrBits < maxBits)
+	{
+		XXInteger bits = (XXInteger) (1 << nrBits) - 1;
+		/* invert and only return the number of asked bits */
+		return (~argument & bits);
+	}
+
+	return(~argument);
 }
 
 %ENDIF%
 %IF%%NUMBEROF_BITGET%
 XXInteger XXBitGet(XXInteger argument, XXInteger bitPos)
 {
-	return (argument & (1 << (bitPos - 1)));
+	/* get the bit itself (prevent double shifting) */
+	return ((argument >> (bitPos - 1)) & 1);
+}
+
+%ENDIF%
+%IF%%NUMBEROF_BITINV%
+XXInteger XXBitInv(XXInteger argument)
+{
+	return ~argument;
 }
 
 %ENDIF%
 %IF%%NUMBEROF_BITSET%
 XXInteger XXBitSet(XXInteger argument, XXInteger bitPos)
 {
-	/* Set the bit to 1 */
+	/* set the bit to 1 */
 	return (argument | (1 << (bitPos - 1)));
 }
 
@@ -322,7 +336,7 @@ XXInteger XXBitSet(XXInteger argument, XXInteger bitPos)
 %IF%%NUMBEROF_BITCLEAR%
 XXInteger XXBitClear(XXInteger argument, XXInteger bitPos)
 {
-	/* Clear the bit */
+	/* reset the bit to 0 */
 	return (argument & ~(1 << (bitPos - 1)));
 }
 
@@ -339,27 +353,40 @@ XXInteger XXBitShift(XXInteger argument, XXInteger bitsToShift)
 		return (argument >> (-bitsToShift));
 	}
 }
+%ENDIF%
+%IF%%NUMBEROF_BITSHIFTRIGHT%
+XXInteger XXBitShiftRight(XXInteger argument, XXInteger bitsToShift)
+{
+	if ( bitsToShift > 0 )
+	{
+		return (argument >> bitsToShift);
+	}
+	else
+	{
+		return (argument << (-bitsToShift));
+	}
+}
 
 %ENDIF%
 %IF%%NUMBEROF_BITSWAPBYTES%
 XXInteger XXSwapBytes(XXInteger argument)
 {
-	int arg1;
-	int byte1;
-	int byte2;
-	int byte3;
-	int byte4;
+	/* this function swaps the 4 bytes of a 32-bit integer (little-big endian) */
+	XXCharacter byte1;
+	XXCharacter byte2;
+	XXCharacter byte3;
+	XXCharacter byte4;
 	int result;
-	
-	arg1 = (int) argument;	/* the argument to swap (only 32-bits swap) */
+	int arg1 = (int) argument;
 
-	byte1 =  0x000000ff & arg1;
-	byte2 = (0x0000ff00 & arg1) >> 8;
-	byte3 = (0x00ff0000 & arg1) >> 16;
-	byte4 = (0xff000000 & arg1) >> 24;
+	/* get the separate bytes */
+	byte1 = (XXCharacter)(arg1 & 0xFF);
+	byte2 = (XXCharacter)((arg1 >> 8) & 0xFF);
+	byte3 = (XXCharacter)((arg1 >> 16) & 0xFF);
+	byte4 = (XXCharacter)((arg1 >> 24) & 0xFF);
 
 	/* do the explicit 32-bit swap */
-	result = (byte1 << 24) + (byte2 << 16) + (byte3 << 8) + byte4;
+	result = (byte1 << 24) | (byte2 << 16) | (byte3 << 8) | byte4;
 
 	return (XXInteger) result;
 }

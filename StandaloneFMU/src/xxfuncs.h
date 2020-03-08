@@ -98,6 +98,9 @@ XXInteger XXBitCmp(XXInteger argument, XXInteger nrBits);
 %IF%%NUMBEROF_BITGET%
 XXInteger XXBitGet(XXInteger argument, XXInteger bitPos);
 %ENDIF%
+%IF%%NUMBEROF_BITINV%
+XXInteger XXBitInv(XXInteger argument);
+%ENDIF%
 %IF%%NUMBEROF_BITSET%
 XXInteger XXBitSet(XXInteger argument1, XXInteger bitPos);
 %ENDIF%
@@ -106,6 +109,9 @@ XXInteger XXBitClear(XXInteger argument1, XXInteger bitPos);
 %ENDIF%
 %IF%%NUMBEROF_BITSHIFT%
 XXInteger XXBitShift(XXInteger argument, XXInteger bitsToShift);
+%ENDIF%
+%IF%%NUMBEROF_BITSHIFTRIGHT%
+XXInteger XXBitShiftRight(XXInteger argument, XXInteger bitsToShift);
 %ENDIF%
 %IF%%NUMBEROF_BITSWAPBYTES%
 XXInteger XXSwapBytes(XXInteger argument);

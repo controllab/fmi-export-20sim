@@ -373,7 +373,7 @@ FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%SetString(%FMI_PREFIX%Component c,
 }
 %IF%%FMI1%
 /* FMI functions for Co-Simulation 1.0 */
-fmiComponent fmiInstantiateSlave(fmiString instanceName,
+FMI_Dll_Export fmiComponent fmiInstantiateSlave(fmiString instanceName,
 								fmiString GUID,
 								fmiString fmuLocation,
 								fmiString mimeType,
@@ -388,7 +388,7 @@ fmiComponent fmiInstantiateSlave(fmiString instanceName,
 	
  	/* we should remember the functions pointer in order to make callback functions */
 	if (!functions.logger)
-		return NULL; // we cannot even log this problem
+		return NULL; /* we cannot even log this problem */
 	if (!instanceName || strlen(instanceName)==0)
 	{
 		functions.logger(NULL, "?", fmiError, "error",
@@ -480,7 +480,7 @@ fmiComponent fmiInstantiateSlave(fmiString instanceName,
 %ENDIF%
 
 %IF%%FMI2%
-fmi2Component fmi2Instantiate(fmi2String instanceName,
+FMI_Dll_Export fmi2Component fmi2Instantiate(fmi2String instanceName,
 								fmi2Type fmuType,
 								fmi2String fmuGUID,
 								fmi2String fmuResourceLocation,
@@ -494,12 +494,12 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 	/* we should remember the functions pointer in order to make callback functions */
 	if (!functions)
 	{
-		return NULL; // we cannot even log this problem
+		return NULL; /* we cannot even log this problem */
 	}
 
 	if (!functions->logger)
 	{
-		return NULL; // we cannot even log this problem
+		return NULL; /* we cannot even log this problem */
 	}
 	if (!instanceName || strlen(instanceName)==0)
 	{
@@ -599,7 +599,7 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 
 %ENDIF%
 %IF%%FMI1%
-fmiStatus fmiInitializeSlave(fmiComponent c,
+FMI_Dll_Export fmiStatus fmiInitializeSlave(fmiComponent c,
 							 fmiReal tStart,
 							 fmiBoolean StopTimeDefined,
 							 fmiReal tStop)
@@ -615,15 +615,17 @@ fmiStatus fmiInitializeSlave(fmiComponent c,
 	}
 
 	/* initialize the submodel itself */
-	%FUNCTIONPREFIX%InitializeSubmodel (model_instance);
-
+	if( %FUNCTIONPREFIX%InitializeSubmodel (model_instance) == XXFALSE)
+	{
+		return fmiError;
+	}
 	/* all done */
 	return fmiOK;
 }
 
 %ENDIF%
 %IF%%FMI2%
-fmi2Status fmi2SetupExperiment(fmi2Component c,
+FMI_Dll_Export fmi2Status fmi2SetupExperiment(fmi2Component c,
 							fmi2Boolean toleranceDefined,
 							fmi2Real tolerance,
 							fmi2Real startTime,
@@ -647,13 +649,13 @@ fmi2Status fmi2SetupExperiment(fmi2Component c,
 	return fmi2OK;
 }
 
-fmi2Status fmi2EnterInitializationMode(fmi2Component c)
+FMI_Dll_Export fmi2Status fmi2EnterInitializationMode(fmi2Component c)
 {
 	/* nothing to do for now */
 	return fmi2OK;
 }
 
-fmi2Status fmi2ExitInitializationMode(fmi2Component c)
+FMI_Dll_Export fmi2Status fmi2ExitInitializationMode(fmi2Component c)
 {
 	%VARPREFIX%ModelInstance* model_instance = (%VARPREFIX%ModelInstance*) c;
 
@@ -665,39 +667,44 @@ fmi2Status fmi2ExitInitializationMode(fmi2Component c)
 
 %ENDIF%
 %IF%%FMI1%
-fmiStatus fmiTerminateSlave(fmiComponent c)
+FMI_Dll_Export fmiStatus fmiTerminateSlave(fmiComponent c)
 %ENDIF%
 %IF%%FMI2%
-fmi2Status fmi2Terminate(fmi2Component c)
+FMI_Dll_Export fmi2Status fmi2Terminate(fmi2Component c)
 %ENDIF%
 {
 	%VARPREFIX%ModelInstance* model_instance = (%VARPREFIX%ModelInstance*) c;
 
 	/* Perform the final calculations */
-	%FUNCTIONPREFIX%TerminateSubmodel (model_instance, model_instance->time);
+	if( %FUNCTIONPREFIX%TerminateSubmodel (model_instance, model_instance->time) == XXFALSE )
+	{
+		return %FMI_PREFIX%Error;
+	}
 
 	/* all done */
 	return %FMI_PREFIX%OK;
 }
 
 %IF%%FMI1%
-fmiStatus fmiResetSlave(fmiComponent c)
+FMI_Dll_Export fmiStatus fmiResetSlave(fmiComponent c)
 %ENDIF%
 %IF%%FMI2%
-fmi2Status fmi2Reset(fmi2Component c)
+FMI_Dll_Export fmi2Status fmi2Reset(fmi2Component c)
 %ENDIF%
 {
 	%VARPREFIX%ModelInstance* model_instance = (%VARPREFIX%ModelInstance*) c;
 
 	/* initialize the submodel itself */
-	%FUNCTIONPREFIX%InitializeSubmodel (model_instance);
-
+	if( %FUNCTIONPREFIX%InitializeSubmodel (model_instance) == XXFALSE )
+	{
+		return %FMI_PREFIX%Error;
+	}
 	/* all done */
 	return %FMI_PREFIX%OK;
 }
 
 %IF%%FMI1%
-void fmiFreeSlaveInstance(fmiComponent c)
+FMI_Dll_Export void fmiFreeSlaveInstance(fmiComponent c)
 {
 	%VARPREFIX%ModelInstance* model_instance = (%VARPREFIX%ModelInstance*) c;
 	fmiCallbackFunctions fmiCallbackFunctions = model_instance->fmiCallbackFunctions;
@@ -721,7 +728,7 @@ void fmiFreeSlaveInstance(fmiComponent c)
 
 %ENDIF%
 %IF%%FMI2%
-void fmi2FreeInstance(fmi2Component c)
+FMI_Dll_Export void fmi2FreeInstance(fmi2Component c)
 {
 	%VARPREFIX%ModelInstance* model_instance = (%VARPREFIX%ModelInstance*) c;
 	const fmi2CallbackFunctions* fmiCallbackFunctions = model_instance->fmiCallbackFunctions;
@@ -744,7 +751,7 @@ void fmi2FreeInstance(fmi2Component c)
 }
 
 %ENDIF%
-%FMI_PREFIX%Status %FMI_PREFIX%SetRealInputDerivatives(%FMI_PREFIX%Component c,
+FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%SetRealInputDerivatives(%FMI_PREFIX%Component c,
 									const %FMI_PREFIX%ValueReference vr[], size_t nvr,
 									const %FMI_PREFIX%Integer order[],
 									const %FMI_PREFIX%Real value[])
@@ -753,7 +760,7 @@ void fmi2FreeInstance(fmi2Component c)
     return %FMI_PREFIX%Error;
 }
 
-%FMI_PREFIX%Status %FMI_PREFIX%GetRealOutputDerivatives(%FMI_PREFIX%Component c,
+FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%GetRealOutputDerivatives(%FMI_PREFIX%Component c,
 									const %FMI_PREFIX%ValueReference vr[],
 									size_t nvr,
 									const %FMI_PREFIX%Integer order[],
@@ -764,10 +771,10 @@ void fmi2FreeInstance(fmi2Component c)
 }
 
 %IF%%FMI1%
-fmiStatus fmiCancelStep(fmiComponent c)
+FMI_Dll_Export fmiStatus fmiCancelStep(fmiComponent c)
 %ENDIF%
 %IF%%FMI2%
-fmi2Status fmi2CancelStep(fmi2Component c)
+FMI_Dll_Export fmi2Status fmi2CancelStep(fmi2Component c)
 %ENDIF%
 {
 	/* not yet */
@@ -775,13 +782,13 @@ fmi2Status fmi2CancelStep(fmi2Component c)
 }
 
 %IF%%FMI1%
-fmiStatus fmiDoStep(fmiComponent c,
+FMI_Dll_Export fmiStatus fmiDoStep(fmiComponent c,
 					fmiReal currentCommunicationPoint,
 					fmiReal communicationStepSize,
 					fmiBoolean newStep)
 %ENDIF%
 %IF%%FMI2%
-fmi2Status fmi2DoStep(fmi2Component c,
+FMI_Dll_Export fmi2Status fmi2DoStep(fmi2Component c,
 					fmi2Real currentCommunicationPoint,
 					fmi2Real communicationStepSize,
 					fmi2Boolean noSetFMUStatePriorToCurrentPoint)
@@ -806,7 +813,7 @@ fmi2Status fmi2DoStep(fmi2Component c,
 	while (model_instance->time < (currentCommunicationPoint + communicationStepSize))
 	{
 		/* check for termination first */
-		if ( model_instance->m_use_finish_time && (model_instance->time > model_instance->finish_time) )
+		if ( model_instance->m_use_finish_time && (model_instance->time >= model_instance->finish_time) )
 		{
 %IF%%FMI2%
 			if(model_instance->fmiCallbackFunctions != NULL && model_instance->fmiCallbackFunctions->logger != NULL)
@@ -826,45 +833,48 @@ fmi2Status fmi2DoStep(fmi2Component c,
 		}
 
 		/* Call the submodel to calculate the output, and increase the time as well */
-		%FUNCTIONPREFIX%CalculateSubmodel (model_instance, model_instance->time);
+		if( %FUNCTIONPREFIX%CalculateSubmodel (model_instance, model_instance->time, currentCommunicationPoint + communicationStepSize) == XXFALSE)
+		{
+			return %FMI_PREFIX%Error;
+		}
 	}
 
 	/* for now */
 	return %FMI_PREFIX%OK;
 }
 
-%FMI_PREFIX%Status %FMI_PREFIX%GetStatus(%FMI_PREFIX%Component c, const %FMI_PREFIX%StatusKind s, %FMI_PREFIX%Status* value)
+FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%GetStatus(%FMI_PREFIX%Component c, const %FMI_PREFIX%StatusKind s, %FMI_PREFIX%Status* value)
 {
 	/* all fine? */
 	return %FMI_PREFIX%OK;
 }
 
-%FMI_PREFIX%Status %FMI_PREFIX%GetRealStatus(%FMI_PREFIX%Component c, const %FMI_PREFIX%StatusKind s, %FMI_PREFIX%Real* value)
+FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%GetRealStatus(%FMI_PREFIX%Component c, const %FMI_PREFIX%StatusKind s, %FMI_PREFIX%Real* value)
 {
 	/* all fine? */
 	return %FMI_PREFIX%OK;
 }
 
-%FMI_PREFIX%Status %FMI_PREFIX%GetIntegerStatus(%FMI_PREFIX%Component c, const %FMI_PREFIX%StatusKind s, %FMI_PREFIX%Integer* value)
+FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%GetIntegerStatus(%FMI_PREFIX%Component c, const %FMI_PREFIX%StatusKind s, %FMI_PREFIX%Integer* value)
 {
 	/* all fine? */
 	return %FMI_PREFIX%OK;
 }
 
-%FMI_PREFIX%Status %FMI_PREFIX%GetBooleanStatus(%FMI_PREFIX%Component c, const %FMI_PREFIX%StatusKind s, %FMI_PREFIX%Boolean* value)
+FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%GetBooleanStatus(%FMI_PREFIX%Component c, const %FMI_PREFIX%StatusKind s, %FMI_PREFIX%Boolean* value)
 {
 	/* all fine? */
 	return %FMI_PREFIX%OK;
 }
 
-%FMI_PREFIX%Status %FMI_PREFIX%GetStringStatus(%FMI_PREFIX%Component c, const %FMI_PREFIX%StatusKind s, %FMI_PREFIX%String*  value)
+FMI_Dll_Export %FMI_PREFIX%Status %FMI_PREFIX%GetStringStatus(%FMI_PREFIX%Component c, const %FMI_PREFIX%StatusKind s, %FMI_PREFIX%String*  value)
 {
 	/* not yet */
 	return %FMI_PREFIX%Discard;
 }
 
 %IF%%FMI2%
-fmi2Status fmi2GetContinuousStates(fmi2Component c, fmi2Real x[], size_t nx)
+FMI_Dll_Export fmi2Status fmi2GetContinuousStates(fmi2Component c, fmi2Real x[], size_t nx)
 {
 %IF%%NUMBER_STATES%
 	size_t i;
@@ -889,7 +899,7 @@ fmi2Status fmi2GetContinuousStates(fmi2Component c, fmi2Real x[], size_t nx)
 %ENDIF%
 
 %IF%%FMI2%
-fmi2Status fmi2GetFMUstate (fmi2Component c, fmi2FMUstate* FMUstate)
+FMI_Dll_Export fmi2Status fmi2GetFMUstate (fmi2Component c, fmi2FMUstate* FMUstate)
 {
 	%VARPREFIX%ModelInstance* model_instance = (%VARPREFIX%ModelInstance*) c;
 
@@ -899,41 +909,44 @@ fmi2Status fmi2GetFMUstate (fmi2Component c, fmi2FMUstate* FMUstate)
 	}
 
 	if (FMUstate == NULL)
-		// We cannot store our memory pointer
+	{
+		/* We cannot store our memory pointer */
 		return fmi2Discard;
+	}
 
 	if (*FMUstate == NULL)
 	{
-		// Allocate a new FMUstate block
+		/* Allocate a new FMUstate block */
 		*FMUstate = (fmi2FMUstate) model_instance->fmiCallbackFunctions->allocateMemory(sizeof(%VARPREFIX%ModelInstance), sizeof(char));
 	}
 	if (*FMUstate == NULL)
 	{
-		// We have no destination memory
+		/* We have no destination memory */
 		model_instance->fmiCallbackFunctions->logger(c, model_instance->instanceName, fmi2Error, "error", "Could not allocate memory for fmi2GetFMUstate.");
 		return fmi2Error;
 	}
 
-	// There is no way to check that the passed FMUstate (void*) refers to a valid memory block of the correct size
-	// The assumption here is that it is valid and correctly sized when non-NULL
+	/* There is no way to check that the passed FMUstate (void*) refers to a valid memory block of the correct size
+	 * The assumption here is that it is valid and correctly sized when non-NULL
+	 */
 	memcpy(*FMUstate, (const void*) model_instance, sizeof(%VARPREFIX%ModelInstance));
 
 	return fmi2OK;
 }
 
-fmi2Status fmi2SetFMUstate (fmi2Component c, fmi2FMUstate FMUstate)
+FMI_Dll_Export fmi2Status fmi2SetFMUstate (fmi2Component c, fmi2FMUstate FMUstate)
 {
 	%VARPREFIX%ModelInstance* model_instance = (%VARPREFIX%ModelInstance*) c;
-	%VARPREFIX%ModelInstance* stored_state = (%VARPREFIX%ModelInstance*) FMUstate;
-
 	if (model_instance == NULL)
 	{
 		return fmi2Error;
 	}
 
+	%VARPREFIX%ModelInstance* stored_state = (%VARPREFIX%ModelInstance*) FMUstate;
+
 	if (FMUstate == NULL)
 	{
-		// We have no stored state
+		/* We have no stored state */
 		model_instance->fmiCallbackFunctions->logger(c, model_instance->instanceName, fmi2Error, "error", "Could not restore the FMU state.");
 		return fmi2Error;
 	}
@@ -977,7 +990,7 @@ fmi2Status fmi2SetFMUstate (fmi2Component c, fmi2FMUstate FMUstate)
 	return fmi2OK;
 }
 
-fmi2Status fmi2FreeFMUstate(fmi2Component c, fmi2FMUstate* FMUstate)
+FMI_Dll_Export fmi2Status fmi2FreeFMUstate(fmi2Component c, fmi2FMUstate* FMUstate)
 {
 	%VARPREFIX%ModelInstance* model_instance = (%VARPREFIX%ModelInstance*) c;
 	if ((FMUstate != NULL) && (*FMUstate != NULL))
@@ -988,26 +1001,26 @@ fmi2Status fmi2FreeFMUstate(fmi2Component c, fmi2FMUstate* FMUstate)
 	return fmi2OK;
 }
 
-fmi2Status fmi2SerializedFMUstateSize(fmi2Component c, fmi2FMUstate FMUstate, size_t *size)
+FMI_Dll_Export fmi2Status fmi2SerializedFMUstateSize(fmi2Component c, fmi2FMUstate FMUstate, size_t *size)
 {
 	/* not yet */
 	return fmi2Discard;
 }
 
-fmi2Status fmi2SerializeFMUstate (fmi2Component c, fmi2FMUstate FMUstate, fmi2Byte serializedState[], size_t size)
+FMI_Dll_Export fmi2Status fmi2SerializeFMUstate (fmi2Component c, fmi2FMUstate FMUstate, fmi2Byte serializedState[], size_t size)
 {
 	/* not yet */
 	return fmi2Discard;
 }
 
-fmi2Status fmi2DeSerializeFMUstate (fmi2Component c, const fmi2Byte serializedState[], size_t size,
+FMI_Dll_Export fmi2Status fmi2DeSerializeFMUstate (fmi2Component c, const fmi2Byte serializedState[], size_t size,
                                     fmi2FMUstate* FMUstate)
 {
 	/* not yet */
 	return fmi2Discard;
 }
 
-fmi2Status fmi2GetDirectionalDerivative(fmi2Component c, const fmi2ValueReference vUnknown_ref[], size_t nUnknown,
+FMI_Dll_Export fmi2Status fmi2GetDirectionalDerivative(fmi2Component c, const fmi2ValueReference vUnknown_ref[], size_t nUnknown,
                                         const fmi2ValueReference vKnown_ref[] , size_t nKnown,
                                         const fmi2Real dvKnown[], fmi2Real dvUnknown[])
 {

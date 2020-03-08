@@ -11,7 +11,7 @@ TITLE 20-sim FMU %FMUVERSION% export - Build script
 rem -------------------------------------------------------------
 set "CURPATH=%~dp0"
 rem Start searching for the newest compiler
-set comp=vs2017
+set comp=vs2019
 set promptlevel=prompt
 set exitcode=0
 set buildmode=clean
@@ -22,16 +22,20 @@ cd "%CURPATH%"
 
 set "FMU=%ROOTPATH%\%SUBMODEL_NAME%.fmu"
 set DLL=%SUBMODEL_NAME%.dll
-set ZIPTOOL=%TEMPLATE_DIR%\bin\7z.exe
+set "ZIPTOOL=%TEMPLATE_DIR%\bin\7z.exe"
 rem The Github hosted template includes these two tools in order to support older 20-sim versions
-set XSLTTOOL=%TEMPLATE_DIR%\bin\msxsl.exe
-set GUIDTOOL=%TEMPLATE_DIR%\bin\GenerateGuid.exe
+set "XSLTTOOL=%TEMPLATE_DIR%\bin\msxsl.exe"
+set "GUIDTOOL=%TEMPLATE_DIR%\bin\GenerateGuid.exe"
 
-if exist "%ProgramData%\Controllab Products B.V\Python34\python.exe" (
-	set PYTHON="%ProgramData%\Controllab Products B.V\Python34\python.exe"
-) else if exist "C:\ProgramData\Controllab Products B.V\Python34\python.exe" (
-	set PYTHON="C:\ProgramData\Controllab Products B.V\Python34\python.exe"
-)
+set "PYTHON=%ProgramData%\Controllab Products B.V\Python37\python.exe"
+if exist "%PYTHON%" goto python_found
+set "PYTHON=C:\ProgramData\Controllab Products B.V\Python37\python.exe"
+if exist "%PYTHON%" goto python_found
+set "PYTHON=%ProgramData%\Controllab Products B.V\Python34\python.exe"
+if exist "%PYTHON%" goto python_found
+set "PYTHON=C:\ProgramData\Controllab Products B.V\Python34\python.exe"
+
+:python_found
 set RESOURCES_SCRIPT="%TEMPLATE_DIR%\bin\include_resources.py"
 
 set "FMU_DIR=%CURPATH%fmu"
@@ -60,11 +64,11 @@ ECHO Generating the modelDescription.xml
 "%XSLTTOOL%"  "%ROOTPATH%\src\ModelConfiguration.xml" "%ROOTPATH%\template\mcf2modelDescription.xsl" -o "%FMU_DIR%\modelDescription.xml" SOURCEDIRECTORY="%ROOTPATH%\src"
 
 ECHO Collecting resources
-IF EXIST %PYTHON% (
-	%PYTHON% %RESOURCES_SCRIPT% "%ROOTPATH%\src\ModelConfiguration.xml" "%RES_DIR%"
+IF EXIST "%PYTHON%" (
+	"%PYTHON%" %RESOURCES_SCRIPT% "%ROOTPATH%\src\ModelConfiguration.xml" "%RES_DIR%"
 ) ELSE (
 	ECHO Unable to collect resources. Could not find Python in %PYTHON%
-	ECHO Please re-install 20-sim 4.6 with Python support enabled.
+	ECHO Please re-install 20-sim 4.6 or higher with Python support enabled.
 )
 
 ECHO ------------------------------------------------------------
@@ -75,6 +79,7 @@ FOR %%b in (%1, %2, %3, %4, %5) DO (
 	IF %%b==vs2013 set comp=vs2013
 	IF %%b==vs2015 set comp=vs2015
 	IF %%b==vs2017 set comp=vs2017
+	IF %%b==vs2019 set comp=vs2019
 	IF %%b==clean set buildmode=clean
 	IF %%b==noclean set buildmode=noclean
 	IF %%b==noprompt set promptlevel=noprompt
@@ -84,6 +89,46 @@ set buildconfig=Release
 set DEVENV=""
 set VSVARS32=""
 set BUILD_X64=1
+
+rem Search for VS 2019
+:VS2019
+IF NOT %comp%==vs2019 goto VS2017
+setlocal
+rem Search for VSWhere first
+set "InstallerPath=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer"
+if not exist "%InstallerPath%" set "InstallerPath=%ProgramFiles%\Microsoft Visual Studio\Installer"
+if not exist "%InstallerPath%" goto :no-vswhere_2019
+
+set VSWHERE_ARGS=-latest -products * %VSWHERE_REQ% %VSWHERE_PRP% %VSWHERE_LMT%
+set VSWHERE_REQ=-requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64
+set VSWHERE_PRP=-property installationPath
+set VSWHERE_LMT=-version "[16.0,17.0)"
+set VSWHERE_ARGS=-latest -products * %VSWHERE_REQ% %VSWHERE_PRP% %VSWHERE_LMT%
+set PATH=%PATH%;%InstallerPath%
+for /f "usebackq tokens=*" %%i in (`vswhere %VSWHERE_ARGS%`) do (
+	endlocal
+	set "VCINSTALLDIR=%%i\VC\"
+	set "VS160COMNTOOLS=%%i\Common7\Tools\"
+)
+endlocal
+:no-vswhere_2019:
+	IF EXIST "%VS160COMNTOOLS%\VsDevCmd.bat" (
+		set VSVARS32="%VS160COMNTOOLS%\VsDevCmd.bat"
+		ECHO Found Visual C++ 2019
+		set PROJ_DIR=VS2019
+	) ELSE IF EXIST "%ProgramFiles%\Microsoft Visual Studio\2019\Community\Common7\Tools\VsDevCmd.bat" (
+		set VSVARS32="%ProgramFiles%\Microsoft Visual Studio\2019\Community\Common7\Tools\VsDevCmd.bat"
+		ECHO Found Visual C++ 2019
+		set PROJ_DIR=VS2019
+	) ELSE IF EXIST "%ProgramFiles(x86)%\Microsoft Visual Studio\2019\Community\Common7\Tools\VsDevCmd.bat" (
+		set VSVARS32="%ProgramFiles(x86)%\Microsoft Visual Studio\2019\Community\Common7\Tools\VsDevCmd.bat"
+		ECHO Found Visual C++ 2019
+		set PROJ_DIR=VS2019
+	) ELSE (
+		rem Try an older compiler
+		set comp=vs2017
+	)
+)
 
 rem Search for VS 2017
 :VS2017
@@ -310,3 +355,4 @@ IF DEFINED VSVARS32 (
 :END_NO_PROMPT
   IF %exitcode% NEQ 0 EXIT /B %exitcode%
   EXIT
+

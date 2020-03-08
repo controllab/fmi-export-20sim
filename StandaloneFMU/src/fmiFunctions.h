@@ -231,4 +231,4 @@ Functions for FMI for Co-Simulation
    DllExport fmiStatus fmiGetStringStatus (fmiComponent c, const fmiStatusKind s, fmiString*  value);
 
 
-#endif // fmiFunctions_h
+#endif /* fmiFunctions_h */

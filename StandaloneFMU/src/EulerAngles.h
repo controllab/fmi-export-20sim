@@ -64,7 +64,6 @@ enum QuatPart {
 	Q_W
 };
 
-//typedef XXDouble HMatrix[4][4]; /* Right-handed, for column vectors */
 typedef XXDouble MyHMatrix[16]; /* now just linear space memory */
 /* and a macro to calculate the index */
 #define INDEX4x4(i,j) ((j<<2)+i)

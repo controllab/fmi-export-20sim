@@ -202,7 +202,7 @@ XXInteger Table2D_TableRead(XXDouble* inarr, XXInteger inputs, XXDouble* outarr,
 		return 1;
 	}
 	id = (int)inarr[0];
-	if (id < 0 || id > 1) // check for correct id.
+	if (id < 0 || id > 1) /* check for correct id. */
 	{
 		strncpy(g_lastError, "Incorrect id passed", LASTERRMSGBUFSIZE);
 		return 1;

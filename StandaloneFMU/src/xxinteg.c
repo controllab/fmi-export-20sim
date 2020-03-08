@@ -15,7 +15,10 @@
 /* This file describes the integration methods
    that are supplied for computation.
 
-   Currently only Euler, RungeKutta2 and RungeKutta4 are supplied,
+   Currently the following methods are supported:
+   * Euler
+   * RungeKutta2
+   * RungeKutta4
    but it is easy for the user to add their own
    integration methods with these two as an example.
 */
@@ -31,31 +34,66 @@
 
 %IF%%NUMBER_STATES%
 #define %VARPREFIX%STATE_SIZE %NUMBER_STATES%
-%ENDIF%
 
+%ENDIF%
+%IF%%FMI1%
+#define FMI_LOG_ERROR(model_instance, message)	if ( model_instance->fmiCallbackFunctions.logger != NULL)\
+	{\
+		model_instance->fmiCallbackFunctions.logger(NULL, "%SUBMODEL_NAME%", fmiError, "error",\
+			message);\
+	}
+
+%ENDIF%
+%IF%%FMI2%
+#define FMI_LOG_ERROR(model_instance ,message)	if (model_instance->fmiCallbackFunctions != NULL && model_instance->fmiCallbackFunctions->logger != NULL)\
+	{\
+		model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",\
+			message);\
+	}
+
+
+%ENDIF%
 #ifdef Discrete_METHOD
 /*********************************************************************
  * Discrete integration method
  *********************************************************************/
 
 /* the initialization of the Discrete integration method */
-void %FUNCTIONPREFIX%DiscreteInitialize (%VARPREFIX%ModelInstance* model_instance)
+XXBoolean %FUNCTIONPREFIX%DiscreteInitialize (%VARPREFIX%ModelInstance* model_instance)
 {
-	/* nothing to be done */
+	/* The internal time is set to the start time
+	 * so set our discrete time to this value as well
+	 */
+	model_instance->m_discrete_time = model_instance->time;
 	model_instance->major = XXTRUE;
+
+	return XXTRUE;
 }
 
 /* the termination of the Discrete integration method */
-void %FUNCTIONPREFIX%DiscreteTerminate (%VARPREFIX%ModelInstance* model_instance)
+XXBoolean %FUNCTIONPREFIX%DiscreteTerminate (%VARPREFIX%ModelInstance* model_instance)
 {
 	/* nothing to be done */
+	return XXTRUE;
 }
 
 /* the Discrete integration method itself */
-void %FUNCTIONPREFIX%DiscreteStep (%VARPREFIX%ModelInstance* model_instance)
+XXBoolean %FUNCTIONPREFIX%DiscreteStep (%VARPREFIX%ModelInstance* model_instance, XXDouble outputTime)
 {
 %IF%%NUMBER_STATES%
 	XXInteger index;
+
+	/* check if the next discrete time point is beyond the outputTime */
+	if( model_instance->m_discrete_time + model_instance->step_size > outputTime )
+	{
+		/* no need to take a discrete step yet
+		 * we just update the internal time, but leave the discrete time as is
+		 */
+		model_instance->time = outputTime;
+
+		/* and just return */
+		return XXTRUE;
+	}
 
 	/* for each of the supplied states */
 	for (index = 0; index < %VARPREFIX%STATE_SIZE; index++)
@@ -66,13 +104,18 @@ void %FUNCTIONPREFIX%DiscreteStep (%VARPREFIX%ModelInstance* model_instance)
 %ELSE%
 	/* no states in the model */
 %ENDIF%
-	/* increment the simulation time */
-	model_instance->time += model_instance->step_size;
+	/* increment the simulation discrete time */
+	model_instance->m_discrete_time += model_instance->step_size;
+
+	/* and set the continious time to the discrete time */
+	model_instance->time = model_instance->m_discrete_time;
 
 	model_instance->major = XXTRUE;
 
 	/* evaluate the dynamic part to calculate the new rates */
 	%FUNCTIONPREFIX%CalculateDynamic (model_instance);
+
+	return XXTRUE;
 }
 #endif /* Discrete_METHOD */
 
@@ -83,40 +126,58 @@ void %FUNCTIONPREFIX%DiscreteStep (%VARPREFIX%ModelInstance* model_instance)
  *********************************************************************/
 
 /* the initialization of the Euler integration method */
-void %FUNCTIONPREFIX%EulerInitialize (%VARPREFIX%ModelInstance* model_instance)
+XXBoolean %FUNCTIONPREFIX%EulerInitialize (%VARPREFIX%ModelInstance* model_instance)
 {
 	/* nothing to be done */
 	model_instance->major = XXTRUE;
+	return XXTRUE;
 }
 
 /* the termination of the Euler integration method */
-void %FUNCTIONPREFIX%EulerTerminate (%VARPREFIX%ModelInstance* model_instance)
+XXBoolean %FUNCTIONPREFIX%EulerTerminate (%VARPREFIX%ModelInstance* model_instance)
 {
 	/* nothing to be done */
+	return XXTRUE;
 }
 
 /* the Euler integration method itself */
-void %FUNCTIONPREFIX%EulerStep (%VARPREFIX%ModelInstance* model_instance)
+XXBoolean %FUNCTIONPREFIX%EulerStep (%VARPREFIX%ModelInstance* model_instance, XXDouble outputTime)
 {
+	XXDouble stepSize = model_instance->step_size;
+	%VARPREFIX%ModelInstance *mi = model_instance;
 %IF%%NUMBER_STATES%
 	XXInteger index;
+%ENDIF%
+	XXDouble output_time = (model_instance->m_use_finish_time ?
+	  (model_instance->finish_time > outputTime ? outputTime : model_instance->finish_time)
+	:
+	  outputTime);
 
+	if( output_time - model_instance->time < stepSize )
+	{
+		/* limit the step size */
+		stepSize = output_time - model_instance->time;
+	}
+
+%IF%%NUMBER_STATES%
 	/* for each of the supplied states */
 	for (index = 0; index < %VARPREFIX%STATE_SIZE; index++)
 	{
 		/* calculate the new state */
-		model_instance->%XX_STATE_ARRAY_NAME% [index] = model_instance->%XX_STATE_ARRAY_NAME% [index] + model_instance->%XX_RATE_ARRAY_NAME% [index] * model_instance->step_size;
+		model_instance->%XX_STATE_ARRAY_NAME% [index] = model_instance->%XX_STATE_ARRAY_NAME% [index] + model_instance->%XX_RATE_ARRAY_NAME% [index] * stepSize;
 	}
 %ELSE%
 	/* no states in the model */
 %ENDIF%
 	/* increment the simulation time */
-	model_instance->time += model_instance->step_size;
+	model_instance->time += stepSize;
 
 	model_instance->major = XXTRUE;
 
 	/* evaluate the dynamic part to calculate the new rates */
 	%FUNCTIONPREFIX%CalculateDynamic (model_instance);
+
+	return XXTRUE;
 }
 #endif /* Euler_METHOD */
 
@@ -126,28 +187,43 @@ void %FUNCTIONPREFIX%EulerStep (%VARPREFIX%ModelInstance* model_instance)
  * RungeKutta2 integration method
  *********************************************************************/
 /* the initialization of the RungeKutta2 integration method */
-void %FUNCTIONPREFIX%RungeKutta2Initialize (%VARPREFIX%ModelInstance* model_instance)
+XXBoolean %FUNCTIONPREFIX%RungeKutta2Initialize (%VARPREFIX%ModelInstance* model_instance)
 {
 %IF%%NUMBER_STATES%
 	/* empty our static arrays */
 	memset (model_instance->q0, 0, %VARPREFIX%STATE_SIZE * sizeof (XXDouble));
 %ENDIF%
+	return XXTRUE;
 }
 
 /* the termination of the RungeKutta2 integration method */
-void %FUNCTIONPREFIX%RungeKutta2Terminate (%VARPREFIX%ModelInstance* model_instance)
+XXBoolean %FUNCTIONPREFIX%RungeKutta2Terminate (%VARPREFIX%ModelInstance* model_instance)
 {
 	/* nothing yet (our arrays are static) */
+	return XXTRUE;
 }
 
-
 /* the Runge-Kutta-2 integration method itself */
-void %FUNCTIONPREFIX%RungeKutta2Step (%VARPREFIX%ModelInstance* model_instance)
+XXBoolean %FUNCTIONPREFIX%RungeKutta2Step (%VARPREFIX%ModelInstance* model_instance, XXDouble outputTime)
 {
+	XXDouble stepSize = model_instance->step_size;
 %IF%%NUMBER_STATES%
 	XXInteger index;
 	XXDouble rktime;
+%ENDIF%
 
+	XXDouble output_time = (model_instance->m_use_finish_time ?
+	  (model_instance->finish_time > outputTime ? outputTime : model_instance->finish_time)
+	: outputTime);
+
+	/* check if we have to limit our stepsize to get exactly at the outpuTime */
+	if( output_time - model_instance->time < stepSize )
+	{
+		/* limit the step size */
+		stepSize = output_time - model_instance->time;
+	}
+
+%IF%%NUMBER_STATES%
 	/* This model has %NUMBER_STATES% states */
 	/*********************************************************************************/
 	/*          calculate intermediate result                                        */
@@ -164,10 +240,10 @@ void %FUNCTIONPREFIX%RungeKutta2Step (%VARPREFIX%ModelInstance* model_instance)
 	for (index = 0; index < %VARPREFIX%STATE_SIZE; index++)
 	{
 		/* set the new states to use */
-		model_instance->%XX_STATE_ARRAY_NAME% [index] = model_instance->q0 [index] + model_instance->%XX_RATE_ARRAY_NAME% [index] * 0.5 * model_instance->step_size;
+		model_instance->%XX_STATE_ARRAY_NAME% [index] = model_instance->q0 [index] + model_instance->%XX_RATE_ARRAY_NAME% [index] * 0.5 * stepSize;
 	}
 
-	model_instance->time = rktime + 0.5 * model_instance->step_size;
+	model_instance->time = rktime + 0.5 * stepSize;
 	model_instance->major = XXFALSE;
 	%FUNCTIONPREFIX%CalculateDynamic (model_instance);
 
@@ -179,20 +255,21 @@ void %FUNCTIONPREFIX%RungeKutta2Step (%VARPREFIX%ModelInstance* model_instance)
 		/*********************************************************************************/
 
 		/* calculate the next state = classical Runge-Kutta integration step */
-		model_instance->%XX_STATE_ARRAY_NAME% [index] = model_instance->q0 [index] +	model_instance->%XX_RATE_ARRAY_NAME% [index] * model_instance->step_size;
+		model_instance->%XX_STATE_ARRAY_NAME% [index] = model_instance->q0 [index] + model_instance->%XX_RATE_ARRAY_NAME% [index] * stepSize;
 	}
-	model_instance->time = rktime + model_instance->step_size;
+	model_instance->time = rktime + stepSize;
 
 %ELSE%
 	/* no states in the model */
 	/* increment the simulation time */
-	model_instance->time += model_instance->step_size;
+	model_instance->time += stepSize;
 
 %ENDIF%
 	model_instance->major = XXTRUE;
 
 	/* evaluate the derivative model to calculate the new rates */
 	%FUNCTIONPREFIX%CalculateDynamic (model_instance);
+	return XXTRUE;
 }
 #endif /* RungeKutta2_METHOD */
 
@@ -207,7 +284,7 @@ void %FUNCTIONPREFIX%RungeKutta2Step (%VARPREFIX%ModelInstance* model_instance)
  */
 static const XXDouble OneOverSix = 1.0 / 6.0;
 
-void %FUNCTIONPREFIX%RungeKutta4Initialize (%VARPREFIX%ModelInstance* model_instance)
+XXBoolean %FUNCTIONPREFIX%RungeKutta4Initialize (%VARPREFIX%ModelInstance* model_instance)
 {
 %IF%%NUMBER_STATES%
 	/* empty our static arrays */
@@ -217,22 +294,37 @@ void %FUNCTIONPREFIX%RungeKutta4Initialize (%VARPREFIX%ModelInstance* model_inst
 	memset (model_instance->q3, 0, %VARPREFIX%STATE_SIZE * sizeof (XXDouble));
 	memset (model_instance->q4, 0, %VARPREFIX%STATE_SIZE * sizeof (XXDouble));
 %ENDIF%
+	return XXTRUE;
 }
 
 /* the termination of the RungeKutta4 integration method */
-void %FUNCTIONPREFIX%RungeKutta4Terminate (%VARPREFIX%ModelInstance* model_instance)
+XXBoolean %FUNCTIONPREFIX%RungeKutta4Terminate (%VARPREFIX%ModelInstance* model_instance)
 {
 	/* nothing yet (our arrays are static) */
+	return XXTRUE;
 }
 
-
 /* the Runge-Kutta-4 integration method itself */
-void %FUNCTIONPREFIX%RungeKutta4Step (%VARPREFIX%ModelInstance* model_instance)
+XXBoolean %FUNCTIONPREFIX%RungeKutta4Step (%VARPREFIX%ModelInstance* model_instance, XXDouble outputTime)
 {
+	XXDouble stepSize = model_instance->step_size;
 %IF%%NUMBER_STATES%
 	XXInteger index;
 	XXDouble rktime;
+%ENDIF%
 
+	XXDouble output_time = (model_instance->m_use_finish_time ?
+	  (model_instance->finish_time > outputTime ? outputTime : model_instance->finish_time)
+	: outputTime);
+
+	/* check if we have to limit our stepsize to get exactly at the outpuTime */
+	if( output_time - model_instance->time < stepSize )
+	{
+		/* limit the step size */
+		stepSize = output_time - model_instance->time;
+	}
+
+%IF%%NUMBER_STATES%
 	/* This model has %NUMBER_STATES% states */
 	/*********************************************************************************/
 	/*          calculate intermediate state results q1, q2, q3 and q4               */
@@ -249,14 +341,14 @@ void %FUNCTIONPREFIX%RungeKutta4Step (%VARPREFIX%ModelInstance* model_instance)
 	for (index = 0; index < %VARPREFIX%STATE_SIZE; index++)
 	{
 		/* set the intermediate q1 */
-		model_instance->q1 [index] = model_instance->%XX_RATE_ARRAY_NAME% [index] * model_instance->step_size;
+		model_instance->q1 [index] = model_instance->%XX_RATE_ARRAY_NAME% [index] * stepSize;
 
 		/* set the new states to use  for q2 */
 		model_instance->%XX_STATE_ARRAY_NAME% [index] = model_instance->q0 [index] + model_instance->q1 [index] / 2;
 	}
 
 	/* calculate q2 = f (states + q1 / 2, t + dt / 2) * dt  */
-	model_instance->time = rktime + model_instance->step_size / 2;
+	model_instance->time = rktime + 0.5 * stepSize;
 
 	model_instance->major = XXFALSE;
 
@@ -267,7 +359,7 @@ void %FUNCTIONPREFIX%RungeKutta4Step (%VARPREFIX%ModelInstance* model_instance)
 	for (index = 0; index < %VARPREFIX%STATE_SIZE; index++)
 	{
 		/* set the ultimate q2 */
-		model_instance->q2 [index] = model_instance->q2 [index] * model_instance->step_size;
+		model_instance->q2 [index] = model_instance->q2 [index] * stepSize;
 
 		/* set the new states to use */
 		model_instance->%XX_STATE_ARRAY_NAME% [index] = model_instance->q0 [index] + model_instance->q2 [index] / 2;
@@ -281,14 +373,14 @@ void %FUNCTIONPREFIX%RungeKutta4Step (%VARPREFIX%ModelInstance* model_instance)
 	for (index = 0; index < %VARPREFIX%STATE_SIZE; index++)
 	{
 		/* set the ultimate q3 */
-		model_instance->q3 [index] = model_instance->q3 [index] * model_instance->step_size;
+		model_instance->q3 [index] = model_instance->q3 [index] * stepSize;
 
 		/* set the new states */
 		model_instance->%XX_STATE_ARRAY_NAME% [index] = model_instance->q0 [index] + model_instance->q3 [index];
 	}
 
 	/* calculate q4 = f (states + q3, t + dt) * dt */
-	model_instance->time = rktime + model_instance->step_size;
+	model_instance->time = rktime + stepSize;
 	%FUNCTIONPREFIX%CalculateDynamic (model_instance);
 	memcpy (model_instance->q4, model_instance->%XX_RATE_ARRAY_NAME%, %VARPREFIX%STATE_SIZE * sizeof (XXDouble));
 
@@ -296,7 +388,7 @@ void %FUNCTIONPREFIX%RungeKutta4Step (%VARPREFIX%ModelInstance* model_instance)
 	for (index = 0; index < %VARPREFIX%STATE_SIZE; index++)
 	{
 		/* set the ultimate q4 */
-		model_instance->q4 [index] = model_instance->q4 [index] * model_instance->step_size;
+		model_instance->q4 [index] = model_instance->q4 [index] * stepSize;
 
 		/*********************************************************************************/
 		/*          calculate the next state from the intermediate results               */
@@ -308,12 +400,13 @@ void %FUNCTIONPREFIX%RungeKutta4Step (%VARPREFIX%ModelInstance* model_instance)
 %ELSE%
 	/* no states in the model */
 	/* increment the simulation time */
-	model_instance->time += model_instance->step_size;
+	model_instance->time += stepSize;
 %ENDIF%
 
 	model_instance->major = XXTRUE;
 
 	/* evaluate the derivative model to calculate the new rates */
 	%FUNCTIONPREFIX%CalculateDynamic (model_instance);
+	return XXTRUE;
 }
 #endif /* RungeKutta4_METHOD */

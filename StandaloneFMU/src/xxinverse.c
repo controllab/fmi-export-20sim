@@ -358,11 +358,7 @@ XXDouble XXMatrixDeterminant (XXMatrix *mat_source, XXDouble *workarray)
  */
 void XXMatrixInverse (XXMatrix *mat_dest, XXMatrix *mat_source, XXDouble *workarray)
 {
-	//XXDouble det;
-	//det = XXInverse(mat_dest, mat_source, workarray);
 	XXInverse(mat_dest, mat_source, workarray);
-
-	/* here you could do something with the det result */
 }
 
 

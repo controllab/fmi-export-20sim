@@ -35,6 +35,7 @@
 /* system include files */
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 
 /* 20-sim include files */
 #include "xxmodel.h"
@@ -54,12 +55,28 @@
 %IF%%NUMBEROF_DLL_Table2D%
 #include "xxTable2D.h"
 %ENDIF%
+%IF%%NOT(EQ(INTEGRATION_METHOD_NAME,MeBDFi))%
+%IF%%NUMBER_DEPSTATES%
+#if defined _MSC_VER
+#pragma message("Warning: This model contains dependent states. Dependent states solving is not implemented in this code generation template.")
+#elif defined __GNUC__
+#warning This model contains dependent states. Dependent states solving is not implemented in this code generation template..
+#endif
+%ENDIF%
 %IF%%NUMBER_ALGLOOPS%
 #if defined _MSC_VER
 #pragma message("Warning: This model contains algebraic loops. Algebraic loop solving is not implemented in this code generation template.")
 #elif defined __GNUC__
 #warning This model contains algebraic loops. Algebraic loop solving is not implemented in this code generation template.
 #endif
+%ENDIF%
+%IF%%NUMBER_CONSTRAINTS%
+#if defined _MSC_VER
+#pragma message("Warning: This model contains constraint variables. Constraint variable solving is not implemented in this code generation template.")
+#elif defined __GNUC__
+#warning This model contains constraint variables. Constraint variable solving is not implemented in this code generation template.
+#endif
+%ENDIF%
 %ENDIF%
 
 %IF%%NUMBEROF_DLL_Table2D%
@@ -382,13 +399,15 @@ XXBoolean %FUNCTIONPREFIX%ModelEventDown (%VARPREFIX%ModelInstance* model_instan
 
 %ENDIF%
 %IF%%NUMBEROF_TIMEEVENTFUNCTION%
+static const XXDouble %VARPREFIX%epsilon_time = %TIME_STEP_SIZE% * 1.0e-6;
+
 XXBoolean %FUNCTIONPREFIX%ModelTimeEvent (%VARPREFIX%ModelInstance* model_instance, XXDouble argument, XXInteger id)
 {
 	if (model_instance->major)
 	{
 		XXDouble prevValue = model_instance->time_event[id];
 		model_instance->time_event[id] = model_instance->time;
-		if ((model_instance->time >= argument) && (prevValue < argument))
+		if ((model_instance->time >= argument - %VARPREFIX%epsilon_time) && (prevValue < argument))
 		{
 			return XXTRUE;
 		}
