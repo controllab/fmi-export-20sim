@@ -67,7 +67,7 @@
 		<xsl:attribute name="modelName">
 			<xsl:value-of select="general/name" />
 		</xsl:attribute>
-%IF%%FMI1%
+%IF%%EQ(FMIVERSION,1.0)%
 		<xsl:attribute name="modelIdentifier">
 			<xsl:value-of select="general/name" />
 		</xsl:attribute>
@@ -78,7 +78,7 @@
 			<xsl:text>}</xsl:text>
 		</xsl:attribute>
 		<xsl:attribute name="generationTool">20-sim %MAJORVERSION%.%MINORVERSION%.%MAJORBUILD%</xsl:attribute>
-%IF%%FMI1%
+%IF%%EQ(FMIVERSION,1.0)%
 		<xsl:attribute name="numberOfContinuousStates">
 			<!-- Note: 20-sim doesn't distinguish between discrete and continuous states, so return the union of both sets -->
 			<xsl:value-of select="$NUMBER_STATES" />
@@ -86,12 +86,12 @@
 %ENDIF%
 		<xsl:attribute name="numberOfEventIndicators">0</xsl:attribute>
 		<xsl:attribute name="variableNamingConvention">structured</xsl:attribute>
-%IF%%FMI2%
+%IF%%EQ(FMIVERSION,2.0)%
 		<xsl:attribute name="copyright">Controllab Products B.V.</xsl:attribute>
 		<xsl:attribute name="license">-</xsl:attribute>
 %ENDIF%
 
-%IF%%FMI2%
+%IF%%EQ(FMIVERSION,2.0)%
 		<xsl:element name="CoSimulation">
 			<xsl:attribute name="modelIdentifier">
 				<xsl:value-of select="general/name" />
@@ -135,7 +135,7 @@
 		<xsl:element name="DefaultExperiment">
 			<xsl:attribute name="startTime"><xsl:value-of select="run/startTime" /></xsl:attribute>
 			<xsl:attribute name="stopTime"><xsl:value-of select="run/finishTime" /></xsl:attribute>
-%IF%%FMI2%
+%IF%%EQ(FMIVERSION,2.0)%
 			<xsl:attribute name="stepSize"><xsl:value-of select="run/stepSize" /></xsl:attribute>
 %ENDIF%
 		</xsl:element>
@@ -150,7 +150,7 @@
 				</xsl:call-template>
 			</xsl:for-each>
 		</xsl:element>
-%IF%%FMI1%
+%IF%%EQ(FMIVERSION,1.0)%
 		<xsl:element name="Implementation">
 			<xsl:element name="CoSimulation_StandAlone">
 				<xsl:element name="Capabilities">
@@ -167,7 +167,7 @@
 			</xsl:element>
 		</xsl:element>
 %ENDIF%
-%IF%%FMI2%
+%IF%%EQ(FMIVERSION,2.0)%
 		<xsl:element name="ModelStructure">
 			<xsl:if test="modelVariables/modelVariable[string(kind) = 'output']">
 				<xsl:element name="Outputs">
@@ -225,10 +225,10 @@
 		</xsl:if>
 		<xsl:attribute name="variability">
 			<xsl:choose>
-%IF%%FMI1%
+%IF%%EQ(FMIVERSION,1.0)%
 				<xsl:when test="string($modelvariable/kind)='parameter'">parameter</xsl:when>
 %ENDIF%
-%IF%%FMI2%
+%IF%%EQ(FMIVERSION,2.0)%
 				<xsl:when test="string($modelvariable/kind)='parameter'">tunable</xsl:when>
 				<xsl:when test="string($modelvariable/kind)='initial value'">fixed</xsl:when>
 %ENDIF%
@@ -241,22 +241,22 @@
 		</xsl:attribute>
 		<xsl:attribute name="causality">
 			<xsl:choose>
-%IF%%FMI2%
+%IF%%EQ(FMIVERSION,2.0)%
 				<xsl:when test="string($modelvariable/kind)='parameter'">parameter</xsl:when>
 				<xsl:when test="string($modelvariable/kind)='initial value'">parameter</xsl:when>
 %ENDIF%
 				<xsl:when test="string($modelvariable/kind)='input'">input</xsl:when>
 				<xsl:when test="string($modelvariable/kind)='output'">output</xsl:when>
-%IF%%FMI1%
+%IF%%EQ(FMIVERSION,1.0)%
 				<xsl:otherwise>internal</xsl:otherwise>
 %ENDIF%
-%IF%%FMI2%
+%IF%%EQ(FMIVERSION,2.0)%
 				<xsl:otherwise>local</xsl:otherwise>
 %ENDIF%
 			</xsl:choose>
 		</xsl:attribute>
 		<!--<xsl:if test="$modelvariable/preceding-sibling::modelVariable/storage[string(name) = $variable_table  and string(index) = $variable_offset] or $modelvariable/aliasOf">  Test if it's not the first usage of the underlying variable -->
-%IF%%FMI1%
+%IF%%EQ(FMIVERSION,1.0)%
 		<xsl:if test="$modelvariable/aliasOf">
 			<xsl:attribute name="alias">alias</xsl:attribute>
 		</xsl:if>
@@ -264,7 +264,7 @@
 		<!-- end of attributes assignment -->
 	
 		<xsl:element name="{$scalartype}">
-%IF%%FMI1%
+%IF%%EQ(FMIVERSION,1.0)%
 			<xsl:if test="$modelvariable/value">
 				<xsl:attribute name="start">
 					<xsl:call-template name="GetArrayValue">
@@ -281,7 +281,7 @@
 				</xsl:attribute>
 			</xsl:if>
 %ENDIF%
-%IF%%FMI2%
+%IF%%EQ(FMIVERSION,2.0)%
 			<xsl:if test="string($modelvariable/kind)='parameter' or string($modelvariable/kind)='initial value' or string($modelvariable/kind)='input'">
 				<xsl:attribute name="start">
 					<xsl:call-template name="GetArrayValue">
@@ -470,5 +470,6 @@
 	</xsl:choose>
 </xsl:template>
 
-</xsl:stylesheet> 
+</xsl:stylesheet>
+
 

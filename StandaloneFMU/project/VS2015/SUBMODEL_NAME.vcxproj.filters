@@ -44,12 +44,12 @@
     <ClInclude Include="..\..\src\xxTable2D.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-%IF%%FMI1%
+%IF%%EQ(FMIVERSION,1.0)%
     <ClInclude Include="..\..\src\fmiPlatformTypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
 %ENDIF%
-%IF%%FMI2%
+%IF%%EQ(FMIVERSION,2.0)%
     <ClInclude Include="..\..\src\fmi2FunctionTypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -95,6 +95,29 @@
       <Filter>Header Files</Filter>
     </ClInclude>
 %ENDIF%
+%IF%%EQ(INTEGRATION_METHOD_NAME,MeBDFi)%
+	<ClInclude Include="..\..\src\MeBDFi\MeBDFi.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+	<ClInclude Include="..\..\src\MeBDFi\include\f2c.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+	<ClInclude Include="..\..\src\MeBDFi\include\fio.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+	<ClInclude Include="..\..\src\MeBDFi\include\fmt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+	<ClInclude Include="..\..\src\MeBDFi\include\fp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+	<ClInclude Include="..\..\src\MeBDFi\include\lio.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+	<ClInclude Include="..\..\src\MeBDFi\include\sysdep1.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+%ENDIF%
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\EulerAngles.c">
@@ -128,31 +151,129 @@
       <Filter>Source Files</Filter>
     </ClCompile>
 %IF%%EQ(INTEGRATION_METHOD_NAME,VodeAdams)%
-	<ClCompile Include="..\..\src\cvode\src\cvode\cvode.c">
+    <ClCompile Include="..\..\src\cvode\src\cvode\cvode.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-	<ClCompile Include="..\..\src\cvode\src\cvode\cvode_dense.c">
+    <ClCompile Include="..\..\src\cvode\src\cvode\cvode_dense.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-	<ClCompile Include="..\..\src\cvode\src\cvode\cvode_direct.c">
+    <ClCompile Include="..\..\src\cvode\src\cvode\cvode_direct.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-	<ClCompile Include="..\..\src\cvode\src\cvode\cvode_io.c">
+    <ClCompile Include="..\..\src\cvode\src\cvode\cvode_io.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-	<ClCompile Include="..\..\src\cvode\src\nvec_ser\nvector_serial.c">
+    <ClCompile Include="..\..\src\cvode\src\nvec_ser\nvector_serial.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-	<ClCompile Include="..\..\src\cvode\src\sundials\sundials_dense.c">
+    <ClCompile Include="..\..\src\cvode\src\sundials\sundials_dense.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-	<ClCompile Include="..\..\src\cvode\src\sundials\sundials_direct.c">
+    <ClCompile Include="..\..\src\cvode\src\sundials\sundials_direct.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-	<ClCompile Include="..\..\src\cvode\src\sundials\sundials_math.c">
+    <ClCompile Include="..\..\src\cvode\src\sundials\sundials_math.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-	<ClCompile Include="..\..\src\cvode\src\sundials\sundials_nvector.c">
+    <ClCompile Include="..\..\src\cvode\src\sundials\sundials_nvector.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+%ENDIF%
+%IF%%EQ(INTEGRATION_METHOD_NAME,MeBDFi)%
+    <ClCompile Include="..\..\src\MeBDFi\MeBDFi.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\MeBDFi\libf2c\close.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\MeBDFi\libf2c\dolio.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\MeBDFi\libf2c\endfile.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\MeBDFi\libf2c\err.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\MeBDFi\libf2c\fmt.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\MeBDFi\libf2c\fmtlib.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\MeBDFi\libf2c\lread.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\MeBDFi\libf2c\lwrite.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\MeBDFi\libf2c\open.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\MeBDFi\libf2c\pow_dd.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\MeBDFi\libf2c\pow_di.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\MeBDFi\libf2c\rdfmt.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\MeBDFi\libf2c\rsfe.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\MeBDFi\libf2c\sfe.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\MeBDFi\libf2c\sig_die.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\MeBDFi\libf2c\util.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\MeBDFi\libf2c\wref.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\MeBDFi\libf2c\wrtfmt.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\MeBDFi\libf2c\wsfe.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\MeBDFi\libf2c\wsle.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\MeBDFi\netlib\DOGLEG.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\MeBDFi\netlib\DPMPAR.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\MeBDFi\netlib\ENORM.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\MeBDFi\netlib\FDJAC1.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\MeBDFi\netlib\HYBRD.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\MeBDFi\netlib\HYBRD1.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\MeBDFi\netlib\mebdfiCore.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\MeBDFi\netlib\QFORM.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\MeBDFi\netlib\QRFAC.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\MeBDFi\netlib\R1MPYQ.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\MeBDFi\netlib\R1UPDT.c">
       <Filter>Source Files</Filter>
     </ClCompile>
 %ENDIF%

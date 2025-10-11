@@ -32,7 +32,6 @@ XXBoolean %FUNCTIONPREFIX%InitializeSubmodel (%VARPREFIX%ModelInstance* model_in
 	model_instance->steps = 0;
 	model_instance->m_initState = XXTRUE;
 
-<<<<<<< .mine
 	%FUNCTIONPREFIX%CalculateInitial (model_instance);
 
 	/* initialize the integration method */
@@ -43,18 +42,6 @@ XXBoolean %FUNCTIONPREFIX%InitializeSubmodel (%VARPREFIX%ModelInstance* model_in
 	}
 
 %IF%%NEQ(INTEGRATION_METHOD_NAME,MeBDFi)%
-=======
-	/* initialize the integration method */
-	if (%FUNCTIONPREFIX%%INTEGRATION_METHOD_NAME%Initialize (model_instance) == XXFALSE)
-	{
-		return XXFALSE;
-	}
-
-
-
-
-
->>>>>>> .theirs
 	/* Calculate the model for the first time */
 	%FUNCTIONPREFIX%CalculateStatic (model_instance);
 	%FUNCTIONPREFIX%CalculateInput (model_instance);
@@ -64,15 +51,9 @@ XXBoolean %FUNCTIONPREFIX%InitializeSubmodel (%VARPREFIX%ModelInstance* model_in
 
 	/* End of initialization phase */
 	model_instance->%XX_INITIALIZE% = XXFALSE;
-<<<<<<< .mine
 	model_instance->m_initState = XXFALSE;
 
 	return XXTRUE;
-=======
-
-	return XXTRUE;
-
->>>>>>> .theirs
 }
 
 /* The function that calculates the submodel */
