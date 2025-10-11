@@ -19,6 +19,8 @@ that are supplied for computation.
    * Euler
    * RungeKutta2
    * RungeKutta4
+   * Vode Adams
+   * MeBDFi
    but it is easy for the user to add their own
    integration methods with these two as an example.
 */
@@ -31,28 +33,35 @@ that are supplied for computation.
 #include "xxmodel.h" /* For the %VARPREFIX%ModelInstance typedef */
 
 /* the integration methods */
-#ifdef Discrete_METHOD
+%IF%%EQ(INTEGRATION_METHOD_NAME,Discrete)%
 XXBoolean %FUNCTIONPREFIX%DiscreteInitialize (%VARPREFIX%ModelInstance* model_instance);
 XXBoolean %FUNCTIONPREFIX%DiscreteTerminate (%VARPREFIX%ModelInstance* model_instance);
 XXBoolean %FUNCTIONPREFIX%DiscreteStep (%VARPREFIX%ModelInstance* model_instance, XXDouble outputTime);
-#endif 
-
-#ifdef Euler_METHOD
+%ENDIF%
+%IF%%EQ(INTEGRATION_METHOD_NAME,Euler)%
 XXBoolean %FUNCTIONPREFIX%EulerInitialize (%VARPREFIX%ModelInstance* model_instance);
 XXBoolean %FUNCTIONPREFIX%EulerTerminate (%VARPREFIX%ModelInstance* model_instance);
 XXBoolean %FUNCTIONPREFIX%EulerStep (%VARPREFIX%ModelInstance* model_instance, XXDouble outputTime);
-#endif 
-
-#ifdef RungeKutta2_METHOD
+%ENDIF%
+%IF%%EQ(INTEGRATION_METHOD_NAME,RungeKutta2)%
 XXBoolean %FUNCTIONPREFIX%RungeKutta2Initialize (%VARPREFIX%ModelInstance* model_instance);
 XXBoolean %FUNCTIONPREFIX%RungeKutta2Terminate (%VARPREFIX%ModelInstance* model_instance);
 XXBoolean %FUNCTIONPREFIX%RungeKutta2Step (%VARPREFIX%ModelInstance* model_instance, XXDouble outputTime);
-#endif
-
-#ifdef RungeKutta4_METHOD
+%ENDIF%
+%IF%%EQ(INTEGRATION_METHOD_NAME,RungeKutta4)%
 XXBoolean %FUNCTIONPREFIX%RungeKutta4Initialize (%VARPREFIX%ModelInstance* model_instance);
 XXBoolean %FUNCTIONPREFIX%RungeKutta4Terminate (%VARPREFIX%ModelInstance* model_instance);
 XXBoolean %FUNCTIONPREFIX%RungeKutta4Step (%VARPREFIX%ModelInstance* model_instance, XXDouble outputTime);
-#endif
+%ENDIF%
+%IF%%EQ(INTEGRATION_METHOD_NAME,VodeAdams)%
+XXBoolean %FUNCTIONPREFIX%VodeAdamsInitialize (%VARPREFIX%ModelInstance* model_instance);
+XXBoolean %FUNCTIONPREFIX%VodeAdamsTerminate (%VARPREFIX%ModelInstance* model_instance);
+XXBoolean %FUNCTIONPREFIX%VodeAdamsStep (%VARPREFIX%ModelInstance* model_instance, XXDouble outputTime);
+%ENDIF%
+%IF%%EQ(INTEGRATION_METHOD_NAME,MeBDFi)%
+XXBoolean %FUNCTIONPREFIX%MeBDFiInitialize (%VARPREFIX%ModelInstance* model_instance);
+XXBoolean %FUNCTIONPREFIX%MeBDFiTerminate (%VARPREFIX%ModelInstance* model_instance);
+XXBoolean %FUNCTIONPREFIX%MeBDFiStep (%VARPREFIX%ModelInstance* model_instance, XXDouble outputTime);
+%ENDIF%
 
 #endif

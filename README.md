@@ -9,6 +9,9 @@ Supported integration methods:
 
 For Vode Adams and Modified BDF (MeBDFi) support, please use the FMI export code generation template included in 20-sim 4.8.
 
+## Requirements
+This template requires at least 20-sim version 4.6.0.
+
 ## Installation
 Download the code generation template using the "Download ZIP" button on Github or using a "git clone"
 
