@@ -64,7 +64,7 @@ rd_Z(Uint *n, int w, ftnlen len)
 	if (bad)
 		return errno = 115;
 	w = (int)len;
-	w1 = s - s0;
+	w1 = (int)(s - s0);
 	w2 = (w1+1) >> 1;
 	t = (char *)n;
 	if (*(char *)&one) {

@@ -84,6 +84,9 @@ static doublereal g_ffail = 0.0;
 static doublereal g_bnd = 0.0;
 static doublereal g_qqq = 0.0;
 
+static doublereal g_tq[5] = {0.0, 0.0, 0.0, 0.0, 0.0};
+static integer g_nrenew = 0;
+
 /* from dlamch_
    maybe those really only need to be initialized once !!!
  */
@@ -161,6 +164,8 @@ void RememberMeBDFiStatics(integer *mebdfStaticInts,
 	mebdfStaticInts[31] = g_jsinup;
 	mebdfStaticInts[32] = g_ijus;
 	mebdfStaticInts[33] = g_lmp4;
+
+	mebdfStaticInts[34] = g_nrenew;
 /*
 	mebdfStaticInts[34] = g_dlamc1_lbeta;
 	mebdfStaticInts[35] = g_dlamch1_lt;
@@ -196,6 +201,12 @@ void RememberMeBDFiStatics(integer *mebdfStaticInts,
 	mebdfStaticDoubles[22] = g_ffail;
 	mebdfStaticDoubles[23] = g_bnd;
 	mebdfStaticDoubles[24] = g_qqq;
+
+	mebdfStaticDoubles[25] = g_tq[0];
+	mebdfStaticDoubles[26] = g_tq[1];
+	mebdfStaticDoubles[27] = g_tq[2];
+	mebdfStaticDoubles[28] = g_tq[3];
+	mebdfStaticDoubles[29] = g_tq[4];
 
 /*
 	mebdfStaticDoubles[25] = g_dlamch_rmin;
@@ -280,6 +291,9 @@ void SetMeBDFiStatics(integer *mebdfStaticInts,
 	g_jsinup = mebdfStaticInts[31];
 	g_ijus = mebdfStaticInts[32];
 	g_lmp4 = mebdfStaticInts[33];
+
+	g_nrenew = mebdfStaticInts[34];
+
 /*
 	g_dlamc1_lbeta = mebdfStaticInts[34];
 	g_dlamch1_lt = mebdfStaticInts[35];
@@ -315,6 +329,13 @@ void SetMeBDFiStatics(integer *mebdfStaticInts,
 	g_ffail = mebdfStaticDoubles[22];
 	g_bnd = mebdfStaticDoubles[23];
 	g_qqq = mebdfStaticDoubles[24];
+
+	g_tq[0] = mebdfStaticDoubles[25];
+	g_tq[0] = mebdfStaticDoubles[26];
+	g_tq[0] = mebdfStaticDoubles[27];
+	g_tq[0] = mebdfStaticDoubles[28];
+	g_tq[0] = mebdfStaticDoubles[29];
+
 /*
 	g_dlamch_rmin = mebdfStaticDoubles[25];
 	g_dlamch_rmax = mebdfStaticDoubles[26];
@@ -924,6 +945,7 @@ N INPUT\002,/,\002         HMIN REDUCED BY A FACTOR OF 1.0E10\002,/,/)";
 	/* only used locally */
     /*static*/ integer kgo;
     /*static*/ doublereal ayi;
+	doublereal rh;/* wtk & grn 27-03-2018 */
 
     /* Fortran I/O blocks */
     static cilist io___21 = { 0, 6, 0, fmt_9160, 0 };
@@ -1105,6 +1127,15 @@ N INPUT\002,/,\002         HMIN REDUCED BY A FACTOR OF 1.0E10\002,/,/)";
     } else if (*idid == 3) {
 /*<          T0 = T >*/
 	*t0 = g_ovdriv_t;
+
+	/* wtk & grn 27-03-2018: check if the next step will be pretty close to tout */
+	if (g_h__ > 0.0)
+	{
+		rh = (*tout - g_ovdriv_t) / g_h__;
+		if (rh > 0.999 && rh < 1.001) { /* wtk & grn 2018-03-27 */
+			g_h__ = (*tout - g_ovdriv_t); /* and use maximum step if we're pretty close */
+		}
+	}
 /*<          IF ((T-TOUT)*H.GE.0.0D+0) THEN >*/
  	if ((g_ovdriv_t - *tout) * g_h__ >= 0.) {
 /*           HAVE OVERSHOT,SO INTERPOLATE */
@@ -2660,8 +2691,6 @@ L50:
 
 
 
-//#pragma optimize("", off) //dgbfa
-
 /*<       subroutine dgbfa(abd,lda,n,ml,mu,ipvt,info) >*/
 /* Subroutine */ int dgbfa_(doublereal *abd, integer *lda, integer *n, 
 	integer *ml, integer *mu, integer *ipvt, integer *info)
@@ -2958,8 +2987,6 @@ L130:
 /*<       end >*/
 } /* dgbfa_ */
 
-//#pragma optimize("", on) //2dgbfa
-
 /* -------------------------------------------------------------------------- */
 /*<       subroutine daxpy(n,da,dx,incx,dy,incy) >*/
 /* Subroutine */ int daxpy_(integer *n, doublereal *da, doublereal *dx, 
@@ -3073,8 +3100,6 @@ L40:
 /*<       end >*/
 } /* daxpy_ */
 
-
-
 /* --------------------------------------------------------------------------- */
 /*<       subroutine  dscal(n,da,dx,incx) >*/
 /* Subroutine */ int dscal_(integer *n, doublereal *da, doublereal *dx, 
@@ -3176,8 +3201,6 @@ L40:
     return 0;
 /*<       end >*/
 } /* dscal_ */
-
-
 
 /* -------------------------------------------------------------------------- */
 /*<       integer function idamax(n,dx,incx) >*/
@@ -3515,6 +3538,7 @@ L100:
     return 0;
 /*<       end >*/
 } /* dgbsl_ */
+
 
 /* --------------------------------------------------------------------------- */
 /*<       double precision function ddot(n,dx,incx,dy,incy) >*/
@@ -4151,7 +4175,9 @@ L FUNCTION   CALL\002)";
     /*static*/ doublereal ho;
     /*static*/ integer ll;
     /*static*/ doublereal qi;
-    /*static*/ doublereal qq, frfail, tq[5], plfail;
+    /*static*/ doublereal qq, frfail;
+/*	doublereal tq[5];  now made a global grn: 2013-04-12 */
+	doublereal plfail;
     
 	extern /* Subroutine */ int hchose_(doublereal *, doublereal *, logical *)
 	    , rscale_(integer *, integer *, doublereal *, doublereal *);
@@ -4170,7 +4196,8 @@ L FUNCTION   CALL\002)";
 	/* given as argument to itrat2 */
     /*static*/ logical worked;
 
-    /*static*/ integer newpar, nrenew;
+    /*static*/ integer newpar;
+	/* static integer nrenew; */
 
     extern /* Subroutine */ int interp_(integer *, integer *, doublereal *, 
 	    doublereal *, doublereal *, doublereal *, doublereal *), cpyary_(
@@ -4467,7 +4494,7 @@ L6000:
 /*     FURTHER CHANGES IN H FOR THAT MANY STEPS. */
 /*     ----------------------------------------------------------------- */
 /*<       CALL COSET(NQ,EL,ELST,TQ,NCOSET,MAXORD) >*/
-    coset_(&g_nq, el, elst, tq, ncoset, maxord);
+    coset_(&g_nq, el, elst, g_tq, ncoset, maxord);
 /*<       LMAX = MAXDER + 1 >*/
     g_lmax = *maxder + 1;
 /*<       RC = RC*EL(1)/OLDLO >*/
@@ -4477,7 +4504,7 @@ L6000:
 /*<       IWEVAL = MITER >*/
     g_iweval = g_miter;
 /*<       NRENEW = 1 >*/
-    nrenew = 1;
+    g_nrenew = 1;
 /*<       NEWPAR = 0 >*/
     newpar = 0;
 /*     ***************************************************** */
@@ -4485,7 +4512,7 @@ L6000:
 /*     WE WISH A NEW J TO BE CALCULATED FOR THIS STEP. */
 /*     ***************************************************** */
 /*<       CALL ERRORS(N,TQ,EDN,E,EUP,BND,EDDN) >*/
-    errors_(n, tq, &g_edn, &g_e, &g_eup, &g_bnd, &g_eddn);
+    errors_(n, g_tq, &g_edn, &g_e, &g_eup, &g_bnd, &g_eddn);
 /*<       DO 20 I = 1,N >*/
     i__1 = *n;
     for (i__ = 1; i__ <= i__1; ++i__) {
@@ -4814,7 +4841,7 @@ L110:
 /*<       IF (CFAIL) THEN >*/
     if (g_cfail) {
 /*<          NRENEW = 1 >*/
-	nrenew = 1;
+	g_nrenew = 1;
 /*<          NEWPAR = 1 >*/
 	newpar = 1;
 /*<          JSINUP = -1 >*/
@@ -4834,7 +4861,7 @@ L110:
 /*<    >*/
     pset_(&y[y_offset], &yprime[1], n, h__, t, uround, epsjac, &qi, &g_miter, &
 	    mbnd[1], nind1, nind2, nind3, &ier, (S_fp)pderv, (S_fp)resid, &
-	    nrenew, &ymax[1], &save1[1], &save2[1], &scale[1], &pw[1], &
+	    g_nrenew, &ymax[1], &save1[1], &save2[1], &scale[1], &pw[1], &
 	    pwcopy[1], &error[1], &ipiv[1], itol, &rtol[1], &atol[1], npset, 
 	    nje, nre, ndec, &ipar[1], &rpar[1], ierr, user_data);
 /*<       IF(IERR.NE.0) GOTO 8000 >*/
@@ -5543,13 +5570,13 @@ L330:
 /*<          L=NQ+1 >*/
 	g_l = g_nq + 1;
 /*<          CALL COSET(NQ,EL,ELST,TQ,NCOSET,MAXORD) >*/
-	coset_(&g_nq, el, elst, tq, ncoset, maxord);
+	coset_(&g_nq, el, elst, g_tq, ncoset, maxord);
 /*<          RC=RC*EL(1)/OLDLO >*/
 	g_rc = g_rc * el[0] / oldlo;
 /*<          OLDLO=EL(1) >*/
 	oldlo = el[0];
 /*<          CALL ERRORS(N,TQ,EDN,E,EUP,BND,EDDN) >*/
-	errors_(n, tq, &g_edn, &g_e, &g_eup, &g_bnd, &g_eddn);
+	errors_(n, g_tq, &g_edn, &g_e, &g_eup, &g_bnd, &g_eddn);
 /*<       ELSE >*/
     } else {
 /*<          NEWQ = NQ >*/
@@ -5621,7 +5648,7 @@ L340:
     g_l = 2;
 /*     RESET ORDER, RECALCULATE ERROR BOUNDS */
 /*<       CALL COSET(NQ,EL,ELST,TQ,NCOSET,MAXORD) >*/
-    coset_(&g_nq, el, elst, tq, ncoset, maxord);
+    coset_(&g_nq, el, elst, g_tq, ncoset, maxord);
 /*<       LMAX = MAXDER + 1 >*/
     g_lmax = *maxder + 1;
 /*<       RC = RC*EL(1)/OLDLO >*/
@@ -5629,7 +5656,7 @@ L340:
 /*<       OLDLO = EL(1) >*/
     oldlo = el[0];
 /*<       CALL ERRORS(N,TQ,EDN,E,EUP,BND,EDDN) >*/
-    errors_(n, tq, &g_edn, &g_e, &g_eup, &g_bnd, &g_eddn);
+    errors_(n, g_tq, &g_edn, &g_e, &g_eup, &g_bnd, &g_eddn);
 /*     NOW JUMP TO NORMAL CONTINUATION POINT */
 /*<       GO TO 60 >*/
     goto L60;
@@ -6042,7 +6069,7 @@ L6578:
 	    g_l = g_nq + 1;
 /*           RESET ORDER,RECALCULATE ERROR BOUNDS */
 /*<             CALL COSET(NQ,EL,ELST,TQ,NCOSET,MAXORD) >*/
-	    coset_(&g_nq, el, elst, tq, ncoset, maxord);
+	    coset_(&g_nq, el, elst, g_tq, ncoset, maxord);
 /*<             LMAX = MAXDER + 1 >*/
 	    g_lmax = *maxder + 1;
 /*<             RC = RC*EL(1)/OLDLO >*/
@@ -6050,7 +6077,7 @@ L6578:
 /*<             OLDLO = EL(1) >*/
 	    oldlo = el[0];
 /*<             CALL ERRORS(N,TQ,EDN,E,EUP,BND,EDDN) >*/
-	    errors_(n, tq, &g_edn, &g_e, &g_eup, &g_bnd, &g_eddn);
+	    errors_(n, g_tq, &g_edn, &g_e, &g_eup, &g_bnd, &g_eddn);
 /*<          END IF >*/
 	}
 /*<          RH = DMAX1(RH,HMIN/DABS(H)) >*/
@@ -6523,7 +6550,6 @@ L8000:
 /*<       END       >*/
 } /* hchose_ */
 
-
 /*  ************************************************************ */
 
 /*<       DOUBLE PRECISION FUNCTION DLAMCH( CMACH ) >*/
@@ -6725,8 +6751,6 @@ doublereal dlamch_(char *cmach, ftnlen cmach_len)
 
 /*<       END >*/
 } /* dlamch_ */
-
-
 
 
 
@@ -7015,9 +7039,7 @@ L30:
 /*<       END >*/
 } /* dlamc1_ */
 
-
 /* *********************************************************************** */
-
 /*<       SUBROUTINE DLAMC2( BETA, T, RND, EPS, EMIN, RMIN, EMAX, RMAX ) >*/
 /* Subroutine */ int dlamc2_(integer *beta, integer *t, logical *rnd, 
 	doublereal *eps, integer *emin, doublereal *rmin, integer *emax, 
@@ -7445,9 +7467,7 @@ L10:
 /*<       END >*/
 } /* dlamc2_ */
 
-
 /* *********************************************************************** */
-
 /*<       DOUBLE PRECISION FUNCTION DLAMC3( A, B ) >*/
 doublereal dlamc3_(doublereal *a, doublereal *b)
 {
@@ -7494,7 +7514,6 @@ doublereal dlamc3_(doublereal *a, doublereal *b)
 
 
 /* *********************************************************************** */
-
 /*<       SUBROUTINE DLAMC4( EMIN, START, BASE ) >*/
 /* Subroutine */ int dlamc4_(integer *emin, doublereal *start, integer *base)
 {
@@ -7631,9 +7650,7 @@ L10:
 /*<       END >*/
 } /* dlamc4_ */
 
-
 /* *********************************************************************** */
-
 /*<       SUBROUTINE DLAMC5( BETA, P, EMIN, IEEE, EMAX, RMAX ) >*/
 /* Subroutine */ int dlamc5_(integer *beta, integer *p, integer *emin, 
 	logical *ieee, integer *emax, doublereal *rmax)
@@ -7986,7 +8003,6 @@ logical lsame_(char *ca, char *cb, ftnlen ca_len, ftnlen cb_len)
 /*<       END >*/
     return ret_val;
 } /* lsame_ */
-
 
 #ifdef __cplusplus
 	}

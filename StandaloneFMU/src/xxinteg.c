@@ -38,26 +38,16 @@
 #define %VARPREFIX%STATE_SIZE %NUMBER_STATES%
 
 %ENDIF%
-<<<<<<< HEAD
 %IF%%FMI1%
 #define FMI_LOG_ERROR(model_instance, message)	if ( model_instance->fmiCallbackFunctions.logger != NULL)\
-=======
-%IF%%EQ(FMIVERSION,1.0)%
-#define FMI_LOG_ERROR(model_instance,message)	if ( model_instance->fmiCallbackFunctions.logger != NULL)\
->>>>>>> origin/MeBDFi
 	{\
 		model_instance->fmiCallbackFunctions.logger(NULL, "%SUBMODEL_NAME%", fmiError, "error",\
 			message);\
 	}
 
 %ENDIF%
-<<<<<<< HEAD
 %IF%%FMI2%
 #define FMI_LOG_ERROR(model_instance ,message)	if (model_instance->fmiCallbackFunctions != NULL && model_instance->fmiCallbackFunctions->logger != NULL)\
-=======
-%IF%%EQ(FMIVERSION,2.0)%
-#define FMI_LOG_ERROR(model_instance,message)	if (model_instance->fmiCallbackFunctions != NULL && model_instance->fmiCallbackFunctions->logger != NULL)\
->>>>>>> origin/MeBDFi
 	{\
 		model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error",\
 			message);\
@@ -471,21 +461,13 @@ XXBoolean %FUNCTIONPREFIX%VodeAdamsReInitialize (%VARPREFIX%ModelInstance* model
 	model_instance->m_cvode_y = N_VNew_Serial(%VARPREFIX%STATE_SIZE);
 	if (model_instance->m_cvode_y == NULL)
 	{
-<<<<<<< HEAD
 		FMI_LOG_ERROR(model_instance, "Error allocating internal State Vector");
-=======
-		FMI_LOG_ERROR(model_instance,"Error allocating internal State Vector");
->>>>>>> origin/MeBDFi
 		return XXFALSE;
 	}
 	model_instance->m_cvode_y0 = N_VNew_Serial(%VARPREFIX%STATE_SIZE);
 	if (model_instance->m_cvode_y0 == NULL)
 	{
-<<<<<<< HEAD
 		FMI_LOG_ERROR(model_instance, "Error allocating internal State Vector");
-=======
-		FMI_LOG_ERROR(model_instance,"Error allocating internal State Vector");
->>>>>>> origin/MeBDFi
 		return XXFALSE;
 	}
 	/* recommended for non-stiff: CV_ADAMS, CV_FUNCTIONAL
@@ -494,11 +476,7 @@ XXBoolean %FUNCTIONPREFIX%VodeAdamsReInitialize (%VARPREFIX%ModelInstance* model
 	model_instance->m_cvode_mem = CVodeCreate(model_instance->m_use_bdf ? CV_BDF : CV_ADAMS, model_instance->m_use_newton ? CV_NEWTON : CV_FUNCTIONAL);
 	if (model_instance->m_cvode_mem == NULL)
 	{
-<<<<<<< HEAD
 		FMI_LOG_ERROR(model_instance, "Error creating CVode memory object");
-=======
-		FMI_LOG_ERROR(model_instance,"Error creating CVode memory object");
->>>>>>> origin/MeBDFi
 		return XXFALSE;
 	}
 
@@ -509,22 +487,14 @@ XXBoolean %FUNCTIONPREFIX%VodeAdamsReInitialize (%VARPREFIX%ModelInstance* model
 	if (model_instance->m_flag != CV_SUCCESS)
 	{
 		/* print error dependent on flag */
-<<<<<<< HEAD
 		FMI_LOG_ERROR(model_instance, "Error calling CVodeInit");
-=======
-		FMI_LOG_ERROR(model_instance,"Error calling CVodeInit");
->>>>>>> origin/MeBDFi
 		return XXFALSE;
 	}
 	model_instance->m_flag = CVodeSStolerances(model_instance->m_cvode_mem, model_instance->m_relative_tolerance, model_instance->m_absolute_tolerance);
 	if (model_instance->m_flag != CV_SUCCESS)
 	{
 		/* print error dependent on flag */
-<<<<<<< HEAD
 		FMI_LOG_ERROR(model_instance, "Error calling CVodeSStolerances");
-=======
-		FMI_LOG_ERROR(model_instance,"Error calling CVodeSStolerances");
->>>>>>> origin/MeBDFi
 		return XXFALSE;
 	}
 
@@ -533,11 +503,7 @@ XXBoolean %FUNCTIONPREFIX%VodeAdamsReInitialize (%VARPREFIX%ModelInstance* model
 	if (model_instance->m_flag != CV_SUCCESS)
 	{
 		/* print error dependent on flag */
-<<<<<<< HEAD
 		FMI_LOG_ERROR(model_instance, "Error calling CVodeSetInitStep");
-=======
-		FMI_LOG_ERROR(model_instance,"Error calling CVodeSetInitStep");
->>>>>>> origin/MeBDFi
 		return XXFALSE;
 	}
 	/* set base-class attributes */
@@ -549,11 +515,7 @@ XXBoolean %FUNCTIONPREFIX%VodeAdamsReInitialize (%VARPREFIX%ModelInstance* model
 	{
 		if (model_instance->m_use_finish_time)
 		{
-<<<<<<< HEAD
 			maxStepSize = (model_instance->finish_time - model_instance->start_time) * 0.001;
-=======
-			maxStepSize = (model_instance->finish_time - model_instance->start_time) / 1000.0;
->>>>>>> origin/MeBDFi
 		}
 		else
 		{
@@ -567,22 +529,14 @@ XXBoolean %FUNCTIONPREFIX%VodeAdamsReInitialize (%VARPREFIX%ModelInstance* model
 	if (model_instance->m_flag != CV_SUCCESS)
 	{
 		/* print error dependent on flag */
-<<<<<<< HEAD
 		FMI_LOG_ERROR(model_instance, "Error calling CVodeSetMaxStep");
-=======
-		FMI_LOG_ERROR(model_instance,"Error calling CVodeSetMaxStep");
->>>>>>> origin/MeBDFi
 		return XXFALSE;
 	}
 	model_instance->m_flag = CVodeSetMaxNumSteps(model_instance->m_cvode_mem, 100000); /* default is 500 */
 	if (model_instance->m_flag != CV_SUCCESS)
 	{
 		/* print error dependent on flag */
-<<<<<<< HEAD
 		FMI_LOG_ERROR(model_instance, "Error calling CVodeSetMaxStep");
-=======
-		FMI_LOG_ERROR(model_instance,"Error calling CVodeSetMaxStep");
->>>>>>> origin/MeBDFi
 		return XXFALSE;
 	}
 
@@ -604,38 +558,22 @@ XXBoolean %FUNCTIONPREFIX%VodeAdamsReInitialize (%VARPREFIX%ModelInstance* model
 			{
 			case CVDLS_MEM_NULL:
 
-<<<<<<< HEAD
 					FMI_LOG_ERROR(model_instance, "No memory passed to initialization of linear solver");
-=======
-					FMI_LOG_ERROR(model_instance,"No memory passed to initialization of linear solver");
->>>>>>> origin/MeBDFi
 					return XXFALSE;
 
 			case CVDLS_MEM_FAIL:
 
-<<<<<<< HEAD
 					FMI_LOG_ERROR(model_instance, "Memory allocation failure during initialization of linear solver");
-=======
-					FMI_LOG_ERROR(model_instance,"Memory allocation failure during initialization of linear solver");
->>>>>>> origin/MeBDFi
 					return XXFALSE;
 
 			case CVDLS_ILL_INPUT:
 
-<<<<<<< HEAD
 					FMI_LOG_ERROR(model_instance,  "Ill input initializing linear solver");
-=======
-					FMI_LOG_ERROR(model_instance,"Ill input initializing linear solver");
->>>>>>> origin/MeBDFi
 					return XXFALSE;
 
 				default:
 
-<<<<<<< HEAD
 					FMI_LOG_ERROR(model_instance, "Unknown error initializing linear solver");
-=======
-					FMI_LOG_ERROR(model_instance,"Unknown error initializing linear solver");
->>>>>>> origin/MeBDFi
 					return XXFALSE;
 
 			}
@@ -652,14 +590,9 @@ XXBoolean %FUNCTIONPREFIX%VodeAdamsInitialize (%VARPREFIX%ModelInstance* model_i
 {
 %IF%%NUMBER_STATES%
 	/* general explicit variable step integration method settings */
-<<<<<<< HEAD
 	/* default step size */
 	model_instance->m_initial_step_size = %INTEGRATION_METHOD_INITIAL_STEPSIZE%;
 	model_instance->step_size = model_instance->m_initial_step_size;
-=======
-	// default step size
-	model_instance->m_initial_step_size = %INTEGRATION_METHOD_INITIAL_STEPSIZE%;
->>>>>>> origin/MeBDFi
 	model_instance->m_maximum_step_size = %INTEGRATION_METHOD_MAX_STEPSIZE%;
 	model_instance->m_absolute_tolerance = %INTEGRATION_METHOD_ABS_TOLERANCE%;
 	model_instance->m_relative_tolerance = %INTEGRATION_METHOD_REL_TOLERANCE%;
@@ -685,11 +618,7 @@ XXBoolean %FUNCTIONPREFIX%VodeAdamsInitialize (%VARPREFIX%ModelInstance* model_i
 	/* and call the "generic" reinitialize function */
 	if (%FUNCTIONPREFIX%VodeAdamsReInitialize(model_instance) == XXFALSE )
 	{
-<<<<<<< HEAD
 		FMI_LOG_ERROR(model_instance, "Error in call to VodeAdamsReInitialize");
-=======
-		FMI_LOG_ERROR(model_instance,"Error in call to VodeAdamsReInitialize");
->>>>>>> origin/MeBDFi
 		return XXFALSE;
 	}
 %ELSE%
@@ -702,11 +631,7 @@ XXBoolean %FUNCTIONPREFIX%VodeAdamsInitialize (%VARPREFIX%ModelInstance* model_i
 XXBoolean %FUNCTIONPREFIX%VodeAdamsTerminate (%VARPREFIX%ModelInstance* model_instance)
 {
 %IF%%NUMBER_STATES%
-<<<<<<< HEAD
 	/* release the attributes */
-=======
-	// release the attributes
->>>>>>> origin/MeBDFi
 	if (model_instance->m_cvode_y != NULL)
 	{
 		N_VDestroy_Serial(model_instance->m_cvode_y);
@@ -738,13 +663,6 @@ XXBoolean %FUNCTIONPREFIX%VodeAdamsTerminate (%VARPREFIX%ModelInstance* model_in
 /* the Vode Adams integration method itself */
 XXBoolean %FUNCTIONPREFIX%VodeAdamsStep (%VARPREFIX%ModelInstance* model_instance, XXDouble outputTime)
 {
-<<<<<<< HEAD
-=======
-    XXDouble vode_output_time = model_instance->m_use_finish_time ? (model_instance->finish_time > outputTime ? outputTime : model_instance->finish_time) : outputTime;
-%IF%%NUMBER_STATES%
-	XXDouble actual_finish_time = model_instance->m_use_finish_time ? model_instance->finish_time : outputTime;
-
->>>>>>> origin/MeBDFi
 	XXDouble time = model_instance->time;
 	XXDouble vode_output_time = model_instance->m_use_finish_time ? (model_instance->finish_time > outputTime ? outputTime : model_instance->finish_time) : outputTime;
 %IF%%NUMBER_STATES%
@@ -784,14 +702,9 @@ XXBoolean %FUNCTIONPREFIX%VodeAdamsStep (%VARPREFIX%ModelInstance* model_instanc
 
 		%FUNCTIONPREFIX%CalculateDynamic (model_instance);
 
-<<<<<<< HEAD
 		/* calculate the difference of the cached previous simulation time */
 		model_instance->m_last_step_size = model_instance->time - model_instance->m_last_step_size;
 		model_instance->step_size = model_instance->time - time;
-=======
-		// calculate the difference of the cached previous simulation time
-		model_instance->m_last_step_size = model_instance->time - model_instance->m_last_step_size;
->>>>>>> origin/MeBDFi
 	}
 
 	/* interpret the step taken by the integration algorithm, see rkf45.f */
@@ -805,28 +718,16 @@ XXBoolean %FUNCTIONPREFIX%VodeAdamsStep (%VARPREFIX%ModelInstance* model_instanc
 			break;
 
 		case CV_LINIT_FAIL:
-<<<<<<< HEAD
 			FMI_LOG_ERROR(model_instance, "Initialization of Vode Adams Method failed.");
-=======
-
-
-			FMI_LOG_ERROR(model_instance,"Initialization of Vode Adams Method failed.");
->>>>>>> origin/MeBDFi
 			return XXFALSE;
 
 		case CV_NO_MALLOC:
 		case CV_MEM_NULL:
-<<<<<<< HEAD
 			FMI_LOG_ERROR(model_instance, "No memory allocated or passed to Vode Adams.");
-=======
-
-			FMI_LOG_ERROR(model_instance,"No memory allocated or passed to Vode Adams.");
->>>>>>> origin/MeBDFi
 			return XXFALSE;
 
 		/* step not taken, next call impossible */
 		case CV_TOO_MUCH_WORK:
-<<<<<<< HEAD
 			FMI_LOG_ERROR(model_instance, "Too many steps taken in the Vode Adams method.");
 			return XXFALSE;
 
@@ -840,53 +741,20 @@ XXBoolean %FUNCTIONPREFIX%VodeAdamsStep (%VARPREFIX%ModelInstance* model_instanc
 
 		case CV_CONV_FAILURE:
 			FMI_LOG_ERROR(model_instance, "Failed to converge in the Vode Adams method.");
-=======
-
-			FMI_LOG_ERROR(model_instance,"Too many steps taken in the Vode Adams method.");
-			return XXFALSE;
-
-		case CV_TOO_MUCH_ACC:
-
-			FMI_LOG_ERROR(model_instance,"The Vode Adams method could not satisfy the accuracy demanded.");
-			break;
-
-		case CV_ERR_FAILURE:
-
-			FMI_LOG_ERROR(model_instance,"Error test failures occurred too many times in Vode Adams method.");
-			return XXFALSE;
-
-		case CV_CONV_FAILURE:
-
-			FMI_LOG_ERROR(model_instance,"Failed to converge in the Vode Adams method.");
->>>>>>> origin/MeBDFi
 			return XXFALSE;
 
 		case CV_LSETUP_FAIL:
 		case CV_LSOLVE_FAIL:
-<<<<<<< HEAD
 			FMI_LOG_ERROR(model_instance, "The linear solver's setup routine failed in the Vode Adams method.");
 			return XXFALSE;
 
 		case CV_ILL_INPUT:
 			FMI_LOG_ERROR(model_instance, "One of the inputs to Vode Adams method is illegal.");
-=======
-
-			FMI_LOG_ERROR(model_instance,"The linear solver's setup routine failed in the Vode Adams method.");
-			return XXFALSE;
-
-		case CV_ILL_INPUT:
-
-			FMI_LOG_ERROR(model_instance,"One of the inputs to Vode Adams method is illegal.");
->>>>>>> origin/MeBDFi
 			return XXFALSE;
 
 		default:
 			/* should not happen */
-<<<<<<< HEAD
 			FMI_LOG_ERROR(model_instance, "Unknown error in the Vode Adams method.");
-=======
-			FMI_LOG_ERROR(model_instance,"Unknown error in the Vode Adams method.");
->>>>>>> origin/MeBDFi
 			return XXFALSE;
 	}
 
@@ -912,7 +780,6 @@ XXBoolean %FUNCTIONPREFIX%VodeAdamsStep (%VARPREFIX%ModelInstance* model_instanc
  * MeBDFI integration method
  *********************************************************************/
 
-<<<<<<< HEAD
 /* the initialization of the MeBDFi integration method */
 XXBoolean %FUNCTIONPREFIX%MeBDFiInitialize (%VARPREFIX%ModelInstance* model_instance)
 {
@@ -926,50 +793,28 @@ XXBoolean %FUNCTIONPREFIX%MeBDFiInitialize (%VARPREFIX%ModelInstance* model_inst
 %ELSE%
 	return XXTRUE;
 %ENDIF%
-=======
-/* the initialization of the Euler integration method */
-XXBoolean %FUNCTIONPREFIX%MeBDFiInitialize (%VARPREFIX%ModelInstance* model_instance)
-{
-	/* initialize the MeBDFi object */
-	model_instance->major = XXTRUE;
-
-	MeBDFiMethod_Constructor(&model_instance->m_mebdfi_method, model_instance);
-
-	/* initialize the MeBDFi method */
-	MeBDFiMethod_Initialize(&model_instance->m_mebdfi_method);
-	return XXTRUE;
->>>>>>> origin/MeBDFi
 }
 
 /* the termination of the MeBDFi integration method */
 XXBoolean %FUNCTIONPREFIX%MeBDFiTerminate (%VARPREFIX%ModelInstance* model_instance)
 {
-<<<<<<< HEAD
 %IF%%NUMBER_STATES%
 	MeBDFiMethod_Destructor(&model_instance->m_mebdfi_method);
 %ENDIF%
-=======
-	MeBDFiMethod_Destructor(&model_instance->m_mebdfi_method);
->>>>>>> origin/MeBDFi
 	return XXTRUE;
 }
 
 /* the MeBDFi integration method itself */
 XXBoolean %FUNCTIONPREFIX%MeBDFiStep (%VARPREFIX%ModelInstance* model_instance, XXDouble outputTime)
 {
-<<<<<<< HEAD
 	XXDouble time = model_instance->time;
 	XXDouble mebdfi_output_time = model_instance->m_use_finish_time ? (model_instance->finish_time > outputTime ? outputTime : model_instance->finish_time) : outputTime;
-=======
-    XXDouble mebdfi_output_time = model_instance->m_use_finish_time ? (model_instance->finish_time > outputTime ? outputTime : model_instance->finish_time) : outputTime;
->>>>>>> origin/MeBDFi
 %IF%%NUMBER_STATES%
 	/* when finish time is not set, set finishtime to twice the output time */
 	/* in this case meBDFi is allowed to go past outputTime, and interpolate back */
 	XXDouble actual_finish_time = model_instance->m_use_finish_time ? model_instance->finish_time : (2.0 * outputTime);
 
 	/* call the MeBDFi method for integration */
-<<<<<<< HEAD
 	while (model_instance->time < mebdfi_output_time &&
 	       model_instance->time < actual_finish_time)
 	{
@@ -982,19 +827,13 @@ XXBoolean %FUNCTIONPREFIX%MeBDFiStep (%VARPREFIX%ModelInstance* model_instance, 
 			return XXFALSE;
 	}
 	model_instance->step_size = model_instance->time - time;
-=======
-	MeBDFiMethod_Integrate(&model_instance->m_mebdfi_method, mebdfi_output_time, actual_finish_time);
->>>>>>> origin/MeBDFi
 
 %ELSE%
 	/* no states in the model */
 
 	/* increment the simulation time */
 	model_instance->time = mebdfi_output_time;
-<<<<<<< HEAD
 	model_instance->step_size = model_instance->time - time;
-=======
->>>>>>> origin/MeBDFi
 
 	model_instance->major = XXTRUE;
 
@@ -1004,8 +843,4 @@ XXBoolean %FUNCTIONPREFIX%MeBDFiStep (%VARPREFIX%ModelInstance* model_instance, 
 %ENDIF%
 	return XXTRUE;
 }
-<<<<<<< HEAD
 %ENDIF%
-=======
-%ENDIF%
->>>>>>> origin/MeBDFi

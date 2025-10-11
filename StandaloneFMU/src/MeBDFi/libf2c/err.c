@@ -9,7 +9,9 @@ extern char *malloc();
 #include "stdlib.h"
 #endif
 
-/* #include "..\include\io.h" grn 2007-02-08; removed on 2017-01-19 */
+#ifdef WIN32
+#include <io.h>
+#endif
 
 #include "..\include\fio.h"
 #include "..\include\fmt.h"	/* for struct syl */

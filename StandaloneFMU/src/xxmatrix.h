@@ -186,6 +186,10 @@ void XXMatrixNormInf (XXDouble *dest, XXMatrix *mat_source);
    The trace is defined as the sum of the diagonal values */
 XXDouble XXMatrixTrace (XXMatrix *mat_source);
 %ENDIF%
+%IF%%NUMBEROF_SINCOSFUNCTION%
+/* calculate both the sine and cosine of the argument and return it as a matrix destination */
+void XXMatrixSinCos (XXMatrix *mat_dest, XXDouble argument);
+%ENDIF%
 %IF%%NUMBEROF_SYMMETRICFUNCTION%
 /* take the symmetric value of the source matrix.
    the result is placed in the destination matrix.

@@ -1,0 +1,346 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{354D6039-7E0B-4A7A-813B-0AE84DE22941}</ProjectGuid>
+    <!-- Default the installed latest Win10 SDK -->
+    <WindowsSdkInstallFolder_10 Condition="'$(WindowsSdkInstallFolder_10)' == ''">$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Microsoft SDKs\Windows\v10.0@InstallationFolder)</WindowsSdkInstallFolder_10>
+    <WindowsSdkInstallFolder_10 Condition="'$(WindowsSdkInstallFolder_10)' == ''">$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Microsoft SDKs\Windows\v10.0@InstallationFolder)</WindowsSdkInstallFolder_10>
+    <WindowsTargetPlatformVersion_10 Condition="'$(WindowsTargetPlatformVersion_10)' == ''">$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Microsoft SDKs\Windows\v10.0@ProductVersion)</WindowsTargetPlatformVersion_10>
+    <WindowsTargetPlatformVersion_10 Condition="'$(WindowsTargetPlatformVersion_10)' == ''">$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Microsoft SDKs\Windows\v10.0@ProductVersion)</WindowsTargetPlatformVersion_10>
+    <!-- Sometimes the version in the registry has to .0 suffix, and sometimes it doesn't. Check and add it -->
+    <WindowsTargetPlatformVersion_10 Condition="'$(WindowsTargetPlatformVersion_10)' != '' and !$(WindowsTargetPlatformVersion_10.EndsWith('.0'))">$(WindowsTargetPlatformVersion_10).0</WindowsTargetPlatformVersion_10>
+    <WindowsTargetPlatformVersion>$(WindowsTargetPlatformVersion_10)</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(Platform)\$(Configuration)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</LinkIncremental>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</LinkIncremental>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Platform)\$(Configuration)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Midl>
+      <TypeLibraryName>Win32/debug/%SUBMODEL_NAME%.tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;NO_FUNCTION_PREFIX;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeaderOutputFile>Win32/debug/%SUBMODEL_NAME%.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>Win32/debug/</AssemblerListingLocation>
+      <ObjectFileName>Win32/debug/</ObjectFileName>
+      <ProgramDataBaseFileName>Win32/debug/</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <AdditionalIncludeDirectories>..\..\src\cvode\include</AdditionalIncludeDirectories>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Link>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>Win32/debug/%SUBMODEL_NAME%.pdb</ProgramDatabaseFile>
+      <SubSystem>Console</SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>
+      </DataExecutionPrevention>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>Win32/debug/%SUBMODEL_NAME%.bsc</OutputFile>
+    </Bscmake>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Midl>
+      <TypeLibraryName>x64/debug/%SUBMODEL_NAME%.tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;NO_FUNCTION_PREFIX;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeaderOutputFile>x64/debug/%SUBMODEL_NAME%.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>x64/debug/</AssemblerListingLocation>
+      <ObjectFileName>x64/debug/</ObjectFileName>
+      <ProgramDataBaseFileName>x64/debug/</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <AdditionalIncludeDirectories>..\..\src\cvode\include</AdditionalIncludeDirectories>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Link>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>x64/debug/%SUBMODEL_NAME%.pdb</ProgramDatabaseFile>
+      <SubSystem>Console</SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>
+      </DataExecutionPrevention>
+    </Link>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>x64/debug/%SUBMODEL_NAME%.bsc</OutputFile>
+    </Bscmake>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Midl>
+      <TypeLibraryName>win32/release/%SUBMODEL_NAME%.tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;NO_FUNCTION_PREFIX;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeaderOutputFile>win32/release/%SUBMODEL_NAME%.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>win32/release/</AssemblerListingLocation>
+      <ObjectFileName>win32/release/</ObjectFileName>
+      <ProgramDataBaseFileName>win32/release/</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <AdditionalIncludeDirectories>..\..\src\cvode\include</AdditionalIncludeDirectories>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Link>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <ProgramDatabaseFile>win32/release/%SUBMODEL_NAME%.pdb</ProgramDatabaseFile>
+      <SubSystem>Console</SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>
+      </DataExecutionPrevention>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>win32/release/%SUBMODEL_NAME%.bsc</OutputFile>
+    </Bscmake>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Midl>
+      <TypeLibraryName>x64/release/%SUBMODEL_NAME%.tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;NO_FUNCTION_PREFIX;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeaderOutputFile>x64/release/%SUBMODEL_NAME%.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>x64/release/</AssemblerListingLocation>
+      <ObjectFileName>x64/release/</ObjectFileName>
+      <ProgramDataBaseFileName>x64/release/</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <AdditionalIncludeDirectories>..\..\src\cvode\include</AdditionalIncludeDirectories>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Link>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <ProgramDatabaseFile>x64/release/%SUBMODEL_NAME%.pdb</ProgramDatabaseFile>
+      <SubSystem>Console</SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>
+      </DataExecutionPrevention>
+    </Link>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>x64/release/%SUBMODEL_NAME%.bsc</OutputFile>
+    </Bscmake>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\EulerAngles.h" />
+    <ClInclude Include="..\..\src\MotionProfiles.h" />
+    <ClInclude Include="..\..\src\xxfuncs.h" />
+    <ClInclude Include="..\..\src\xxinteg.h" />
+    <ClInclude Include="..\..\src\xxmatrix.h" />
+    <ClInclude Include="..\..\src\xxmodel.h" />
+    <ClInclude Include="..\..\src\xxsubmod.h" />
+    <ClInclude Include="..\..\src\xxtypes.h" />
+    <ClInclude Include="..\..\src\%FMI_PREFIX%Functions.h" />
+%IF%%FMI1%
+    <ClInclude Include="..\..\src\fmiPlatformTypes.h" />
+%ENDIF%
+%IF%%FMI2%
+    <ClInclude Include="..\..\src\fmi2FunctionTypes.h" />
+    <ClInclude Include="..\..\src\fmi2TypesPlatform.h" />
+%ENDIF%
+    <ClInclude Include="..\..\src\fmiGUID.h" />
+    <ClInclude Include="..\..\src\xxTable2D.h" />
+%IF%%EQ(INTEGRATION_METHOD_NAME,VodeAdams)%
+    <ClInclude Include="..\..\src\cvode\include\cvode\cvode.h" />
+    <ClInclude Include="..\..\src\cvode\include\cvode\cvode_dense.h" />
+    <ClInclude Include="..\..\src\cvode\include\cvode\cvode_direct.h" />
+    <ClInclude Include="..\..\src\cvode\include\cvode\cvode_direct_impl.h" />
+    <ClInclude Include="..\..\src\cvode\include\nvector\nvector_serial.h" />
+    <ClInclude Include="..\..\src\cvode\src\cvode\cvode_direct_impl.h" />
+    <ClInclude Include="..\..\src\cvode\src\cvode\cvode_impl.h" />
+    <ClInclude Include="..\..\src\cvode\include\sundials\sundials_config.h" />
+    <ClInclude Include="..\..\src\cvode\include\sundials\sundials_math.h" />
+    <ClInclude Include="..\..\src\cvode\include\sundials\sundials_nvector.h" />
+    <ClInclude Include="..\..\src\cvode\include\sundials\sundials_dense.h" />
+    <ClInclude Include="..\..\src\cvode\include\sundials\sundials_direct.h" />
+%ENDIF%
+%IF%%EQ(INTEGRATION_METHOD_NAME,MeBDFi)%
+    <ClInclude Include="..\..\src\MeBDFi\MeBDFi.h" />
+    <ClInclude Include="..\..\src\MeBDFi\include\f2c.h" />
+    <ClInclude Include="..\..\src\MeBDFi\include\fio.h" />
+    <ClInclude Include="..\..\src\MeBDFi\include\fmt.h" />
+    <ClInclude Include="..\..\src\MeBDFi\include\fp.h" />
+    <ClInclude Include="..\..\src\MeBDFi\include\lio.h" />
+    <ClInclude Include="..\..\src\MeBDFi\include\sysdep1.h" />
+%ENDIF%
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\EulerAngles.c" />
+    <ClCompile Include="..\..\src\MotionProfiles.c" />
+    <ClCompile Include="..\..\src\xxfuncs.c" />
+    <ClCompile Include="..\..\src\xxinteg.c" />
+    <ClCompile Include="..\..\src\xxinverse.c" />
+    <ClCompile Include="..\..\src\xxmodel.c" />
+    <ClCompile Include="..\..\src\xxmatrix.c" />
+    <ClCompile Include="..\..\src\%FMI_PREFIX%Functions.c" />
+    <ClCompile Include="..\..\src\xxsubmod.c" />
+    <ClCompile Include="..\..\src\xxTable2D.c" />
+%IF%%EQ(INTEGRATION_METHOD_NAME,VodeAdams)%
+    <ClCompile Include="..\..\src\cvode\src\cvode\cvode.c" />
+    <ClCompile Include="..\..\src\cvode\src\cvode\cvode_dense.c" />
+    <ClCompile Include="..\..\src\cvode\src\cvode\cvode_direct.c" />
+    <ClCompile Include="..\..\src\cvode\src\cvode\cvode_io.c" />
+    <ClCompile Include="..\..\src\cvode\src\nvec_ser\nvector_serial.c" />
+    <ClCompile Include="..\..\src\cvode\src\sundials\sundials_dense.c" />
+    <ClCompile Include="..\..\src\cvode\src\sundials\sundials_direct.c" />
+    <ClCompile Include="..\..\src\cvode\src\sundials\sundials_math.c" />
+    <ClCompile Include="..\..\src\cvode\src\sundials\sundials_nvector.c" />
+%ENDIF%
+%IF%%EQ(INTEGRATION_METHOD_NAME,MeBDFi)%
+    <ClCompile Include="..\..\src\MeBDFi\MeBDFi.c" />
+    <ClCompile Include="..\..\src\MeBDFi\libf2c\close.c" />
+    <ClCompile Include="..\..\src\MeBDFi\libf2c\dolio.c" />
+    <ClCompile Include="..\..\src\MeBDFi\libf2c\endfile.c" />
+    <ClCompile Include="..\..\src\MeBDFi\libf2c\err.c" />
+    <ClCompile Include="..\..\src\MeBDFi\libf2c\fmt.c" />
+    <ClCompile Include="..\..\src\MeBDFi\libf2c\fmtlib.c" />
+    <ClCompile Include="..\..\src\MeBDFi\libf2c\lread.c" />
+    <ClCompile Include="..\..\src\MeBDFi\libf2c\lwrite.c" />
+    <ClCompile Include="..\..\src\MeBDFi\libf2c\open.c" />
+    <ClCompile Include="..\..\src\MeBDFi\libf2c\pow_dd.c" />
+    <ClCompile Include="..\..\src\MeBDFi\libf2c\pow_di.c" />
+    <ClCompile Include="..\..\src\MeBDFi\libf2c\rdfmt.c" />
+    <ClCompile Include="..\..\src\MeBDFi\libf2c\rsfe.c" />
+    <ClCompile Include="..\..\src\MeBDFi\libf2c\sfe.c" />
+    <ClCompile Include="..\..\src\MeBDFi\libf2c\sig_die.c" />
+    <ClCompile Include="..\..\src\MeBDFi\libf2c\util.c" />
+    <ClCompile Include="..\..\src\MeBDFi\libf2c\wref.c" />
+    <ClCompile Include="..\..\src\MeBDFi\libf2c\wrtfmt.c" />
+    <ClCompile Include="..\..\src\MeBDFi\libf2c\wsfe.c" />
+    <ClCompile Include="..\..\src\MeBDFi\libf2c\wsle.c" />
+    <ClCompile Include="..\..\src\MeBDFi\netlib\DOGLEG.c" />
+    <ClCompile Include="..\..\src\MeBDFi\netlib\DPMPAR.c" />
+    <ClCompile Include="..\..\src\MeBDFi\netlib\ENORM.c" />
+    <ClCompile Include="..\..\src\MeBDFi\netlib\FDJAC1.c" />
+    <ClCompile Include="..\..\src\MeBDFi\netlib\HYBRD.c" />
+    <ClCompile Include="..\..\src\MeBDFi\netlib\HYBRD1.c" />
+    <ClCompile Include="..\..\src\MeBDFi\netlib\mebdfiCore.c" />
+    <ClCompile Include="..\..\src\MeBDFi\netlib\QFORM.c" />
+    <ClCompile Include="..\..\src\MeBDFi\netlib\QRFAC.c" />
+    <ClCompile Include="..\..\src\MeBDFi\netlib\R1MPYQ.c" />
+    <ClCompile Include="..\..\src\MeBDFi\netlib\R1UPDT.c" />
+%ENDIF%
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

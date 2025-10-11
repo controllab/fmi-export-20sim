@@ -165,7 +165,7 @@ l_g(char *buf, double n)
 			}
 		}
  f__ret:
-	return b - buf;
+	return (int)(b - buf);
 #endif
 	}
 

@@ -89,10 +89,9 @@ void XXMatrixSetRow (XXMatrix *mat_dest, XXMatrix *mat_source, XXInteger row)
 */
 void XXMatrixGetColumn (XXMatrix *mat_dest, XXMatrix *mat_source, XXInteger column)
 {
-	XXInteger i, rows, columns;
-
-	rows = mat_source->rows;
-	columns = mat_source->columns;
+	XXInteger i;
+	const XXInteger rows = mat_dest->rows;
+	const XXInteger columns = mat_dest->columns;
 
 	for( i = 0; i < rows; i++)
 		mat_dest->mat[i] = mat_source->mat[columns * i + column];
@@ -104,10 +103,9 @@ void XXMatrixGetColumn (XXMatrix *mat_dest, XXMatrix *mat_source, XXInteger colu
 */
 void XXMatrixSetColumn (XXMatrix *mat_dest, XXMatrix *mat_source, XXInteger column)
 {
-	XXInteger i, rows, columns;
-
-	rows = mat_dest->rows;
-	columns = mat_dest->columns;
+	XXInteger i;
+	const XXInteger rows = mat_dest->rows;
+	const XXInteger columns = mat_dest->columns;
 
 	for( i = 0; i < rows; i++)
 		mat_dest->mat[columns * i + column] = mat_source->mat[i];
@@ -121,16 +119,16 @@ void XXMatrixDiag (XXMatrix *mat_dest, XXMatrix *mat_source)
 {
 	XXInteger i;
 	const XXInteger rows = mat_dest->rows;
-	const XXInteger cols = mat_dest->cols;
+	const XXInteger columns = mat_dest->columns;
 
 	/* first set everything zero */
-	memset(mat_dest->mat, 0, rows * cols * sizeof(XXDouble));
+	memset(mat_dest->mat, 0, rows * columns * sizeof(XXDouble));
 
 	/* and loop to set the diagonal values */
 	for( i = 0; i < rows; i++)
 	{
 		/* set the diagonal value */
-		mat_dest->mat[size*i+i] = mat_source->mat[i];
+		mat_dest->mat[columns*i+i] = mat_source->mat[i];
 	}
 }
 
@@ -827,6 +825,21 @@ void XXMatrixNormInf (XXDouble *dest, XXMatrix *mat_source)
 		if( p > (*dest) )
 			*dest = p;
 	}
+}
+
+%ENDIF%
+%IF%%NUMBEROF_SINCOSFUNCTION%
+/* calculate both the sine and cosine of the argument and return it as a matrix destination */
+void XXMatrixSinCos (XXMatrix *mat_dest, XXDouble argument)
+{
+	XXDouble s, c;
+
+	/* this is optimized depending on the compiler */
+	s = sin (argument);
+	c = cos (argument);
+
+	mat_dest->mat[0] = s;
+	mat_dest->mat[1] = c;
 }
 
 %ENDIF%

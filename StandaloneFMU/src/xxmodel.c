@@ -37,8 +37,6 @@
 #include <math.h>
 #include <string.h>
 
-#include <string.h>
-
 /* 20-sim include files */
 #include "xxmodel.h"
 #include "xxfuncs.h"
@@ -87,126 +85,6 @@
  */
 const char* g_fmuResourceLocation = NULL;
 %ENDIF%
-
-/**
- * Convert an uri provided by the the co-simulator to a native path
- * @param uri Input path. native and file:/ and file:/// uri's right now
- * @return Natve path that ends with a path separator.
- * Note that the caller is responsible for free-ing the allocated string buffer
- * memory
- * defined in %FMI_PREFIX%Functions.c
- */
-extern const char* URIToNativePath(%VARPREFIX%ModelInstance* model_instance, const char* uri);
-
-XXBoolean %FUNCTIONPREFIX%ModelInstance_Constructor(%VARPREFIX%ModelInstance* model_instance,
-													%FMI_PREFIX%String instanceName,
-%IF%%EQ(FMIVERSION,2.0)%
-													%FMI_PREFIX%Type fmuType,
-													%FMI_PREFIX%String fmuResourceLocation,
-%ENDIF%
-%IF%%EQ(FMIVERSION,1.0)%
-													fmiCallbackFunctions fmi_functions)
-%ENDIF%
-%IF%%EQ(FMIVERSION,2.0)%
-													const fmi2CallbackFunctions *functions)
-%ENDIF%
-{
-	int offset = 0;
-
-%IF%%EQ(FMIVERSION,1.0)%
-	fmiCallbackFunctions *functions = &fmi_functions;
-%ENDIF%
-
-	/* initialize the members of the model_instance structure */
-	model_instance->instanceName = (%FMI_PREFIX%String) functions->allocateMemory(1 + strlen(instanceName), sizeof(char));
-
-	if (!model_instance->instanceName)
-	{
-		functions->logger(NULL, instanceName, %FMI_PREFIX%Error, "error",
-			"%FMI_PREFIX%Instantiate: Out of memory while allocating instance name");
-		return XXFALSE;
-	}
-	strcpy((char *)model_instance->instanceName, (char *)instanceName);
-
-	/* Prepare the model instance struct */
-	model_instance->start_time = %START_TIME%;
-	model_instance->finish_time = 0.0;
-	model_instance->m_use_finish_time = XXFALSE;
-	model_instance->step_size = %TIME_STEP_SIZE%;
-	model_instance->time = 0.0;
-	model_instance->steps = 0;
-	model_instance->%XX_INITIALIZE% = XXTRUE;
-	model_instance->major = XXTRUE;
-	model_instance->stop_simulation = XXFALSE;
-	model_instance->m_reinitState = XXFALSE;
-	model_instance->m_initState = XXFALSE;
-
-	/* Set the offsets within the model_instance->MEMORY array */
-%IF%%NUMBER_CONSTANTS%
-	model_instance->%XX_CONSTANT_ARRAY_NAME% = &model_instance->MEMORY[offset]; /* constants offset */
-	offset = offset + %VARPREFIX%constants_count;
-%ENDIF%
-%IF%%NUMBER_PARAMETERS%
-	model_instance->%XX_PARAMETER_ARRAY_NAME% = &model_instance->MEMORY[offset];	/* parameters offset */
-	offset = offset + %VARPREFIX%parameter_count;
-%ENDIF%
-%IF%%NUMBER_INITIAL_VALUES%
-	model_instance->%XX_INITIAL_VALUE_ARRAY_NAME% = &model_instance->MEMORY[offset];	/* initial values offset */
-	offset = offset + %VARPREFIX%initialvalue_count;
-%ENDIF%
-%IF%%NUMBER_VARIABLES%
-	model_instance->%XX_VARIABLE_ARRAY_NAME% = &model_instance->MEMORY[offset];	/* variables offset */
-	offset = offset + %VARPREFIX%variable_count;
-%ENDIF%
-%IF%%NUMBER_STATES%
-	model_instance->%XX_STATE_ARRAY_NAME% = &model_instance->MEMORY[offset];	/* states offset */
-	offset = offset + %VARPREFIX%state_count;
-	model_instance->%XX_RATE_ARRAY_NAME% = &model_instance->MEMORY[offset];	/* rates offset */
-	offset = offset + %VARPREFIX%state_count;
-%ENDIF%
-%IF%%NUMBER_DEPSTATES%
-	model_instance->%XX_DEP_STATE_ARRAY_NAME% = &model_instance->MEMORY[offset];	/* states offset */
-	offset = offset + %VARPREFIX%depstate_count;
-	model_instance->%XX_DEP_RATE_ARRAY_NAME% = &model_instance->MEMORY[offset];	/* rates offset */
-	offset = offset + %VARPREFIX%depstate_count;
-%ENDIF%
-%IF%%NUMBER_ALGLOOPS%
-	model_instance->%XX_ALG_IN_ARRAY_NAME% = &model_instance->MEMORY[offset];	/* aglebraic loop input offset */
-	offset = offset + %VARPREFIX%algloop_count;
-	model_instance->%XX_ALG_OUT_ARRAY_NAME% = &model_instance->MEMORY[offset];	/* aglebraic loop output offset */
-	offset = offset + %VARPREFIX%algloop_count;
-%ENDIF%
-%IF%%NUMBER_CONSTRAINTS%
-	model_instance->%XX_ALG_IN_ARRAY_NAME% = &model_instance->MEMORY[offset];		/* constraint in offset */
-	offset = offset + %VARPREFIX%constraint_count;
-	model_instance->%XX_ALG_OUT_ARRAY_NAME% = &model_instance->MEMORY[offset];		/* constraint out offset */
-%ENDIF%
-
-	/* Register the callback */
-%IF%%EQ(FMIVERSION,1.0)%
-	model_instance->fmiCallbackFunctions = fmi_functions;
-
-	/* Remember the resource folder location */
-	model_instance->resourceLocation = NULL;
-%ENDIF%
-%IF%%EQ(FMIVERSION,2.0)%
-	model_instance->fmiCallbackFunctions = functions;
-
-	/* Remember the resource folder location */
-	model_instance->resourceLocation = URIToNativePath(model_instance, fmuResourceLocation);
-%ENDIF%
-
-%IF%%EQ(FMIVERSION,2.0)%
-	/* check if we are setup for co-simulation, that's the only possible option for now */
-	if( fmuType != %FMI_PREFIX%CoSimulation )
-	{
-		model_instance->fmiCallbackFunctions->logger(NULL, instanceName, %FMI_PREFIX%Error, "error",
-			"FMU can only be used for Co-Simulation, not for Model Exchange");
-		return XXFALSE;
-	}
-%ENDIF%
-	return XXTRUE;
-}
 
 #if (%NUMBER_PARAMETERS% > 8192) && defined _MSC_VER
 #pragma optimize("", off)
@@ -440,7 +318,7 @@ XXBoolean %FUNCTIONPREFIX%ModelWarning (%VARPREFIX%ModelInstance* model_instance
 %IF%%FMI2%
 	if(model_instance->fmiCallbackFunctions != NULL && model_instance->fmiCallbackFunctions->logger != NULL)
 	{
-		model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", %FMI_PREFIX%Warning, "warning", message);
+		model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Warning, "warning", message);
 	}
 %ENDIF%
 	return 0;
@@ -464,7 +342,7 @@ XXBoolean %FUNCTIONPREFIX%ModelStopSimulation (%VARPREFIX%ModelInstance* model_i
 %IF%%FMI2%
 	if(model_instance->fmiCallbackFunctions != NULL && model_instance->fmiCallbackFunctions->logger != NULL)
 	{
-		model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", %FMI_PREFIX%Error, "error", message);
+		model_instance->fmiCallbackFunctions->logger(NULL, "%SUBMODEL_NAME%", fmi2Error, "error", message);
 	}
 %ENDIF%
 	return 0;

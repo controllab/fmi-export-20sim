@@ -14,7 +14,7 @@
 
 #ifndef __MEBDFI_H
 #define __MEBDFI_H
-
+%IF%%NUMBER_STATES%
 typedef struct IntegrationMethod
 {
 	XXBoolean m_take_desired_step_busy;
@@ -77,10 +77,10 @@ typedef struct MeBDFiMethod
 	double *m_Y;
 	double *m_YPRIME;
 
-	// and new work arrays to make the bdf method re-entrant */
-	int m_mebdfStaticInts[35]; // 34 + 1
-	double m_mebdfStaticDoubles[26]; // 25 + 1
-	long int m_mebdfStaticLogicals[5]; // 4 + 1
+	/* and new work arrays to make the bdf method re-entrant */
+	int m_mebdfStaticInts[35]; /* 34 + 1 */
+	double m_mebdfStaticDoubles[26]; /* 25 + 1 */
+	long int m_mebdfStaticLogicals[5]; /* 4 + 1 */
 
 	/* and some values, to be able to reset the method
 	 * to a previous time (in event detection) */
@@ -93,10 +93,10 @@ typedef struct MeBDFiMethod
 	XXBoolean m_use_fixed_step_size;
 	double m_fixed_step_size;
 
-	// boolean to determine whether a communication interval should be used
+	/* boolean to determine whether a communication interval should be used */
 	XXBoolean m_use_comm_int;
 
-	// if the boolean is true is this communication interval
+	/* if the boolean is true is this communication interval */
 	double m_comm_int;
 
 	/* this will trigger that additional
@@ -164,6 +164,8 @@ XXBoolean MeBDFiMethod_CanHandleAlgebraicRelations(MeBDFiMethod *mebdfi_method);
 XXBoolean MeBDFiMethod_CanHandleConstraints(MeBDFiMethod *mebdfi_method);
 
 void MeBDFiMethod_Destructor(MeBDFiMethod *mebdfi_method);
-
+%ELSE%
+/* Model has no states */
+%ENDIF%
 #endif
 

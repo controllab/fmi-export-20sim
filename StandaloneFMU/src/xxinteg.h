@@ -64,5 +64,4 @@ XXBoolean %FUNCTIONPREFIX%MeBDFiTerminate (%VARPREFIX%ModelInstance* model_insta
 XXBoolean %FUNCTIONPREFIX%MeBDFiStep (%VARPREFIX%ModelInstance* model_instance, XXDouble outputTime);
 %ENDIF%
 
-
 #endif

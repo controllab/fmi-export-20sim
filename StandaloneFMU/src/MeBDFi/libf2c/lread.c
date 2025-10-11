@@ -74,9 +74,6 @@ un_getc(int x, FILE *f__cf)
 #define un_getc ungetc
 #ifdef KR_headers
  extern int ungetc();
-#else
-// removed by grn 2007-02-23
-//extern int ungetc(int, FILE*);	/* for systems with a buggy stdio.h */
 #endif
 #endif
 
@@ -121,7 +118,8 @@ l_R(int poststar, int reqint)
 	register int ch;
 	register char *sp, *spe, *sp1;
 	long e, exp;
-	int havenum, havestar, se;
+	size_t havenum;
+	int havestar, se;
 
 	if (!poststar) {
 		if (f__lcount > 0)

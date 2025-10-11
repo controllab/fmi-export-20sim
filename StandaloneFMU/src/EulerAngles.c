@@ -14,7 +14,7 @@
 /*****************************************************************************
 --------------------------------------------------------------------------
 
- Copyright (c) 1995-2007 Controllab Products B.V. All Rights Reserved.
+ Copyright © 1995-2007 Controllab Products B.V. All Rights Reserved.
 
              www.controllab.nl
                www.20sim.com
@@ -277,7 +277,7 @@ void Quat_FromHMatrix(MyHMatrix *M, Quat *q)
 	XXDouble sqrtT;
 
 	/* if the "w" is non-zero */
-	if( T != 0.0 )
+	if( fabs(T) > 16 * FLT_EPSILON)
 	{
 		sqrtT = 2.0 * sqrt(T);
 		S = 1.0 / sqrtT;
@@ -984,5 +984,5 @@ XXInteger EulerAngles_QuaternionFromRotationMatrix (XXDouble *inarr, XXInteger i
 	/* 0 is success */
 	return 0;
 }
-%ENDIF%
 
+%ENDIF%
